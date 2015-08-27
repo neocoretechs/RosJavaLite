@@ -1,4 +1,4 @@
-ROSJava
+ROSJavaLite
 =======
 
 Java implementation of ROS Core services (fork) without XML-RPC, instead, Java Serialization for smaller footprint devices
