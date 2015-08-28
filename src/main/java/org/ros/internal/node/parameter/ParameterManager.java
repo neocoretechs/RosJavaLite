@@ -27,6 +27,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
+ * Maintains a list of listeners to a parameter tree such that when a value is updated those
+ * listeners are notified of the change and new value.
  * @author damonkohler@google.com (Damon Kohler)
  */
 public class ParameterManager {

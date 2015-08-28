@@ -117,72 +117,18 @@ public class DefaultParameterTree implements ParameterTree {
   }
 
   @Override
-  public void set(GraphName name, boolean value) {
+  public void set(GraphName name, Object value) {
     GraphName resolvedName = resolver.resolve(name);
     parameterClient.setParam(resolvedName, value);
   }
 
   @Override
-  public void set(String name, boolean value) {
+  public void set(String name, Object value) {
     set(GraphName.of(name), value);
   }
 
-  @Override
-  public void set(GraphName name, int value) {
-    GraphName resolvedName = resolver.resolve(name);
-    parameterClient.setParam(resolvedName, value);
-  }
-
-  @Override
-  public void set(String name, int value) {
-    set(GraphName.of(name), value);
-  }
-
-  @Override
-  public void set(GraphName name, double value) {
-    GraphName resolvedName = resolver.resolve(name);
-    parameterClient.setParam(resolvedName, value);
-  }
-
-  @Override
-  public void set(String name, double value) {
-    set(GraphName.of(name), value);
-  }
-
-  @Override
-  public void set(GraphName name, String value) {
-    GraphName resolvedName = resolver.resolve(name);
-    parameterClient.setParam(resolvedName, value);
-  }
-
-  @Override
-  public void set(String name, String value) {
-    set(GraphName.of(name), value);
-  }
-
-  @Override
-  public void set(GraphName name, List<?> value) {
-    GraphName resolvedName = resolver.resolve(name);
-    parameterClient.setParam(resolvedName, value);
-  }
-
-  @Override
-  public void set(String name, List<?> value) {
-    set(GraphName.of(name), value);
-  }
-
-  @Override
-  public void set(GraphName name, Map<?, ?> value) {
-    GraphName resolvedName = resolver.resolve(name);
-    parameterClient.setParam(resolvedName, value);
-  }
-
-  @Override
-  public void set(String name, Map<?, ?> value) {
-    set(GraphName.of(name), value);
-  }
-
-  private <T> T get(GraphName name, Class<T> type) {
+  
+  private <T> T getInternal(GraphName name, Class<T> type) {
     GraphName resolvedName = resolver.resolve(name);
     Response<Object> response = parameterClient.getParam(resolvedName);
     try {
@@ -196,7 +142,7 @@ public class DefaultParameterTree implements ParameterTree {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T get(GraphName name, T defaultValue) {
+  private <T> T getInternal(GraphName name, T defaultValue) {
     assert(defaultValue != null);
     GraphName resolvedName = resolver.resolve(name);
     Response<Object> response = parameterClient.getParam(resolvedName);
@@ -212,125 +158,6 @@ public class DefaultParameterTree implements ParameterTree {
     }
   }
 
-  @Override
-  public boolean getBoolean(GraphName name) {
-    return get(name, Boolean.class);
-  }
-
-  @Override
-  public boolean getBoolean(String name) {
-    return getBoolean(GraphName.of(name));
-  }
-
-  @Override
-  public boolean getBoolean(GraphName name, boolean defaultValue) {
-    return get(name, defaultValue);
-  }
-
-  @Override
-  public boolean getBoolean(String name, boolean defaultValue) {
-    return getBoolean(GraphName.of(name), defaultValue);
-  }
-
-  @Override
-  public int getInteger(GraphName name) {
-    return get(name, Integer.class);
-  }
-
-  @Override
-  public int getInteger(String name) {
-    return getInteger(GraphName.of(name));
-  }
-
-  @Override
-  public int getInteger(GraphName name, int defaultValue) {
-    return get(name, defaultValue);
-  }
-
-  @Override
-  public int getInteger(String name, int defaultValue) {
-    return getInteger(GraphName.of(name), defaultValue);
-  }
-
-  @Override
-  public double getDouble(GraphName name) {
-    return get(name, Double.class);
-  }
-
-  @Override
-  public double getDouble(String name) {
-    return getDouble(GraphName.of(name));
-  }
-
-  @Override
-  public double getDouble(GraphName name, double defaultValue) {
-    return get(name, defaultValue);
-  }
-
-  @Override
-  public double getDouble(String name, double defaultValue) {
-    return getDouble(GraphName.of(name), defaultValue);
-  }
-
-  @Override
-  public String getString(GraphName name) {
-    return get(name, String.class);
-  }
-
-  @Override
-  public String getString(String name) {
-    return get(GraphName.of(name), String.class);
-  }
-
-  @Override
-  public String getString(GraphName name, String defaultValue) {
-    return get(name, defaultValue);
-  }
-
-  @Override
-  public String getString(String name, String defaultValue) {
-    return getString(GraphName.of(name), defaultValue);
-  }
-
-  @Override
-  public List<?> getList(GraphName name) {
-    return Arrays.asList(get(name, Object[].class));
-  }
-
-  @Override
-  public List<?> getList(String name) {
-    return getList(GraphName.of(name));
-  }
-
-  @Override
-  public List<?> getList(GraphName name, List<?> defaultValue) {
-    return Arrays.asList(get(name, defaultValue.toArray()));
-  }
-
-  @Override
-  public List<?> getList(String name, List<?> defaultValue) {
-    return getList(GraphName.of(name), defaultValue);
-  }
-
-  @Override
-  public Map<?, ?> getMap(GraphName name) {
-    return get(name, Map.class);
-  }
-
-  @Override
-  public Map<?, ?> getMap(String name) {
-    return getMap(GraphName.of(name));
-  }
-
-  @Override
-  public Map<?, ?> getMap(GraphName name, Map<?, ?> defaultValue) {
-    return get(name, defaultValue);
-  }
-
-  @Override
-  public Map<?, ?> getMap(String name, Map<?, ?> defaultValue) {
-    return getMap(GraphName.of(name), defaultValue);
-  }
 
   public static ParameterTree newFromNodeIdentifier(
 	NodeIdentifier nodeIdentifier, InetSocketAddress remoteUri,
@@ -338,4 +165,32 @@ public class DefaultParameterTree implements ParameterTree {
 	ParameterClient client = new ParameterClient(nodeIdentifier, remoteUri);
 	return new DefaultParameterTree(client, parameterManager, resolver);
   }
+
+@Override
+public Object get(GraphName name, Object defaultValue) {
+	return getInternal(name, defaultValue);
+}
+
+@Override
+public Object get(String name, Object defaultValue) {
+	return getInternal(GraphName.of(name), defaultValue);
+}
+/**
+ * Retrieve the value and cast to the designated default type
+ * @param name
+ * @param defaultValue
+ * @return
+ */
+public <T> T get(String name, Class<T> defaultValue) {
+	return getInternal(GraphName.of(name), defaultValue);
+}
+/**
+ * Retrieve the value and cast to the designated default type
+ * @param name
+ * @param defaultValue
+ * @return
+ */
+public <T> T get(GraphName name, Class<T> defaultValue) {
+	return getInternal(name, defaultValue);
+}
 }

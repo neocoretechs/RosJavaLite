@@ -79,40 +79,11 @@ public class SlaveClient extends Client<SlaveRpcEndpoint> {
         new TopicListResultFactory());
   }
 
-  public Response<Void> paramUpdate(GraphName name, boolean value) {
+  public Response<Void> paramUpdate(GraphName name, Object value) {
     return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
         new VoidResultFactory());
   }
 
-  public Response<Void> paramUpdate(GraphName name, char value) {
-    return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
-        new VoidResultFactory());
-  }
-
-  public Response<Void> paramUpdate(GraphName name, int value) {
-    return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
-        new VoidResultFactory());
-  }
-
-  public Response<Void> paramUpdate(GraphName name, double value) {
-    return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
-        new VoidResultFactory());
-  }
-
-  public Response<Void> paramUpdate(GraphName name, String value) {
-    return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
-        new VoidResultFactory());
-  }
-
-  public Response<Void> paramUpdate(GraphName name, List<?> value) {
-    return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
-        new VoidResultFactory());
-  }
-
-  public Response<Void> paramUpdate(GraphName name, Map<?, ?> value) {
-    return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
-        new VoidResultFactory());
-  }
 
   public Response<Void> publisherUpdate(GraphName topic, List<InetSocketAddress> publisherUris) {
     return Response.fromListChecked(

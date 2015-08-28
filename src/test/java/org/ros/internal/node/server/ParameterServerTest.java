@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
+import org.ros.internal.node.client.ParameterClient;
 import org.ros.namespace.GraphName;
+import org.ros.node.NodeConfiguration;
 
 
 /**
@@ -36,96 +39,98 @@ import org.ros.namespace.GraphName;
  */
 public class ParameterServerTest {
 
-  private ParameterServer server;
+  private ParameterClient server;
 
   @Before
   public void setup() throws IOException {
-    server = new ParameterServer(BindAddress.newPrivate(), AdvertiseAddress.newPrivate(8091));
+	  InetSocketAddress testServer = new InetSocketAddress("172.16.0.101", 8090);
+	  InetSocketAddress paramServer = new InetSocketAddress("172.16.0.101",8091);
+    server = new ParameterClient(new NodeIdentifier(GraphName.of("/foo"), testServer ), testServer);
   }
 
   @Test
   public void testGetNonExistent() {
-    assertEquals(null, server.get(GraphName.of("/foo")));
-    assertEquals(null, server.get(GraphName.of("/foo/bar")));
+    assertEquals(new Object(), server.getParam(GraphName.of("/foo")).getResult());
+    assertEquals(new Object(), server.getParam(GraphName.of("/foo/bar")).getResult());
   }
 
   @Test
   public void testSetAndGetShallow() {
-    server.set(GraphName.of("/foo"), "bloop");
-    assertEquals("bloop", server.get(GraphName.of("/foo")));
+    server.setParam(GraphName.of("/foo"), "bloop");
+    assertEquals("bloop", server.getParam(GraphName.of("/foo")).getResult());
   }
 
   @Test
   public void testSetAndGetDeep() {
-    server.set(GraphName.of("/foo/bar"), "bloop");
-    assertEquals("bloop", server.get(GraphName.of("/foo/bar")));
+    server.setParam(GraphName.of("/foo/bar"), "bloop");
+    assertEquals("bloop", server.getParam(GraphName.of("/foo/bar")).getResult());
   }
 
   @Test
   public void testSetAndGet() {
-    server.set(GraphName.of("/foo"), "bloop");
-    assertEquals("bloop", server.get(GraphName.of("/foo")));
-    server.set(GraphName.of("/foo/bar"), "bloop");
-    assertEquals("bloop", server.get(GraphName.of("/foo/bar")));
-    server.set(GraphName.of("/foo/bar/baz"), "bloop");
-    assertEquals("bloop", server.get(GraphName.of("/foo/bar/baz")));
+    server.setParam(GraphName.of("/foo"), "bloop");
+    assertEquals("bloop", server.getParam(GraphName.of("/foo")).getResult());
+    server.setParam(GraphName.of("/foo/bar"), "bloop");
+    assertEquals("bloop", server.getParam(GraphName.of("/foo/bar")).getResult());
+    server.setParam(GraphName.of("/foo/bar/baz"), "bloop");
+    assertEquals("bloop", server.getParam(GraphName.of("/foo/bar/baz")).getResult());
   }
 
   @Test
   public void testSetDeepAndGetShallow() {
-    server.set(GraphName.of("/foo/bar"), "bloop");
+    server.setParam(GraphName.of("/foo/bar"), "bloop");
     Map<String, Object> expected = new HashMap<String, Object>();
     expected.put("bar", "bloop");
-    assertEquals(expected, server.get(GraphName.of("/foo")));
+    assertEquals(expected, server.getParam(GraphName.of("/foo")).getResult());
   }
 
   @Test
   public void testSetOverwritesMap() {
-    server.set(GraphName.of("/foo/bar"), "bloop");
-    assertEquals("bloop", server.get(GraphName.of("/foo/bar")));
-    server.set(GraphName.of("/foo"), "bloop");
-    assertEquals("bloop", server.get(GraphName.of("/foo")));
+    server.setParam(GraphName.of("/foo/bar"), "bloop");
+    assertEquals("bloop", server.getParam(GraphName.of("/foo/bar")).getResult());
+    server.setParam(GraphName.of("/foo"), "bloop");
+    assertEquals("bloop", server.getParam(GraphName.of("/foo")).getResult());
   }
 
   @Test
   public void testSetAndGetFloat() {
     GraphName name = GraphName.of("/foo/bar");
-    server.set(name, 0.42f);
-    assertEquals(0.42, (Double) server.get(name), 0.1);
+    server.setParam(name, new Float(0.42f));
+    assertEquals(0.42, (Float) server.getParam(name).getResult(), 0.1);
   }
 
   @Test
   public void testDeleteShallow() {
     GraphName name = GraphName.of("/foo");
-    server.set(name, "bloop");
-    server.delete(name);
-    assertEquals(null, server.get(name));
+    server.setParam(name, "bloop");
+    server.deleteParam(name);
+    assertEquals(new Object(), server.getParam(name).getResult());
   }
 
   @Test
   public void testDeleteDeep() {
     GraphName name = GraphName.of("/foo/bar");
-    server.set(name, "bloop");
-    server.delete(name);
-    assertEquals(null, server.get(name));
+    server.setParam(name, "bloop");
+    server.deleteParam(name);
+    assertEquals(null, server.getParam(name).getResult());
   }
 
   @Test
   public void testHas() {
-    server.set(GraphName.of("/foo/bar/baz"), "bloop");
-    assertTrue(server.has(GraphName.of("/foo/bar/baz")));
-    assertTrue(server.has(GraphName.of("/foo/bar")));
-    assertTrue(server.has(GraphName.of("/foo")));
-    assertTrue(server.has(GraphName.of("/")));
+    server.setParam(GraphName.of("/foo/bar/baz"), "bloop");
+    assertTrue((Boolean)server.hasParam(GraphName.of("/foo/bar/baz")).getResult());
+    assertTrue((Boolean)server.hasParam(GraphName.of("/foo/bar")).getResult());
+    assertTrue((Boolean)server.hasParam(GraphName.of("/foo")).getResult());
+    assertTrue((Boolean)server.hasParam(GraphName.of("/")).getResult());
   }
 
   @Test
   public void testGetNames() {
     GraphName name1 = GraphName.of("/foo/bar/baz");
-    server.set(name1, "bloop");
+    server.setParam(name1, "bloop");
     GraphName name2 = GraphName.of("/testing");
-    server.set(name2, "123");
-    Collection<GraphName> names = server.getNames();
+    server.setParam(name2, "123");
+    Collection<GraphName> names = server.getParamNames().getResult();
     assertEquals(2, names.size());
     assertTrue(names.contains(name1));
     assertTrue(names.contains(name2));

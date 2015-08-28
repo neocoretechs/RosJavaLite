@@ -66,7 +66,7 @@ public class ParameterTreeIntegrationTest extends RosTest {
   @Test
   public void testGetNonExistentParameter() {
     try {
-      parameters.getBoolean("bloop");
+      parameters.get("bloop","FAIL");
       fail();
     } catch (ParameterNotFoundException e) {
       // Thrown when a parameter does not exist.
@@ -77,7 +77,7 @@ public class ParameterTreeIntegrationTest extends RosTest {
   public void testGetParameterOfWrongType() {
     parameters.set("bloop", "foo");
     try {
-      parameters.getBoolean("bloop");
+      parameters.get("bloop","FAIL");
       fail();
     } catch (ParameterClassCastException e) {
       // Thrown when a parameter is of the wrong type.
@@ -86,21 +86,21 @@ public class ParameterTreeIntegrationTest extends RosTest {
 
   @Test
   public void testGetParameterWithDefault() {
-    assertTrue(parameters.getBoolean("bloop", true));
+    assertTrue((boolean)parameters.get("bloop", true));
     List<String> expectedList = new ArrayList<String>();
     expectedList.add("foo");
     expectedList.add("bar");
     expectedList.add("baz");
-    assertEquals(expectedList, parameters.getList("bloop", expectedList));
+    assertEquals(expectedList, parameters.get("bloop", expectedList));
     parameters.set("bloop", expectedList);
-    assertEquals(expectedList, parameters.getList("bloop", new ArrayList<String>()));
+    assertEquals(expectedList, parameters.get("bloop", new ArrayList<String>()));
   }
 
-  @Test
+@Test
   public void testGetParameterWithDefaultOfWrongType() {
     parameters.set("bloop", "foo");
     try {
-      parameters.getBoolean("bloop", true);
+      parameters.get("bloop", true);
       fail();
     } catch (ParameterClassCastException e) {
       // Thrown when a parameter is of the wrong type.
@@ -110,36 +110,36 @@ public class ParameterTreeIntegrationTest extends RosTest {
   @Test
   public void testSetAndGetStrings() {
     parameters.set("/foo/bar", "baz");
-    assertEquals("baz", parameters.getString("/foo/bar"));
+    assertEquals("baz", parameters.get("/foo/bar","FAIL"));
     parameters.set("/foo/bar", "baz");
-    assertEquals("baz", parameters.getString("/foo/bar"));
+    assertEquals("baz", parameters.get("/foo/bar","FAIL"));
     Map<String, Object> expected = new HashMap<String, Object>();
     expected.put("bar", "baz");
-    assertEquals(expected, parameters.getMap("/foo"));
+    assertEquals(expected, parameters.get("/foo", new HashMap()));
   }
 
   @Test
   public void testSetAndGetAllTypes() {
     String name = "/foo/bar";
     parameters.set(name, true);
-    assertTrue(parameters.getBoolean(name));
+    assertTrue((Boolean)parameters.get(name,false));
     parameters.set(name, 42);
-    assertEquals(42, parameters.getInteger(name));
+    assertEquals(42, parameters.get(name,0));
     parameters.set(name, 0.42d);
-    assertEquals(0.42d, parameters.getDouble(name), 0.01);
+    assertEquals(0.42d, parameters.get(name,0.0));
     parameters.set(name, "foo");
-    assertEquals("foo", parameters.getString(name));
+    assertEquals("foo", parameters.get(name,""));
     List<String> expectedList = new ArrayList<String>();
     expectedList.add("foo");
     expectedList.add("bar");
     expectedList.add("baz");
     parameters.set(name, expectedList);
-    assertEquals(expectedList, parameters.getList(name));
+    assertEquals(expectedList, parameters.get(name, new ArrayList()));
     Map<String, String> expectedMap = new HashMap<String, String>();
     expectedMap.put("foo", "bar");
     expectedMap.put("baz", "bloop");
     parameters.set(name, expectedMap);
-    assertEquals(expectedMap, parameters.getMap(name));
+    assertEquals(expectedMap, parameters.get(name, new HashMap()));
   }
 
   @Test

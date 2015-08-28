@@ -143,52 +143,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
   }
 
   @Override
-  public List<Object> paramUpdate(String callerId, String key, boolean value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, char value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, byte value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, short value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, int value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, double value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, String value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, List<?> value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, Vector<?> value) {
-    return parameterUpdate(key, value);
-  }
-
-  @Override
-  public List<Object> paramUpdate(String callerId, String key, Map<?, ?> value) {
+  public List<Object> paramUpdate(String callerId, String key, Object value) {
     return parameterUpdate(key, value);
   }
 

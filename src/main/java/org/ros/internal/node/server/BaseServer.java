@@ -78,7 +78,7 @@ public final class BaseServer extends TCPServer {
 	}
 
 	public String toString() {
-		return "BaseServer with address "+address;
+		return "BaseServer for "+ rpcserver;
 	}
 
 }

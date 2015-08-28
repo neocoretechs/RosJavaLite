@@ -6,14 +6,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-
 import java.util.concurrent.ArrayBlockingQueue;
 
 
+
+import org.ros.internal.node.response.VoidResultFactory;
 import org.ros.internal.node.server.RemoteRequestInterface;
 import org.ros.internal.node.server.ThreadPoolManager;
 
@@ -35,6 +35,8 @@ public class RemoteClient implements Runnable {
 
 	private boolean shouldRun = true; // master service thread control
 	private Object waitHalt = new Object(); 
+	
+	private VoidResultFactory handleNull = new VoidResultFactory();
 	
 	ArrayBlockingQueue<RemoteRequestInterface> requests = new ArrayBlockingQueue<RemoteRequestInterface>(1);
 	ArrayBlockingQueue<Object> responses = new ArrayBlockingQueue<Object>(1);
@@ -83,8 +85,9 @@ public class RemoteClient implements Runnable {
 				InputStream ins = workerSocket.getInputStream();
 				ObjectInputStream ois = new ObjectInputStream(ins);
 				Object ret = ois.readObject();
-				 // get the original request from the stored table
-				 if( DEBUG )
+				if( ret == null )
+					ret = new Object(); // let voidResultFactory handle this, we cant put null to queue
+				if( DEBUG )
 					 System.out.println("FROM Remote, response:"+ret);
 				 responses.put(ret);
 			} catch (SocketException e) {

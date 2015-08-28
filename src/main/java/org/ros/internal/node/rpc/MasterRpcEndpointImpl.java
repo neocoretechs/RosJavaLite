@@ -184,7 +184,7 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
  
   @Override
   public List<Object> setParam(String callerId, String key, Object value) {
-	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.ParameterServer", 
+	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.ParameterServer", 
 			  "set",
 			  GraphName.of(key), value);
     //parameterServer.set(GraphName.of(key), value);
@@ -193,7 +193,7 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
 
   @Override
   public List<Object> getParam(String callerId, String key) {
-	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.ParameterServer", 
+	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.ParameterServer", 
 			  "get",
 			  GraphName.of(key));
     Object value = remoteParameter.queue(rri);//parameterServer.get(GraphName.of(key));
@@ -210,7 +210,7 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
 
   @Override
   public List<Object> subscribeParam(String callerId, String callerSlaveUri, String slavePort, String key) {
-	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.ParameterServer", 
+	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.ParameterServer", 
 			  "subscribe",
 			  GraphName.of(key), NodeIdentifier.forNameAndUri(callerId, callerSlaveUri, Integer.valueOf(slavePort)));
     //parameterServer.subscribe(GraphName.of(key),
@@ -230,7 +230,7 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
 
   @Override
   public List<Object> deleteParam(String callerId, String key) {
-	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.ParameterServer", 
+	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.ParameterServer", 
 			  "delete",
 			  GraphName.of(key)); 
     //parameterServer.delete(GraphName.of(key));
@@ -239,7 +239,7 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
 
   @Override
   public List<Object> hasParam(String callerId, String key) {
-	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.ParameterServer", 
+	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.ParameterServer", 
 			  "has",
 			  GraphName.of(key));
     return Response.newSuccess("Success",
@@ -250,15 +250,17 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
 
   @Override
   public List<Object> getParamNames(String callerId) {
-	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.ParameterServer", 
+	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.ParameterServer", 
 			  "getNames"
 			  );
-    Collection<GraphName> names = (Collection<GraphName>) remoteParameter.queue(rri);//parameterServer.getNames();
+    //Collection<GraphName> names = (Collection<GraphName>) remoteParameter.queue(rri);//parameterServer.getNames();
+    /*
     List<String> stringNames = new ArrayList<String>();
     for (GraphName name : names) {
       stringNames.add(name.toString());
     }
-    return Response.newSuccess("Success", stringNames).toList();
+    */
+    return Response.newSuccess("Success", remoteParameter.queue(rri)).toList();
   }
 
 @Override

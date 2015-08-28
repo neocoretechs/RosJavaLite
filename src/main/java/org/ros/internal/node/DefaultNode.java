@@ -211,7 +211,7 @@ public class DefaultNode implements ConnectedNode {
     try {
       useSimTime =
           parameterTree.has(Parameters.USE_SIM_TIME)
-              && parameterTree.getBoolean(Parameters.USE_SIM_TIME);
+              && (Boolean)parameterTree.get(Parameters.USE_SIM_TIME, Boolean.FALSE);
     } catch (Exception e) {
       signalOnError(e);
     }

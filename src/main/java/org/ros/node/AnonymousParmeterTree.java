@@ -26,8 +26,7 @@ import org.ros.node.parameter.ParameterTree;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+
 
 /**
  * @author damonkohler@google.com (Damon Kohler)
@@ -43,185 +42,32 @@ public class AnonymousParmeterTree implements ParameterTree {
   }
 
   @Override
-  public boolean getBoolean(GraphName name) {
-    return parameterTree.getBoolean(name);
+  public Object get(GraphName name, Object defaultObject) {
+    return parameterTree.get(name, defaultObject);
   }
 
+  public Object get(GraphName name) { return get(name, false); }
+  
   @Override
-  public boolean getBoolean(String name) {
-    return parameterTree.getBoolean(name);
+  public Object get(String name, Object defaultObject) { 
+	  return parameterTree.get(name, defaultObject); 
   }
-
-  @Override
-  public boolean getBoolean(GraphName name, boolean defaultValue) {
-    return parameterTree.getBoolean(name, defaultValue);
+  
+  public Object get(String name) { 
+	  return parameterTree.get(name, false); 
   }
-
+  
   @Override
-  public boolean getBoolean(String name, boolean defaultValue) {
-    return parameterTree.getBoolean(name, defaultValue);
-  }
-
-  @Override
-  public int getInteger(GraphName name) {
-    return parameterTree.getInteger(name);
-  }
-
-  @Override
-  public int getInteger(String name) {
-    return parameterTree.getInteger(name);
-  }
-
-  @Override
-  public int getInteger(GraphName name, int defaultValue) {
-    return parameterTree.getInteger(name, defaultValue);
-  }
-
-  @Override
-  public int getInteger(String name, int defaultValue) {
-    return parameterTree.getInteger(name, defaultValue);
-  }
-
-  @Override
-  public double getDouble(GraphName name) {
-    return parameterTree.getDouble(name);
-  }
-
-  @Override
-  public double getDouble(String name) {
-    return parameterTree.getDouble(name);
-  }
-
-  @Override
-  public double getDouble(GraphName name, double defaultValue) {
-    return parameterTree.getDouble(name, defaultValue);
-  }
-
-  @Override
-  public double getDouble(String name, double defaultValue) {
-    return parameterTree.getDouble(name, defaultValue);
-  }
-
-  @Override
-  public String getString(GraphName name) {
-    return parameterTree.getString(name);
-  }
-
-  @Override
-  public String getString(String name) {
-    return parameterTree.getString(name);
-  }
-
-  @Override
-  public String getString(GraphName name, String defaultValue) {
-    return parameterTree.getString(name, defaultValue);
-  }
-
-  @Override
-  public String getString(String name, String defaultValue) {
-    return parameterTree.getString(name, defaultValue);
-  }
-
-  @Override
-  public List<?> getList(GraphName name) {
-    return parameterTree.getList(name);
-  }
-
-  @Override
-  public List<?> getList(String name) {
-    return parameterTree.getList(name);
-  }
-
-  @Override
-  public List<?> getList(GraphName name, List<?> defaultValue) {
-    return parameterTree.getList(name, defaultValue);
-  }
-
-  @Override
-  public List<?> getList(String name, List<?> defaultValue) {
-    return parameterTree.getList(name, defaultValue);
-  }
-
-  @Override
-  public Map<?, ?> getMap(GraphName name) {
-    return parameterTree.getMap(name);
-  }
-
-  @Override
-  public Map<?, ?> getMap(String name) {
-    return parameterTree.getMap(name);
-  }
-
-  @Override
-  public Map<?, ?> getMap(GraphName name, Map<?, ?> defaultValue) {
-    return parameterTree.getMap(name, defaultValue);
-  }
-
-  @Override
-  public Map<?, ?> getMap(String name, Map<?, ?> defaultValue) {
-    return parameterTree.getMap(name, defaultValue);
-  }
-
-  @Override
-  public void set(GraphName name, boolean value) {
+  public void set(GraphName name, Object value) {
     parameterTree.set(name, value);
   }
 
   @Override
-  public void set(String name, boolean value) {
+  public void set(String name, Object value) {
     parameterTree.set(name, value);
   }
 
-  @Override
-  public void set(GraphName name, int value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(String name, int value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(GraphName name, double value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(String name, double value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(GraphName name, String value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(String name, String value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(GraphName name, List<?> value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(String name, List<?> value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(GraphName name, Map<?, ?> value) {
-    parameterTree.set(name, value);
-  }
-
-  @Override
-  public void set(String name, Map<?, ?> value) {
-    parameterTree.set(name, value);
-  }
-
+ 
   @Override
   public boolean has(GraphName name) {
     return parameterTree.has(name);

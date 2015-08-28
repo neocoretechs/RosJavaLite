@@ -26,7 +26,7 @@ import org.ros.namespace.GraphName;
  * @author Groff
  */
 public class ParameterServer extends RpcServer {
-
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(ParameterServer.class);
 
   private final Map<String, Object> tree;
@@ -62,6 +62,8 @@ public class ParameterServer extends RpcServer {
       parts.add(tip.getBasename().toString());
       tip = tip.getParent();
     }
+    //if( DEBUG )
+    //	log.info("Returning graph name parts with "+parts.size()+" elements");
     return parts;
   }
 
@@ -86,6 +88,8 @@ public class ParameterServer extends RpcServer {
     Map<String, Object> subtree = tree;
     while (!parts.empty()) {
       String part = parts.pop();
+      //if( DEBUG )
+    //	  log.info("setValue subtree part "+part);
       if (parts.empty()) {
         subtree.put(part, value);
       } else if (subtree.containsKey(part) && subtree.get(part) instanceof Map) {
@@ -105,71 +109,37 @@ public class ParameterServer extends RpcServer {
   private <T> void update(GraphName name, T value, Updater updater) {
     setValue(name, value);
     synchronized (subscribers) {
+     if( subscribers.get(name) != null ) {
       for (NodeIdentifier nodeIdentifier : subscribers.get(name)) {
         try {
+          //if( DEBUG )
+        	//	log.info("Constructing SlaveClient for update master:"+masterName+" addr:"+nodeIdentifier.getUri());
           SlaveClient client = new SlaveClient(masterName, nodeIdentifier.getUri());
+          //if( DEBUG )
+        //		log.info("Calling update master:"+masterName+" addr:"+nodeIdentifier.getUri()+" using "+client);
           updater.update(client);
+       	  //if( DEBUG )
+      	//	log.info("SUCCESS update master:"+masterName+" addr:"+nodeIdentifier.getUri()+" using "+client);
         } catch (Exception e) {
           log.error(e);
         }
       }
+     }
     }
   }
 
-  public void set(final GraphName name, final boolean value) {
-    update(name, value, new Updater() {
+  public void set(GraphName name, Object value) {
+	  final GraphName fname = name;
+	  final Object fvalue = value;
+    update(fname, fvalue, new Updater() {
       @Override
       public void update(SlaveClient client) {
-        client.paramUpdate(name, value);
+        client.paramUpdate(fname, fvalue);
       }
     });
   }
 
-  public void set(final GraphName name, final int value) {
-    update(name, value, new Updater() {
-      @Override
-      public void update(SlaveClient client) {
-        client.paramUpdate(name, value);
-      }
-    });
-  }
-
-  public void set(final GraphName name, final double value) {
-    update(name, value, new Updater() {
-      @Override
-      public void update(SlaveClient client) {
-        client.paramUpdate(name, value);
-      }
-    });
-  }
-
-  public void set(final GraphName name, final String value) {
-    update(name, value, new Updater() {
-      @Override
-      public void update(SlaveClient client) {
-        client.paramUpdate(name, value);
-      }
-    });
-  }
-
-  public void set(final GraphName name, final List<?> value) {
-    update(name, value, new Updater() {
-      @Override
-      public void update(SlaveClient client) {
-        client.paramUpdate(name, value);
-      }
-    });
-  }
-
-  public void set(final GraphName name, final Map<?, ?> value) {
-    update(name, value, new Updater() {
-      @Override
-      public void update(SlaveClient client) {
-        client.paramUpdate(name, value);
-      }
-    });
-  }
-
+ 
   @SuppressWarnings("unchecked")
   public void delete(GraphName name) {
     assert(name.isGlobal());
@@ -204,13 +174,12 @@ public class ParameterServer extends RpcServer {
   }
 
   @SuppressWarnings("unchecked")
-  private Set<GraphName> getSubtreeNames(GraphName parent, Map<String, Object> subtree,
-      Set<GraphName> names) {
+  private List<GraphName> getSubtreeNames(GraphName parent, Map<String, Object> subtree) {
+	List<GraphName> names = new ArrayList<GraphName>();
     for (String name : subtree.keySet()) {
       Object possibleSubtree = subtree.get(name);
       if (possibleSubtree instanceof Map) {
-        names.addAll(getSubtreeNames(parent.join(GraphName.of(name)),
-            (Map<String, Object>) possibleSubtree, names));
+        names.addAll(getSubtreeNames(parent.join(GraphName.of(name)),(Map<String, Object>) possibleSubtree));
       } else {
         names.add(parent.join(GraphName.of(name)));
       }
@@ -218,9 +187,8 @@ public class ParameterServer extends RpcServer {
     return names;
   }
 
-  public Collection<GraphName> getNames() {
-    Set<GraphName> names = new HashSet<GraphName>();
-    return getSubtreeNames(GraphName.root(), tree, names);
+  public List<GraphName> getNames() {
+    return getSubtreeNames(GraphName.root(), tree);
   }
   
   public synchronized Object invokeMethod(RemoteRequestInterface rri) throws Exception {

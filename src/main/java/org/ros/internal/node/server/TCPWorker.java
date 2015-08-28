@@ -61,7 +61,7 @@ public class TCPWorker implements Runnable {
 					ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
 					RemoteRequestInterface o = (RemoteRequestInterface) ois.readObject();
 					if( DEBUG )
-						System.out.println("ROS Base Server command received:"+o);
+						System.out.println("ROS TCPWorker for "+server+" at address "+dataSocket+" command received:"+o);
 					Object res = server.invokeMethod(o);
 					queueResponse(res);
 				}

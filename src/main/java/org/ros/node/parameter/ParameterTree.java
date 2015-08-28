@@ -22,8 +22,7 @@ import org.ros.internal.node.server.ParameterServer;
 import org.ros.namespace.GraphName;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+
 
 /**
  * Provides access to a {@link ParameterServer}.
@@ -46,22 +45,6 @@ public interface ParameterTree {
   /**
    * @param name
    *          the parameter name
-   * @return the parameter value
-   * @throws ParameterNotFoundException
-   *           if the parameter is not found
-   * @throws ParameterClassCastException
-   *           if the parameter is not the expected type
-   */
-  boolean getBoolean(GraphName name);
-
-  /**
-   * @see #getBoolean(GraphName)
-   */
-  boolean getBoolean(String name);
-
-  /**
-   * @param name
-   *          the parameter name
    * @param defaultValue
    *          the default value
    * @return the parameter value or the default value if the parameter does not
@@ -69,256 +52,26 @@ public interface ParameterTree {
    * @throws ParameterClassCastException
    *           if the parameter exists and is not the expected type
    */
-  boolean getBoolean(GraphName name, boolean defaultValue);
-
-  /**
-   * @see #getBoolean(GraphName, boolean)
-   */
-  boolean getBoolean(String name, boolean defaultValue);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @return the parameter value
-   * @throws ParameterNotFoundException
-   *           if the parameter is not found
-   * @throws ParameterClassCastException
-   *           if the parameter is not the expected type
-   */
-  int getInteger(GraphName name);
-
-  /**
-   * @see #getInteger(GraphName)
-   */
-  int getInteger(String name);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param defaultValue
-   *          the default value
-   * @return the parameter value or the default value if the parameter does not
-   *         exist
-   * @throws ParameterClassCastException
-   *           if the parameter exists and is not the expected type
-   */
-  int getInteger(GraphName name, int defaultValue);
-
-  /**
-   * @see #getInteger(GraphName, int)
-   */
-  int getInteger(String name, int defaultValue);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @return the parameter value
-   * @throws ParameterNotFoundException
-   *           if the parameter is not found
-   * @throws ParameterClassCastException
-   *           if the parameter is not the expected type
-   */
-  double getDouble(GraphName name);
-
-  /**
-   * @see #getDouble(GraphName)
-   */
-  double getDouble(String name);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param defaultValue
-   *          the default value
-   * @return the parameter value or the default value if the parameter does not
-   *         exist
-   * @throws ParameterClassCastException
-   *           if the parameter exists and is not the expected type
-   */
-  double getDouble(GraphName name, double defaultValue);
-
-  /**
-   * @see #getDouble(GraphName, double)
-   */
-  double getDouble(String name, double defaultValue);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @return the parameter value:w
-   * 
-   * @throws ParameterNotFoundException
-   *           if the parameter is not found
-   * @throws ParameterClassCastException
-   *           if the parameter is not the expected type
-   */
-  String getString(GraphName name);
-
-  /**
-   * @see #getString(GraphName)
-   */
-  String getString(String name);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param defaultValue
-   *          the default value
-   * @return the parameter value or the default value if the parameter does not
-   *         exist
-   * @throws ParameterClassCastException
-   *           if the parameter exists and is not the expected type
-   */
-  String getString(GraphName name, String defaultValue);
-
-  /**
-   * @see #getString(GraphName, String)
-   */
-  String getString(String name, String defaultValue);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @return the parameter value
-   * @throws ParameterNotFoundException
-   *           if the parameter is not found
-   * @throws ParameterClassCastException
-   *           if the parameter is not the expected type
-   */
-  List<?> getList(GraphName name);
-
-  /**
-   * @see #getList(GraphName)
-   */
-  List<?> getList(String name);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param defaultValue
-   *          the default value
-   * @return the parameter value or the default value if the parameter does not
-   *         exist
-   * @throws ParameterClassCastException
-   *           if the parameter exists and is not the expected type
-   */
-  List<?> getList(GraphName name, List<?> defaultValue);
-
-  /**
-   * @see #getList(GraphName, List)
-   */
-  List<?> getList(String name, List<?> defaultValue);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @return the parameter value
-   * @throws ParameterNotFoundException
-   *           if the parameter is not found
-   * @throws ParameterClassCastException
-   *           if the parameter is not the expected type
-   */
-  Map<?, ?> getMap(GraphName name);
-
-  /**
-   * @see #getMap(GraphName)
-   */
-  Map<?, ?> getMap(String name);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param defaultValue
-   *          the default value
-   * @return the parameter value or the default value if the parameter does not
-   *         exist
-   * @throws ParameterClassCastException
-   *           if the parameter exists and is not the expected type
-   */
-  Map<?, ?> getMap(GraphName name, Map<?, ?> defaultValue);
+  Object get(GraphName name, Object defaultValue);
 
   /**
    * @see #getMap(GraphName, Map)
    */
-  Map<?, ?> getMap(String name, Map<?, ?> defaultValue);
+  Object get(String name, Object defaultValue);
 
+ 
   /**
    * @param name
    *          the parameter name
    * @param value
    *          the value that the parameter will be set to
    */
-  void set(GraphName name, boolean value);
-
-  /**
-   * @see #set(GraphName, boolean)
-   */
-  void set(String name, boolean value);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param value
-   *          the value that the parameter will be set to
-   */
-  void set(GraphName name, int value);
-
-  /**
-   * @see #set(GraphName, int)
-   */
-  void set(String name, int value);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param value
-   *          the value that the parameter will be set to
-   */
-  void set(GraphName name, double value);
-
-  /**
-   * @see #set(GraphName, double)
-   */
-  void set(String name, double value);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param value
-   *          the value that the parameter will be set to
-   */
-  void set(GraphName name, String value);
-
-  /**
-   * @see #set(GraphName, String)
-   */
-  void set(String name, String value);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param value
-   *          the value that the parameter will be set to
-   */
-  void set(GraphName name, List<?> value);
-
-  /**
-   * @see #set(GraphName, List)
-   */
-  void set(String name, List<?> value);
-
-  /**
-   * @param name
-   *          the parameter name
-   * @param value
-   *          the value that the parameter will be set to
-   */
-  void set(GraphName name, Map<?, ?> value);
+  void set(GraphName name, Object value);
 
   /**
    * @see #set(GraphName, Map)
    */
-  void set(String name, Map<?, ?> value);
+  void set(String name, Object value);
 
   /**
    * @param name

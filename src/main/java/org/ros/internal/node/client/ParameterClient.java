@@ -18,9 +18,11 @@ package org.ros.internal.node.client;
 
 
 import org.ros.internal.node.response.BooleanResultFactory;
+import org.ros.internal.node.response.GraphNameListResultFactory;
 import org.ros.internal.node.response.IntegerResultFactory;
 import org.ros.internal.node.response.ObjectResultFactory;
 import org.ros.internal.node.response.Response;
+import org.ros.internal.node.response.ResultFactory;
 import org.ros.internal.node.response.StringListResultFactory;
 import org.ros.internal.node.response.StringResultFactory;
 import org.ros.internal.node.response.VoidResultFactory;
@@ -40,10 +42,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Provide access to the XML-RPC API for a ROS {@link ParameterServer}.
+ * Provide access to the RPC API for a ROS {@link ParameterServer}.
  * 
  * @author kwc@willowgarage.com (Ken Conley)
  * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class ParameterClient extends Client<ParameterServerRpcEndpoint> {
   private static final boolean DEBUG = true;
@@ -52,10 +55,11 @@ public class ParameterClient extends Client<ParameterServerRpcEndpoint> {
 
   /**
    * Create a new {@link ParameterClient} connected to the specified
-   * {@link ParameterServer} URI.
+   * {@link ParameterServer} Address.
+   * @param nodeIdentifier The identifier of our currently executing node
    * 
    * @param uri
-   *          the {@link URI} of the {@link ParameterServer} to connect to
+   *          the {@link address} of the {@link ParameterServer} to connect to
  * @throws IOException 
  * @throws UnknownHostException 
    */
@@ -72,35 +76,11 @@ public Response<Object> getParam(GraphName parameterName) {
         new ObjectResultFactory());
   }
 
-  public Response<Void> setParam(GraphName parameterName, Boolean parameterValue) {
+  public Response<Void> setParam(GraphName parameterName, Object parameterValue) {
     return Response.fromListChecked(
         rpcEndpoint.setParam(nodeName, parameterName.toString(), parameterValue), new VoidResultFactory());
   }
 
-  public Response<Void> setParam(GraphName parameterName, Integer parameterValue) {
-    return Response.fromListChecked(
-        rpcEndpoint.setParam(nodeName, parameterName.toString(), parameterValue), new VoidResultFactory());
-  }
-
-  public Response<Void> setParam(GraphName parameterName, Double parameterValue) {
-    return Response.fromListChecked(
-        rpcEndpoint.setParam(nodeName, parameterName.toString(), parameterValue), new VoidResultFactory());
-  }
-
-  public Response<Void> setParam(GraphName parameterName, String parameterValue) {
-    return Response.fromListChecked(
-        rpcEndpoint.setParam(nodeName, parameterName.toString(), parameterValue), new VoidResultFactory());
-  }
-
-  public Response<Void> setParam(GraphName parameterName, List<?> parameterValue) {
-    return Response.fromListChecked(
-        rpcEndpoint.setParam(nodeName, parameterName.toString(), parameterValue), new VoidResultFactory());
-  }
-
-  public Response<Void> setParam(GraphName parameterName, Map<?, ?> parameterValue) {
-    return Response.fromListChecked(
-        rpcEndpoint.setParam(nodeName, parameterName.toString(), parameterValue), new VoidResultFactory());
-  }
 
   public Response<GraphName> searchParam(GraphName parameterName) {
     Response<String> response =
@@ -134,13 +114,10 @@ public Response<Object> getParam(GraphName parameterName) {
   }
 
   public Response<List<GraphName>> getParamNames() {
-    Response<List<String>> response =
-        Response.fromListChecked(rpcEndpoint.getParamNames(nodeName), new StringListResultFactory());
-    List<GraphName> graphNames = new ArrayList<GraphName>();
-    //for (String name : response.getResult()) {
-      graphNames.add(GraphName.of(response.getResult().toString()));
-    //}
-    return new Response<List<GraphName>>(response.getStatusCode(), response.getStatusMessage(),
-        graphNames);
+    Response<List<GraphName>> response =
+        Response.fromListChecked(rpcEndpoint.getParamNames(nodeName), new GraphNameListResultFactory());
+    return response;
   }
+
+
 }

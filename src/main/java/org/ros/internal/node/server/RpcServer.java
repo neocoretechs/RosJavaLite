@@ -106,6 +106,6 @@ public abstract class RpcServer {
   }
   
   public String toString() {
-	  return "RpcServer at address "+advertiseAddress+" using server "+server;
+	  return "RpcServer at address "+advertiseAddress;
   }
 }
