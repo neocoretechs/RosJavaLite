@@ -65,10 +65,10 @@ import org.ros.time.ClockTopicTimeProvider;
 import org.ros.time.TimeProvider;
 
 import java.io.IOException;
-import java.net.InetAddress;
+
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
+
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;

@@ -25,6 +25,7 @@ import org.ros.node.DefaultNodeMainExecutor;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,16 +43,16 @@ public abstract class RosTest {
 
   @Before
   public void setUp() throws InterruptedException {
-    rosCore = RosCore.newPrivate();
-    rosCore.start();
-    assertTrue(rosCore.awaitStart(1, TimeUnit.SECONDS));
+    //rosCore = RosCore.newPrivate();
+    //rosCore.start();
+    //assertTrue(rosCore.awaitStart(1, TimeUnit.SECONDS));
     nodeMainExecutor = DefaultNodeMainExecutor.newDefault();
-    nodeConfiguration = NodeConfiguration.newPrivate(rosCore.getUri());
+    nodeConfiguration = NodeConfiguration.newPrivate(new InetSocketAddress("devbox",8090)/*rosCore.getUri()*/);
   }
 
   @After
   public void tearDown() {
     nodeMainExecutor.shutdown();
-    rosCore.shutdown();
+    //rosCore.shutdown();
   }
 }

@@ -36,11 +36,9 @@ import org.ros.time.TimeProvider;
 import org.ros.time.WallTimeProvider;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
+
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -475,8 +473,8 @@ public class NodeConfiguration {
    * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node
    *      documentation</a>
    * 
-   * @param xmlRpcBindAddress
-   *          the {@link BindAddress} for the {@link Node}'s XML-RPC server
+   * @param RpcBindAddress
+   *          the {@link BindAddress} for the {@link Node}'s RPC server
    */
   public NodeConfiguration setRpcBindAddress(BindAddress rpcBindAddress) {
     this.rpcBindAddress = rpcBindAddress;
@@ -490,7 +488,7 @@ public class NodeConfiguration {
    * @return the {@link AdvertiseAddress} for the {@link Node}'s RPC server
    */
   public AdvertiseAddress getRpcAdvertiseAddress() {
-    return rpcAdvertiseAddressFactory.newDefault(0);
+    return rpcAdvertiseAddressFactory.newDefault(8200);
   }
 
   /**
@@ -513,8 +511,8 @@ public class NodeConfiguration {
    *          server
    */
   public NodeConfiguration setRpcAdvertiseAddressFactory(
-      AdvertiseAddressFactory xmlRpcAdvertiseAddressFactory) {
-    this.rpcAdvertiseAddressFactory = xmlRpcAdvertiseAddressFactory;
+      AdvertiseAddressFactory rpcAdvertiseAddressFactory) {
+    this.rpcAdvertiseAddressFactory = rpcAdvertiseAddressFactory;
     return this;
   }
 

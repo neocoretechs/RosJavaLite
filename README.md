@@ -9,7 +9,8 @@ and 'assert' keyword. Also added additional logic in onNodeReplacement to attemp
 new node replaces a previous one. None of the tools of ROS are within scope of this, but Core, that being Master and 
 Parameter server and supporting messages and their plumbing. The intent was to reduce the codebase rather than address
 any other issues. Also removed are the test harnesses and other tooling regarding generation of Catkin and Gradle-based
-packages to produce executable JARs which are ROS 'packages'. Ant is used in each of the subprojects to do builds. 
+packages to produce executable JARs which are ROS 'packages'. Ant is used in each of the subprojects to do builds and typically a build.xml file
+can be found in each target project. 
 Eclipse was the development environment used.  The original project was broken down into several subprojects for 
 easier handling: 
 ROSJava - this. 
@@ -23,10 +24,19 @@ The dynamic proxy invocation using the generated interfaces was removed in favor
 concrete serializable classes vs interfaces and dynamic proxy invocations. 
 This version will not interop with XML-RPC, yet. 
 A simple intermediary to translate serialzable to XML-RPC would need constructed.
+The mechanism for remote calls is a simple serialized class of 'package, method name, and parameters'. On the remote side the server classes are
+reflected and the methods matched to the incoming message and invoked with the parameters supplied in the message. The result is returned
+as lists of objects, as in the original version, but the only requirement is that the objects in request and result all serialize.
+To this end the Standard ROS message files can be generated as concrete serializable classes with the GenerateClasses class mentioned earlier.
 
+Addresses are now expressed in InetSocketAddress rather than URI since the primary servers are simple socket servers and can use Java serialization instead
+of the heavyweight XML-RPC protocols with their associated 'schemes'.
 
-Addresses are now expressed in InetSocketAddress rather than URI as the primary servers are simple socket servers using Java serialization instead
-of the heavyweight XML-RPC protocols.
+The MasterServer and ParameterServer are now organized as distinct servers on 2 different ports, although the reflected methods available
+to remotely call both are encapsulated in the MasterServer class. The default ports for the master and parameter server are port and port+1
+starting at 8090., so initially the default master is at 127.0.0.1:8090 and default parameter server is at 127.0.0.1:8091
 
-The original incarnation was simply too unnecessarily massive to get good performance from SBC's like the Odroid and RPi.
-Eventually, a cohesive Relatrix/ROSJavaLite robot bus will combine all the NeoCoreTechs robotics projects.
+The original incarnation was simply too unnecessarily massive to get good performance from SBC's like the Odroid and RPi. Bringing up the associated full web
+server and XML RPC endpoints was a performance death sentence.
+Eventually, a cohesive Relatrix/ROSJavaLite robot bus will combine all the NeoCoreTechs robotics projects into a true general purpose
+Robot Operating System usable for field robotics.

@@ -159,14 +159,14 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    *          the {@link GraphName} of the subscribed {@link TopicParticipant}
    * @param topicMessageType
    *          the message type of the topic
-   * @return A {@link List} of XMLRPC API {@link URI}s for nodes currently
+   * @return A {@link List} of addresses {@link InetSocketAddress}s for nodes currently
    *         publishing the specified topic
    */
   public List<InetSocketAddress> registerSubscriber(GraphName nodeName, InetSocketAddress nodeSlaveUri, GraphName topicName,
       String topicMessageType) {
     if (DEBUG) {
       log.info(String.format(
-          "Registering subscriber %s with message type %s on node %s with URI %s", topicName,
+          "Registering subscriber %s with message type %s on node %s with Address %s", topicName,
           topicMessageType, nodeName, nodeSlaveUri));
     }
 

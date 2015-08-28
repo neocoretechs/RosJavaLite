@@ -64,7 +64,9 @@ public interface MasterRpcEndpoint extends RpcEndpoint {
    * @param callerApi
    *          API URI of subscriber to register. Will be used for new publisher
    *          notifications
-   * @return publishers as a list of XMLRPC API URIs for nodes currently
+   * @param port
+   * 		  port the server is running on
+   * @return publishers as a list of InetSocketAddresses for nodes currently
    *         publishing the specified topic
    */
   List<Object> registerSubscriber(String callerId, String topicName, String topicType,

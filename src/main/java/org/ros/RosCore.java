@@ -22,7 +22,6 @@ import org.ros.internal.node.server.ParameterServer;
 import org.ros.internal.node.server.master.MasterServer;
 
 import java.io.IOException;
-
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
@@ -108,5 +107,12 @@ public class RosCore {
   
   public MasterServer getMasterServer() {
     return masterServer;
+  }
+  
+  public static void main(String[] args) throws Exception {
+	   RosCore rosCore = RosCore.newPublic(8090);
+	   rosCore.start();
+	   rosCore.awaitStart(1, TimeUnit.SECONDS);
+	   System.out.println("RosLite Master started @ address "+rosCore.getUri());
   }
 }

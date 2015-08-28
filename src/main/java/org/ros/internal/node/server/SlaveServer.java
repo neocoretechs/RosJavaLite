@@ -35,9 +35,7 @@ import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.namespace.GraphName;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
