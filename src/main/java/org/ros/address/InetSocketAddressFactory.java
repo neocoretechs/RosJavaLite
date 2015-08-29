@@ -18,9 +18,11 @@ package org.ros.address;
 
 import org.ros.exception.RosRuntimeException;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -36,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author jg
  */
 public class InetSocketAddressFactory {
-  private static AtomicInteger portSelector = new AtomicInteger(8090); // add and get by 2 each call, so first is 8090
   
   private InetSocketAddressFactory() {
     // Utility class
@@ -101,40 +102,17 @@ public class InetSocketAddressFactory {
    * If the specified host name is {@code Address.LOCALHOST}, this method
    * returns a loopback address.
    * 
-   * In all cases the port is incremented by 2 each new address for a master and parameter server port
-   * combination;
    * 
    * @param host
    * @return an {@link InetAddress} with both an IP and a host set (no further resolving will take place)
    */
   public static InetSocketAddress newFromHostString(String host) {
-    try {
-      InetAddress target = null;
-      if (InetAddress.getByName(host) != null) {
-        return new InetSocketAddress(InetAddress.getByAddress(host, InetAddress.getByName(host).getAddress()), 
-        		portSelector.addAndGet(2));
-      }
-      if (host.equals(Address.LOCALHOST)) {
-        return new InetSocketAddress(InetAddress.getByAddress(Address.LOCALHOST, InetAddress.getByName(Address.LOOPBACK).getAddress()),
-        		portSelector.addAndGet(2));
-      }
-    } catch (UnknownHostException e) {
-      throw new RosRuntimeException(e);
-    }
-    Collection<InetAddress> allAddressesByName = getAllInetAddressByName(host);
-    // First, try to find a non-loopback IPv4 address.
-    for (InetAddress address : allAddressesByName) {
-      if (!address.isLoopbackAddress() && isIpv4(address)) {
-        return new InetSocketAddress(address, portSelector.addAndGet(2));
-      }
-    }
-    // Return a loopback IPv4 address as a last resort.
-    for (InetAddress address : allAddressesByName) {
-      if (isIpv4(address)) {
-        return new InetSocketAddress(address, portSelector.addAndGet(2));
-      }
-    }
-    throw new RosRuntimeException("Unable to construct InetAddress for host: " + host);
+        try {
+        	InetAddress hostaddr = InetAddress.getByName(host);
+			return new InetSocketAddress(hostaddr, findPortOnAddress(hostaddr));
+		} catch (IOException e) {
+			throw new RosRuntimeException(e);
+		}
   }
 
   public static InetSocketAddress newLoopback() {
@@ -143,5 +121,13 @@ public class InetSocketAddressFactory {
   
   public static InetSocketAddress newLoopback(int port) {
 	    return new InetSocketAddress(Address.LOOPBACK, port);
+  }
+  
+  private static Integer findPortOnAddress(InetAddress host) throws IOException {
+	    try (
+	        ServerSocket socket = new ServerSocket(0,0,host);
+	    ) {
+	      return socket.getLocalPort();
+	    }
   }
 }

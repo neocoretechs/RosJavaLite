@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * This TCPWorker is spawned for servicing traffic from a master or slave node and invoking methods thereupon.
@@ -66,10 +67,17 @@ public class TCPWorker implements Runnable {
 					queueResponse(res);
 				}
 				dataSocket.close();
-				
-			} catch(Exception ioe) { 
-				System.out.println("Remote invocation failure "+ioe);
-				ioe.printStackTrace();
+			} catch(Exception se) {
+				if( se instanceof SocketException ) {
+					System.out.println("Received SocketException, connection reset..");
+				} else {
+					System.out.println("Remote invocation failure "+se);
+					se.printStackTrace();
+				}
+			} finally {
+				try {
+					dataSocket.close();
+				} catch (IOException e) {}
 			}
 			synchronized(waitHalt) {
 				waitHalt.notify();

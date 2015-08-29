@@ -16,8 +16,12 @@
 
 package org.ros.address;
 
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.net.ServerSocket;
+
+import org.ros.exception.RosRuntimeException;
 
 /**
  * A wrapper for {@link InetSocketAddress} that emphasizes the difference
@@ -29,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BindAddress {
 
   private final InetSocketAddress address;
-  private final static AtomicInteger portSelector = new AtomicInteger(8090);
 
   private BindAddress(InetSocketAddress address) {
     this.address = address;
@@ -41,11 +44,16 @@ public class BindAddress {
    *         to all network interfaces on the host
    */
   public static BindAddress newPublic(int port) {
-    return new BindAddress(new InetSocketAddress(port));
+    return new BindAddress(new InetSocketAddress(InetSocketAddressFactory.newNonLoopback(), port));
   }
 
   public static BindAddress newPublic() {
-    return newPublic(portSelector.getAndAdd(2));
+	InetAddress host = InetSocketAddressFactory.newNonLoopback();
+    try {
+		return new BindAddress(new InetSocketAddress(host, findPortOnAddress(host)));
+	} catch (IOException e) {
+		throw new RosRuntimeException(e);
+	}
   }
 
   /**
@@ -58,7 +66,7 @@ public class BindAddress {
   }
 
   public static BindAddress newPrivate() {
-    return newPrivate(portSelector.getAndAdd(2));
+	return new BindAddress(InetSocketAddressFactory.newLoopback());
   }
 
   @Override
@@ -89,5 +97,12 @@ public class BindAddress {
     } else if (!address.equals(other.address)) return false;
     return true;
   }
-
+  
+  private static Integer findPortOnAddress(InetAddress host) throws IOException {
+	    try (
+	        ServerSocket socket = new ServerSocket(0,0,host);
+	    ) {
+	      return socket.getLocalPort();
+	    }
+}
 }

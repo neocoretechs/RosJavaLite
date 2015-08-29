@@ -119,7 +119,7 @@ public class DefaultNode implements ConnectedNode {
    * {@link DefaultNodeFactory}.
    * 
    * @param nodeConfiguration
-   *          the {@link NodeConfiguration} for this {@link Node}
+   *          the {@link NodeConfiguration} for this {@link Node}, rpc bind/advertise and tcpros bind/advertise from here
    * @param nodeListeners
    *          a {@link Collection} of {@link NodeListener}s that will be added
    *          to this {@link Node} before it starts

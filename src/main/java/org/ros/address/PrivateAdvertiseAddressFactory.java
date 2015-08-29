@@ -22,7 +22,7 @@ package org.ros.address;
 public class PrivateAdvertiseAddressFactory implements AdvertiseAddressFactory {
 
   @Override
-  public AdvertiseAddress newDefault(int port) {
-    return new AdvertiseAddress(Address.LOOPBACK, port);
+  public AdvertiseAddress newDefault() {
+    return new AdvertiseAddress(Address.LOOPBACK);
   }
 }

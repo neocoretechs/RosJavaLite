@@ -13,7 +13,7 @@ import java.net.Socket;
  */
 public final class BaseServer extends TCPServer {
 	private static boolean DEBUG = true;
-	public int WORKBOOTPORT = 9000;
+	public int WORKBOOTPORT = 8090;
 	public InetAddress address = null;
 	private RpcServer rpcserver = null;
 	

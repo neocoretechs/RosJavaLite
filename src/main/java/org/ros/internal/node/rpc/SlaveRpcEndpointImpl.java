@@ -168,23 +168,32 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
     for (int i = 0; i < protocols.length; i++) {
       requestedProtocols.add((String) ((Object[]) protocols[i])[0]);
     }
-    ProtocolDescription protocol;
+    ProtocolDescription protocol = null;
     RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
 				"requestTopic",
 				topic, requestedProtocols); 
-    protocol = (ProtocolDescription) remoteSlave.queue(rri);//slave.requestTopic(topic, requestedProtocols);
-    List<Object> response = Response.newSuccess(protocol.toString(), protocol.toList()).toList();
-    if (DEBUG) {
-      log.info("requestTopic(" + topic + ", " + requestedProtocols + ") response: "
-          + response.toString());
+    // The remote request may reference a topic with no publishers
+    // in that case the call on the remote side return null, which is translated to
+    // an empty object instance by the time it gets here, so check for proper
+    // type returned before cast fail
+    Object res = remoteSlave.queue(rri);//slave.requestTopic(topic, requestedProtocols);
+    List<Object> response = null;
+    if( res instanceof ProtocolDescription ) {
+    	protocol = (ProtocolDescription)res;
+    	response = Response.newSuccess(protocol.toString(), protocol.toList()).toList();
+    	if (DEBUG) {
+    		log.info("Requested topic " + topic + " with proto:" + requestedProtocols + ". response: "+ response.toString());
+    	}
+    } else {
+    	response = Response.newFailure("Requested topic "+topic+" failed to return a valid protcol response, may not exist", 1).toList();
     }
     return response;
   }
 
-@Override
-public void setConfig(RpcClientConfigImpl config) {
-	// TODO Auto-generated method stub	
-}
+  @Override
+  public void setConfig(RpcClientConfigImpl config) {
+	
+  }
 
 
 }

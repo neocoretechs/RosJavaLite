@@ -41,7 +41,8 @@ import java.util.Map;
 
 /**
  * Create {@link NodeConfiguration} instances using a ROS command-line and
- * environment specification.
+ * environment specification. When starting a node through RosRun, this class is used
+ * to process the command line remappings.
  * 
  * @author kwc@willowgarage.com (Ken Conley)
  * @author damonkohler@google.com (Damon Kohler)
@@ -115,7 +116,7 @@ public class CommandLineLoader {
   public NodeConfiguration build() {
     parseRemappingArguments();
     // TODO(damonkohler): Add support for starting up a private node.
-    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getHost(), getPort());
+    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getHost(), getMasterUri());
     nodeConfiguration.setParentResolver(buildParentResolver());
     nodeConfiguration.setRosRoot(getRosRoot());
     nodeConfiguration.setRosPackagePath(getRosPackagePath());
@@ -171,7 +172,7 @@ public class CommandLineLoader {
    * </ol>
    */
   private String getHost() {
-    String host = InetSocketAddressFactory.newLoopback().getAddress().getHostAddress();
+    String host = InetSocketAddressFactory.newLoopback().getAddress().getCanonicalHostName();
     if (specialRemappings.containsKey(CommandLineVariables.ROS_IP)) {
       host = specialRemappings.get(CommandLineVariables.ROS_IP);
     } else if (environment.containsKey(EnvironmentVariables.ROS_IP)) {
@@ -182,17 +183,6 @@ public class CommandLineLoader {
     return host;
   }
 
-  private int getPort() {
-	   int port = InetSocketAddressFactory.newLoopback().getPort();
-	    if (specialRemappings.containsKey(CommandLineVariables.ROS_IP_PORT)) {
-	      port = Integer.valueOf(specialRemappings.get(CommandLineVariables.ROS_IP_PORT));
-	    } else if (environment.containsKey(EnvironmentVariables.ROS_IP_PORT)) {
-	      port = Integer.valueOf(environment.get(EnvironmentVariables.ROS_IP_PORT));
-	    } else if (environment.containsKey(EnvironmentVariables.ROS_HOSTPORT)) {
-	      port = Integer.valueOf(environment.get(EnvironmentVariables.ROS_HOSTPORT));
-	    }
-	    return port; 
-  }
   /**
    * Precedence:
    * 

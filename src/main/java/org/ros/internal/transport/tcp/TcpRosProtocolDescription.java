@@ -16,6 +16,8 @@
 
 package org.ros.internal.transport.tcp;
 
+import java.io.Serializable;
+
 import org.ros.address.AdvertiseAddress;
 import org.ros.internal.transport.ProtocolDescription;
 import org.ros.internal.transport.ProtocolNames;
@@ -23,7 +25,9 @@ import org.ros.internal.transport.ProtocolNames;
 /**
  * @author damonkohler@google.com (Damon Kohler)
  */
-public class TcpRosProtocolDescription extends ProtocolDescription {
+public class TcpRosProtocolDescription extends ProtocolDescription implements Serializable {
+  private static final long serialVersionUID = -6976784864294162007L;
+  public TcpRosProtocolDescription() { super(); }
 
   public TcpRosProtocolDescription(AdvertiseAddress address) {
     super(ProtocolNames.TCPROS, address);

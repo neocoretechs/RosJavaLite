@@ -50,13 +50,10 @@ public class RosCore {
     return new RosCore(BindAddress.newPublic(port), AdvertiseAddress.newPublic(port));
   }
 
-  public static RosCore newPrivate(int port) {
-    return new RosCore(BindAddress.newPrivate(port), AdvertiseAddress.newPrivate(port));
-  }
 
   public static RosCore newPrivate() {
 	BindAddress ba = BindAddress.newPrivate();
-    return new RosCore(ba, AdvertiseAddress.newPrivate(ba.toInetSocketAddress().getPort()));
+    return new RosCore(ba, AdvertiseAddress.newPrivate());
   }
 
   private RosCore(BindAddress bindAddress, AdvertiseAddress advertiseAddress) {

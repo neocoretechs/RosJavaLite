@@ -178,14 +178,22 @@ public class SlaveServer extends RpcServer {
       subscriber.updatePublishers(identifiers);
     }
   }
-
-  public ProtocolDescription requestTopic(String topicName, Collection<String> protocols)
-      throws ServerException {
+  /**
+   * Request a topic conforming to the specified set of protocols, fir instance
+   * if a ProtocolNames.TCPROS is included, a new TcpRosProtocolDescription from tcpRosServer.getAdvertiseAddress
+   * using tcpRosServer class field will be returned
+   * @param topicName
+   * @param protocols
+   * @return
+   * @throws ServerException
+   */
+  public ProtocolDescription requestTopic(String topicName, Collection<String> protocols) throws ServerException {
     // TODO(damonkohler): Use NameResolver.
     // Canonicalize topic name.
     GraphName graphName = GraphName.of(topicName).toGlobal();
     if (!topicParticipantManager.hasPublisher(graphName)) {
-      throw new ServerException("No publishers for topic: " + graphName);
+      //throw new ServerException("No publishers for topic: " + graphName);
+    	return null;
     }
     for (String protocol : protocols) {
       if (protocol.equals(ProtocolNames.TCPROS)) {

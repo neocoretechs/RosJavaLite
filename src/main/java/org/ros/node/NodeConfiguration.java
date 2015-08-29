@@ -51,6 +51,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author ethan.rublee@gmail.com (Ethan Rublee)
  * @author kwc@willowgarage.com (Ken Conley)
  * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class NodeConfiguration {
 
@@ -60,7 +61,7 @@ public class NodeConfiguration {
   public static final InetSocketAddress DEFAULT_MASTER_URI;
 
   static {
-    DEFAULT_MASTER_URI = new InetSocketAddress("localhost", 8090);
+    DEFAULT_MASTER_URI = new InetSocketAddress("172.16.0.101", 8090);
   }
 
   private NameResolver parentResolver;
@@ -119,7 +120,7 @@ public class NodeConfiguration {
    * @return a new {@link NodeConfiguration} for a publicly accessible
    *         {@link Node}
    */
-  public static NodeConfiguration newPublic(String host, int port, InetSocketAddress defaultMasterUri) {
+  public static NodeConfiguration newPublic(String host, InetSocketAddress defaultMasterUri) {
     NodeConfiguration configuration = new NodeConfiguration();
     configuration.setRpcBindAddress(BindAddress.newPublic());
     configuration.setRpcAdvertiseAddressFactory(new PublicAdvertiseAddressFactory(host));
@@ -129,18 +130,6 @@ public class NodeConfiguration {
     return configuration;
   }
 
-  /**
-   * Creates a new {@link NodeConfiguration} for a publicly accessible
-   * {@link Node}.
-   * 
-   * @param host
-   *          the host that the {@link Node} will run on
-   * @return a new {@link NodeConfiguration} for a publicly accessible
-   *         {@link Node}
-   */
-  public static NodeConfiguration newPublic(String host, int port) {
-    return newPublic(host, port, DEFAULT_MASTER_URI);
-  }
 
   /**
    * Creates a new {@link NodeConfiguration} for a {@link Node} that is only
@@ -456,7 +445,7 @@ public class NodeConfiguration {
    * @return the {@link AdvertiseAddress} for the {@link Node}'s TCPROS server
    */
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
-    return tcpRosAdvertiseAddressFactory.newDefault(0);
+    return tcpRosAdvertiseAddressFactory.newDefault();
   }
 
   /**
@@ -488,7 +477,7 @@ public class NodeConfiguration {
    * @return the {@link AdvertiseAddress} for the {@link Node}'s RPC server
    */
   public AdvertiseAddress getRpcAdvertiseAddress() {
-    return rpcAdvertiseAddressFactory.newDefault(8200);
+    return rpcAdvertiseAddressFactory.newDefault();
   }
 
   /**

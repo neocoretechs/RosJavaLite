@@ -33,15 +33,18 @@ public class InetAddressListResultFactory implements ResultFactory<List<InetAddr
 
 	@Override
 	public List<InetAddress> newFromValue(Object value) {
+		/*
 		List<Object> values = Arrays.asList(value);
 		List<InetAddress> uris = new ArrayList<InetAddress>();
 		for (Object uri : values) {
 			try {
-				uris.add(InetAddress.getByName((String) uri));
+				uris.add( InetAddress.getByName((String)uri));
 			} catch (UnknownHostException e) {
 				throw new RosRuntimeException(e);
 			}
 		}
 		return uris;
+		*/
+		return (List<InetAddress>)value;
 	}
 }

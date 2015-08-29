@@ -56,7 +56,7 @@ public class MasterSlaveIntegrationTest {
   public void setUp() throws IOException {
     executorService = Executors.newScheduledThreadPool(10);
     try {
-		masterServer = new MasterServer(BindAddress.newPrivate(), AdvertiseAddress.newPrivate(8090));
+		masterServer = new MasterServer(BindAddress.newPrivate(), AdvertiseAddress.newPrivate());
 	} catch (IOException e) {
 		e.printStackTrace();
 	}
@@ -69,7 +69,7 @@ public class MasterSlaveIntegrationTest {
     try {
 		slaveServer =
 		    new SlaveServer(GraphName.of("/foo"), BindAddress.newPrivate(),
-		        AdvertiseAddress.newPrivate(8100), BindAddress.newPrivate(), AdvertiseAddress.newPrivate(8100),
+		        AdvertiseAddress.newPrivate(), BindAddress.newPrivate(), AdvertiseAddress.newPrivate(),
 		        masterClient, topicParticipantManager, serviceManager, parameterManager,
 		        executorService);
 	} catch (IOException e) {

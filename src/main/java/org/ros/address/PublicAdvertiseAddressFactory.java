@@ -16,27 +16,45 @@
 
 package org.ros.address;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+
+import org.ros.exception.RosRuntimeException;
+
 /**
  * An {@link AdvertiseAddressFactory} which creates public (non-loopback) addresses.
  * 
  * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class PublicAdvertiseAddressFactory implements AdvertiseAddressFactory {
 
-  private final String host;
-
+  private final InetAddress host;
 
   public PublicAdvertiseAddressFactory() {
-    this(InetSocketAddressFactory.newNonLoopback().getCanonicalHostName());
+    this(InetSocketAddressFactory.newNonLoopback());
   }
 
-  public PublicAdvertiseAddressFactory(String host) {
+  public PublicAdvertiseAddressFactory(InetAddress host) {
 	    this.host = host;
   }
   
+  public PublicAdvertiseAddressFactory(String host) {
+	    try {
+			this.host = InetAddress.getByName(host);
+		} catch (UnknownHostException e) {
+			throw new RosRuntimeException("Host name "+host+" cannot be resolved");
+		}
+}
 
-  @Override
   public AdvertiseAddress newDefault(int port) {
     return new AdvertiseAddress(host, port);
+  }
+
+  @Override
+  public AdvertiseAddress newDefault() {
+	InetSocketAddress isa = InetSocketAddressFactory.newLoopback();
+	return new AdvertiseAddress(isa);
   }
 }

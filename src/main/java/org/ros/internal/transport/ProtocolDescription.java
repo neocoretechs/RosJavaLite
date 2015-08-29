@@ -16,25 +16,30 @@
 
 package org.ros.internal.transport;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.ros.address.AdvertiseAddress;
 
-
 /**
+ * ProtocolDescription gets shipped around as serialized object passed to configure slaves that span TCP
+ * processes to do the OOB data comm. In our RosJavaLite the Serializable wiring is in place here and in subclasses.
  * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
-public class ProtocolDescription {
-
-  private final String name;
-  private final AdvertiseAddress address;
+public class ProtocolDescription implements Serializable {
+  private static final long serialVersionUID = -714032869496198686L;
+  private String name;
+  private AdvertiseAddress address;
 
   public ProtocolDescription(String name, AdvertiseAddress address) {
     this.name = name;
     this.address = address;
   }
+
+  public ProtocolDescription() {}
 
   public String getName() {
     return name;
@@ -49,7 +54,7 @@ public class ProtocolDescription {
   }
 
   public List<Object> toList() {
-    ArrayList l1 = new ArrayList();
+    ArrayList<Object> l1 = new ArrayList<Object>();
     l1.add((Object) name);
     l1.add(address.getHost());
     l1.add( address.getPort());

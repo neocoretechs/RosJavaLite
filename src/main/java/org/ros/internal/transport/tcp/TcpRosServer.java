@@ -31,6 +31,7 @@ import org.ros.address.BindAddress;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.nio.ByteOrder;
 import java.util.concurrent.Callable;
@@ -46,21 +47,23 @@ import java.util.concurrent.ScheduledExecutorService;
  * 
  * @author damonkohler@google.com (Damon Kohler)
  */
-public class TcpRosServer {
-
+public class TcpRosServer implements Serializable {
+  private static final long serialVersionUID = 1298495789043968855L;
   private static final boolean DEBUG = true ;
   private static final Log log = LogFactory.getLog(TcpRosServer.class);
 
-  private final BindAddress bindAddress;
-  private final AdvertiseAddress advertiseAddress;
-  private final TopicParticipantManager topicParticipantManager;
-  private final ServiceManager serviceManager;
-  private final ScheduledExecutorService executorService;
+  private BindAddress bindAddress;
+  private AdvertiseAddress advertiseAddress;
+  private transient TopicParticipantManager topicParticipantManager;
+  private transient ServiceManager serviceManager;
+  private transient ScheduledExecutorService executorService;
 
-  private ChannelFactory channelFactory;
-  private ServerBootstrap bootstrap;
-  private Channel outgoingChannel;
-  private ChannelGroup incomingChannelGroup;
+  private transient ChannelFactory channelFactory;
+  private transient ServerBootstrap bootstrap;
+  private transient Channel outgoingChannel;
+  private transient ChannelGroup incomingChannelGroup;
+  
+  public TcpRosServer() {}
 
   public TcpRosServer(BindAddress bindAddress, AdvertiseAddress advertiseAddress,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager,

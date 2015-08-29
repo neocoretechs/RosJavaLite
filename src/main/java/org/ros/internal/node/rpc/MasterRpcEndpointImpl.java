@@ -129,11 +129,11 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
         //master.registerSubscriber(GraphName.of(callerId), new InetSocketAddress(callerSlaveUri, Integer.valueOf(port)),
         //    GraphName.of(topicName), topicMessageType);
     		(List<InetSocketAddress>)remoteMaster.queue(rri);
-      List<String> urls = new ArrayList<String>();
-      for (InetSocketAddress uri : publishers) {
-        urls.add(uri.toString());
-      }
-      return Response.newSuccess("Success", urls).toList();
+      //List<String> urls = new ArrayList<String>();
+      //for (InetSocketAddress uri : publishers) {
+      //  urls.add(uri.toString());
+      //}
+      return Response.newSuccess("Success", publishers).toList();
   }
 
   @Override

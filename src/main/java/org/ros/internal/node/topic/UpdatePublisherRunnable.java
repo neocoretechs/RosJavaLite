@@ -71,13 +71,16 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
       System.out.println("Requesting topic name "+subscriber.getTopicName());
       Response<ProtocolDescription> response =
           slaveClient.requestTopic(subscriber.getTopicName(), ProtocolNames.SUPPORTED);
-      // TODO(kwc): all of this logic really belongs in a protocol handler
-      // registry.
-      ProtocolDescription selected = response.getResult();
-      if (ProtocolNames.SUPPORTED.contains(selected.getName())) {
-        subscriber.addPublisher(publisherIdentifier, selected.getAddress());
+      // If null there is no publisher for the requested topic
+      if( response != null ) {
+    	  ProtocolDescription selected = response.getResult();
+    	  if (ProtocolNames.SUPPORTED.contains(selected.getName())) {
+    		  subscriber.addPublisher(publisherIdentifier, selected.getAddress());
+    	  } else {
+    		  log.error("Publisher returned unsupported protocol selection: " + response);
+    	  }
       } else {
-        log.error("Publisher returned unsupported protocol selection: " + response);
+    	  log.error("There are NO publishers available for topic "+subscriber.getTopicName());
       }
     } catch (IOException | RemoteException e) {
       // TODO(damonkohler): Retry logic is needed at the RPC layer.

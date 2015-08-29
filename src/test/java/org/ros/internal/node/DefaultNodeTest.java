@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.ros.Assert.assertGraphNameEquals;
 
 import org.junit.Test;
-import org.ros.RosCore;
+//import org.ros.RosCore;
 import org.ros.RosTest;
 import org.ros.concurrent.Holder;
 import org.ros.internal.node.client.SlaveClient;
@@ -64,7 +64,7 @@ public class DefaultNodeTest extends RosTest {
 
   private void checkNodeAddress(final String host) throws InterruptedException {
     final Holder<InetSocketAddress> holder = Holder.newEmpty();
-    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(host, 8090,new InetSocketAddress("localhost",8090) /*rosCore.getUri()*/);
+    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(host,new InetSocketAddress("127.0.0.1",8090) /*rosCore.getUri()*/);
     nodeMainExecutor.execute(new AbstractNodeMain() {
       @Override
       public GraphName getDefaultNodeName() {
@@ -194,12 +194,12 @@ public class DefaultNodeTest extends RosTest {
     //rosCore.start();
     //assertTrue(rosCore.awaitStart(1, TimeUnit.SECONDS));
 
-    InetSocketAddress masterUri = new InetSocketAddress("localhost",8090);//rosCore.getUri();
+    InetSocketAddress masterUri = new InetSocketAddress("172.16.0.101",8090);//rosCore.getUri();
     //checkHostName(masterUri.getHost());
 
     final Holder<ConnectedNode> holder = Holder.newEmpty();
     NodeConfiguration nodeConfiguration =
-        NodeConfiguration.newPublic(masterUri.getHostName(), 8090,  masterUri);
+        NodeConfiguration.newPublic(masterUri.getHostName(),  masterUri);
     nodeMainExecutor.execute(new AbstractNodeMain() {
       @Override
       public GraphName getDefaultNodeName() {
@@ -231,8 +231,13 @@ public class DefaultNodeTest extends RosTest {
 	slaveClient = new SlaveClient(GraphName.of("test_addresses"), nodeUri);
     Response<ProtocolDescription> response =
         slaveClient.requestTopic(GraphName.of("test_addresses_pub"), ProtocolNames.TCP);
-    ProtocolDescription result = response.getResult();
-    InetSocketAddress tcpRosAddress = result.getAdverstiseAddress().toInetSocketAddress();
-    checkHostName(tcpRosAddress.getHostName());
+    // If null is returned there are no publishers for this topic
+    if( response == null ) {
+    	ProtocolDescription result = response.getResult();
+    	InetSocketAddress tcpRosAddress = result.getAdverstiseAddress().toInetSocketAddress();
+    	checkHostName(tcpRosAddress.getHostName());
+    } else {
+    	System.out.println("There are no publishers for topic "+GraphName.of("test_addresses_pub"));
+    }
   }
 }

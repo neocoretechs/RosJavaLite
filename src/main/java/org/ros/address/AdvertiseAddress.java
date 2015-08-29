@@ -19,6 +19,7 @@ package org.ros.address;
 
 import org.ros.exception.RosRuntimeException;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -34,16 +35,19 @@ import java.util.concurrent.Callable;
  * the advertised port.
  * 
  * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
-public class AdvertiseAddress {
-
-  private final String host;
-  private final int port;
+public class AdvertiseAddress implements Serializable {
+  private static final long serialVersionUID = -8488174967781048482L;
+  private String host;
+  private int port;
 
   private Callable<Integer> portCallable;
 
-  public static AdvertiseAddress newPrivate(int port) {
-    return new PrivateAdvertiseAddressFactory().newDefault(port);
+  public AdvertiseAddress() {  }
+  
+  public static AdvertiseAddress newPrivate() {
+    return new PrivateAdvertiseAddressFactory().newDefault();
   }
 
   /**
@@ -63,6 +67,21 @@ public class AdvertiseAddress {
     this.port = port;
   }
 
+  public AdvertiseAddress(InetAddress host, int port) {
+	this.host = host.getCanonicalHostName();
+	this.port = port;
+  }
+
+  public AdvertiseAddress(String loopback) {
+	  InetSocketAddress addr = InetSocketAddressFactory.newFromHostString(loopback);
+	  this.host = addr.getHostName();
+	  this.port = addr.getPort();
+  }
+
+  public AdvertiseAddress(InetSocketAddress addr) {
+	this.host = addr.getHostName();
+	this.port = addr.getPort();
+  }
 
 public String getHost() {
     return host;
