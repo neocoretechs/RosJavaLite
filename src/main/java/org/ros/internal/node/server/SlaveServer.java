@@ -216,6 +216,8 @@ public class SlaveServer extends RpcServer {
 
   @Override
   public Object invokeMethod(RemoteRequestInterface rri) throws Exception {
-	return invokableMethods.invokeMethod(rri, this);
+	  synchronized(invokableMethods) {
+		  return invokableMethods.invokeMethod(rri, this);
+	  }
   }
 }

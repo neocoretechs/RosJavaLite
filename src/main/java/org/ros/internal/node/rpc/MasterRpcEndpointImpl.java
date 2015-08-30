@@ -100,15 +100,11 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
 	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.MasterServer", 
 			  "registerPublisher",
 			  GraphName.of(callerId), new InetSocketAddress(callerSlaveUri, Integer.valueOf(port)), GraphName.of(topicName), topicMessageType);
-    List<InetSocketAddress> subscribers =
+	  List<InetSocketAddress> subscribers =
          //master.registerPublisher(GraphName.of(callerId), 
         //new InetSocketAddress(callerSlaveUri, Integer.valueOf(port)), GraphName.of(topicName), topicMessageType);
     		(List<InetSocketAddress>)remoteMaster.queue(rri);
-      List<String> urls = new ArrayList<String>();
-      for (InetSocketAddress uri : subscribers) {
-        urls.add(uri.toString());
-      }
-      return Response.newSuccess("Success", urls).toList();
+      return Response.newSuccess("Success", subscribers).toList();
   }
 
   @Override

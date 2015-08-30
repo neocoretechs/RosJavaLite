@@ -21,6 +21,7 @@ import org.ros.internal.transport.ConnectionHeaderFields;
 import org.ros.namespace.GraphName;
 import org.ros.node.Node;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.URI;
 
@@ -30,10 +31,11 @@ import java.net.URI;
  * 
  * @author damonkohler@google.com (Damon Kohler)
  */
-public class NodeIdentifier {
-
-  private final GraphName name;
-  private final InetSocketAddress uri;
+public class NodeIdentifier implements Serializable {
+  private static final long serialVersionUID = -3493232406156967129L;
+  
+  private GraphName name;
+  private InetSocketAddress uri;
 
   public static NodeIdentifier forName(String name) {
     return new NodeIdentifier(GraphName.of(name), null);
@@ -47,6 +49,7 @@ public class NodeIdentifier {
     return new NodeIdentifier(GraphName.of(name), new InetSocketAddress(uri, port));
   }
 
+  public NodeIdentifier() {}
   /**
    * Constructs a new {@link NodeIdentifier}.
    * 

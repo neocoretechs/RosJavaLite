@@ -336,7 +336,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
     synchronized (masterRegistrationManager) {
       List<List<String>> result = new ArrayList<List<String>>();
       for (TopicRegistrationInfo topic : masterRegistrationManager.getAllTopics()) {
-    	 ArrayList l1 = new ArrayList();
+    	 ArrayList<String> l1 = new ArrayList<String>();
     	 l1.add(topic.getTopicName().toString());
     	 l1.add(topic.getMessageType());
         result.add(l1);
@@ -436,7 +436,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
     for (ServiceRegistrationInfo service : masterRegistrationManager.getAllServices()) {
       List<Object> topicInfo = new ArrayList<Object>();
       topicInfo.add(service.getServiceName().toString());
-      topicInfo.add(new ArrayList().add(service.getServiceName().toString()));
+      topicInfo.add(new ArrayList<String>().add(service.getServiceName().toString()));
 
       result.add(topicInfo);
     }
@@ -482,7 +482,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
       List<Object> result = new ArrayList<Object>();
       for (TopicRegistrationInfo topic : masterRegistrationManager.getAllTopics()) {
         if (topic.hasPublishers()) {
-        	ArrayList l1 = new ArrayList();
+        	ArrayList<String> l1 = new ArrayList<String>();
         	l1.add(topic.getTopicName().toString());
         	l1.add(topic.getMessageType());
             result.add(l1);
