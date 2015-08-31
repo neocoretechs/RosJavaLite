@@ -76,8 +76,10 @@ public class NodeConfiguration {
   private MessageFactory serviceResponseMessageFactory;
  
   private BindAddress tcpRosBindAddress;
+  private AdvertiseAddress tcpRosAdvertiseAddress = null;
   private AdvertiseAddressFactory tcpRosAdvertiseAddressFactory;
   private BindAddress rpcBindAddress;
+  private AdvertiseAddress rpcAdvertiseAddress = null;
   private AdvertiseAddressFactory rpcAdvertiseAddressFactory;
   private ScheduledExecutorService scheduledExecutorService;
   private TimeProvider timeProvider;
@@ -433,8 +435,7 @@ public class NodeConfiguration {
    *          server
    * @return this {@link NodeConfiguration}
    */
-  public NodeConfiguration setTcpRosAdvertiseAddressFactory(
-      AdvertiseAddressFactory tcpRosAdvertiseAddressFactory) {
+  public NodeConfiguration setTcpRosAdvertiseAddressFactory(AdvertiseAddressFactory tcpRosAdvertiseAddressFactory) {
     this.tcpRosAdvertiseAddressFactory = tcpRosAdvertiseAddressFactory;
     return this;
   }
@@ -445,7 +446,9 @@ public class NodeConfiguration {
    * @return the {@link AdvertiseAddress} for the {@link Node}'s TCPROS server
    */
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
-    return tcpRosAdvertiseAddressFactory.newDefault();
+	  if( tcpRosAdvertiseAddress == null)
+		  tcpRosAdvertiseAddress = tcpRosAdvertiseAddressFactory.newDefault();
+	  return tcpRosAdvertiseAddress;
   }
 
   /**
@@ -477,7 +480,9 @@ public class NodeConfiguration {
    * @return the {@link AdvertiseAddress} for the {@link Node}'s RPC server
    */
   public AdvertiseAddress getRpcAdvertiseAddress() {
-    return rpcAdvertiseAddressFactory.newDefault();
+	  if( rpcAdvertiseAddress == null)
+		  rpcAdvertiseAddress = rpcAdvertiseAddressFactory.newDefault();
+	  return rpcAdvertiseAddress;
   }
 
   /**

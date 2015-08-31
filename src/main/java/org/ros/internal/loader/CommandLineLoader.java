@@ -172,7 +172,7 @@ public class CommandLineLoader {
    * </ol>
    */
   private String getHost() {
-    String host = InetSocketAddressFactory.newLoopback().getAddress().getCanonicalHostName();
+    String host = InetSocketAddressFactory.newNonLoopback().getCanonicalHostName();
     if (specialRemappings.containsKey(CommandLineVariables.ROS_IP)) {
       host = specialRemappings.get(CommandLineVariables.ROS_IP);
     } else if (environment.containsKey(EnvironmentVariables.ROS_IP)) {

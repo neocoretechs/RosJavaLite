@@ -33,12 +33,14 @@ public abstract class RpcServer {
 
   public RpcServer(BindAddress bindAddress, AdvertiseAddress advertiseAddress) throws IOException {
     this.advertiseAddress = advertiseAddress;
+    /*
     this.advertiseAddress.setPortCallable(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return server.getPort();
       }
     });
+    */
   }
 
  

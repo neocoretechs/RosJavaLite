@@ -22,6 +22,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -121,30 +122,40 @@ public class TopicParticipantManager {
 	  //log.info("sub:"+subscriber+" pub:"+publisherIdentifier);
 	  List<PublisherIdentifier> pubs = subscriberConnections.get(subscriber);
 	  //for(PublisherIdentifier p: pubs) log.info("Pub: "+p);
-	  assert(pubs != null);
-	  if( pubs.contains(publisherIdentifier))
-		  return;
-	  pubs.add(publisherIdentifier);
+	  if( pubs == null ) {
+		  pubs = new ArrayList<PublisherIdentifier>();
+		  pubs.add(publisherIdentifier);
+		  subscriberConnections.put(subscriber,  pubs);
+	  } else {
+		  if( pubs.contains(publisherIdentifier))
+			  return;
+		  pubs.add(publisherIdentifier);
+	  }
   }
 
   public void removeSubscriberConnection(DefaultSubscriber<?> subscriber, PublisherIdentifier publisherIdentifier) {
 	  List<PublisherIdentifier> pubs = subscriberConnections.get(subscriber);
-	  assert(pubs != null);
-	  pubs.remove(publisherIdentifier);
+	  if(pubs != null);
+	  	pubs.remove(publisherIdentifier);
   }
 
   public void addPublisherConnection(DefaultPublisher<?> publisher, SubscriberIdentifier subscriberIdentifier) {
 	  List<SubscriberIdentifier> subs = publisherConnections.get(publisher);
-	  assert(subs != null);
-	  if( subs.contains(subscriberIdentifier) )
-		  return;
-	  subs.add(subscriberIdentifier);
+	  if( subs == null) {
+		  subs = new ArrayList<SubscriberIdentifier>();
+		  subs.add(subscriberIdentifier);
+		  publisherConnections.put(publisher, subs);
+	  } else {
+		  if( subs.contains(subscriberIdentifier) )
+			  return;
+		  subs.add(subscriberIdentifier);
+	  }
   }
 
   public void removePublisherConnection(DefaultPublisher<?> publisher, SubscriberIdentifier subscriberIdentifier) {
 	  List<SubscriberIdentifier> subs = publisherConnections.get(publisher);
-	  assert(subs != null);
-	  subs.remove(subscriberIdentifier);
+	  if(subs != null);
+	  	subs.remove(subscriberIdentifier);
   }
 
   public Collection<DefaultSubscriber<?>> getSubscribers() {

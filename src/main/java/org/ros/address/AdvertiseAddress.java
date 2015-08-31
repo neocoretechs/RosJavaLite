@@ -42,7 +42,7 @@ public class AdvertiseAddress implements Serializable {
   private String host;
   private int port;
 
-  private Callable<Integer> portCallable;
+  //private transient Callable<Integer> portCallable;
 
   public AdvertiseAddress() {  }
   
@@ -87,6 +87,7 @@ public String getHost() {
     return host;
   }
 
+/*
   public void setStaticPort(final int port) {
     portCallable = new Callable<Integer>() {
       @Override
@@ -95,19 +96,22 @@ public String getHost() {
       }
     };
   }
-
+*/
   public int getPort() {
-    try {
-      return portCallable.call();
-    } catch (Exception e) {
+    //try {
+    //  return portCallable.call();
+    //} catch (Exception e) {
     	return port;
       //throw new RosRuntimeException(e);
-    }
+    //}
   }
 
-  public void setPortCallable(Callable<Integer> portCallable) {
-    this.portCallable = portCallable;
+  public void setPort(int port) {
+		this.port = port;	
   }
+ // public void setPortCallable(Callable<Integer> portCallable) {
+ //   this.portCallable = portCallable;
+ // }
 
   /*
   public InetAddress toInetAddress() {
@@ -116,19 +120,19 @@ public String getHost() {
  */
   
   public InetSocketAddress toInetSocketAddress() {
-    assert(portCallable != null);
-    try {
-      return new  InetSocketAddress(host, portCallable.call()); //toInetAddress()
-    } catch (Exception e) {
+    //assert(portCallable != null);
+    //try {
+    //  return new  InetSocketAddress(host, portCallable.call()); //toInetAddress()
+   // } catch (Exception e) {
       //throw new RosRuntimeException(e);
         return new  InetSocketAddress(host, port); //toInetAddress()
-    }
+    //}
   }
 
   public URI toUri(String scheme) {
-    assert(portCallable != null);
+    //assert(portCallable != null);
     try {
-      return new URI(scheme, null, host, portCallable.call(), "/", null, null);
+      return new URI(scheme, null, host, port/*portCallable.call()*/, "/", null, null);
     } catch (Exception e) {
       throw new RosRuntimeException("Failed to create URI: " + this, e);
     }
@@ -140,9 +144,9 @@ public String getHost() {
 
   @Override
   public String toString() {
-    assert(portCallable != null);
+    //assert(portCallable != null);
     try {
-      return "AdvertiseAddress<" + host + ", " + portCallable.call() + ">";
+      return "AdvertiseAddress<" + host + ", " + port/*portCallable.call()*/ + ">";
     } catch (Exception e) {
     	 return "AdvertiseAddress<" + host + ", " + port + ">";
     }
@@ -150,12 +154,12 @@ public String getHost() {
 
   @Override
   public int hashCode() {
-    assert(portCallable != null);
+    //assert(portCallable != null);
     final int prime = 31;
     int result = 1;
     result = prime * result + ((host == null) ? 0 : host.hashCode());
     try {
-      result = prime * result + portCallable.call();
+      result = prime * result + port;//portCallable.call();
     } catch (Exception e) {
       throw new RosRuntimeException(e);
     }
@@ -164,7 +168,7 @@ public String getHost() {
 
   @Override
   public boolean equals(Object obj) {
-    assert(portCallable != null);
+   // assert(portCallable != null);
     if (this == obj)
       return true;
     if (obj == null)
@@ -178,12 +182,14 @@ public String getHost() {
     } else if (!host.equals(other.host))
       return false;
     try {
-      if (portCallable.call() != other.portCallable.call())
-        return false;
+      //if (portCallable.call() != other.portCallable.call())
+    	if( port != other.port)
+    		return false;
     } catch (Exception e) {
       throw new RosRuntimeException(e);
     }
     return true;
   }
+
 
 }

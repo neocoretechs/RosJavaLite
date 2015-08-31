@@ -16,8 +16,10 @@
 
 package org.ros.address;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.UnknownHostException;
 
 import org.ros.exception.RosRuntimeException;
@@ -54,7 +56,18 @@ public class PublicAdvertiseAddressFactory implements AdvertiseAddressFactory {
 
   @Override
   public AdvertiseAddress newDefault() {
-	InetSocketAddress isa = InetSocketAddressFactory.newLoopback();
-	return new AdvertiseAddress(isa);
+	try {
+		return new AdvertiseAddress(host, findPortOnAddress(host));
+	} catch (IOException e) {
+		throw new RosRuntimeException("Cannot generate new default advertise address due to "+e);
+	}
+  }
+  
+  private static Integer findPortOnAddress(InetAddress host) throws IOException {
+	    try (
+	        ServerSocket socket = new ServerSocket(0,0,host);
+	    ) {
+	      return socket.getLocalPort();
+	    }
   }
 }

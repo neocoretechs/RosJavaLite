@@ -16,6 +16,7 @@
 
 package org.ros.internal.node.response;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,10 +33,11 @@ public class ProtocolDescriptionResultFactory implements ResultFactory<ProtocolD
 
   @Override
   public ProtocolDescription newFromValue(Object value) {
-    List<Object> protocolParameters = Arrays.asList((Object[]) value);
-    assert(protocolParameters.size() == 3);
-    assert(protocolParameters.get(0).equals(ProtocolNames.TCPROS));
-    AdvertiseAddress address = new AdvertiseAddress((String) protocolParameters.get(1), (Integer) protocolParameters.get(2));
+    List<Object> protocolParameters = Arrays.asList(value);
+    //assert(protocolParameters.size() == 3);
+    //assert(protocolParameters.get(0).equals(ProtocolNames.TCPROS));
+    ArrayList params = (ArrayList) protocolParameters.get(0);
+    AdvertiseAddress address = new AdvertiseAddress((String) params.get(1), (Integer) params.get(2));
     return new TcpRosProtocolDescription(address);
   }
 }

@@ -87,12 +87,15 @@ public class TcpRosServer implements Serializable {
         topicParticipantManager, serviceManager));
 
     outgoingChannel = bootstrap.bind(bindAddress.toInetSocketAddress());
+    advertiseAddress.setPort(((InetSocketAddress)(outgoingChannel.getLocalAddress())).getPort());
+    /*
     advertiseAddress.setPortCallable(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return ((InetSocketAddress) outgoingChannel.getLocalAddress()).getPort();
       }
     });
+    */
     if (DEBUG) {
       log.info("TcpRosServer starting and Bound to: " + bindAddress);
       log.info("TcpRosServer starting and Advertising: " + advertiseAddress);
