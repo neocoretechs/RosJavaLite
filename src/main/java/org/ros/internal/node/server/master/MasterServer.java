@@ -497,19 +497,19 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
     // A node in the registration manager is being replaced. Contact the node
     // and tell it to shut down.
     if (log.isWarnEnabled()) {
-      log.warn(String.format("Existing node %s with slave URI %s will be shutdown.",
+      log.warn(String.format("Existing node %s with slave address %s will be shut down.",
           nodeInfo.getNodeName(), nodeInfo.getNodeSlaveUri()));
     }
 
-    SlaveClient client;
 	try {
-		client = new SlaveClient(MASTER_NODE_NAME, nodeInfo.getNodeSlaveUri());
-	} catch (IOException e) {
-		System.out.println("MasterServer cannot construct slave client due to bad host "+nodeInfo.getNodeSlaveUri());
-		e.printStackTrace();
-		throw new RosRuntimeException(e);
+		SlaveClient client = new SlaveClient(MASTER_NODE_NAME, nodeInfo.getNodeSlaveUri());
+		client.shutdown("Replaced by new slave");
+	} catch (Exception e) {
+		log.warn("MasterServer attempt to signal remote shutdown failed for node "+nodeInfo.getNodeSlaveUri()+" due to "+e);
+		//e.printStackTrace();
+		//throw new RosRuntimeException(e);
 	}
-    client.shutdown("Replaced by new slave");
+  
   }
 
 

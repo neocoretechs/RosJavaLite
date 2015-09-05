@@ -16,9 +16,7 @@
 
 package org.ros.internal.node.server.master;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;

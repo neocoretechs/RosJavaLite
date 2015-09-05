@@ -52,14 +52,22 @@ public class InetSocketAddressFactory {
   
   private static Collection<InetAddress> getAllInetAddresses() {
     List<NetworkInterface> networkInterfaces;
+    List<InetAddress> inetAddresses = new ArrayList<InetAddress>();
     try {
       networkInterfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+
+      // sort to move ether ahead of wlan or lo
+      List<String> sortIface = new ArrayList<String>();
+      for (NetworkInterface networkInterface : networkInterfaces) {
+        sortIface.add(networkInterface.getName());
+      }
+      Collections.sort(sortIface);
+      //for (NetworkInterface networkInterface : networkInterfaces) {
+      for( String iface : sortIface) {
+    	  inetAddresses.addAll(Collections.list(NetworkInterface.getByName(iface).getInetAddresses()));//networkInterface.getInetAddresses()));
+      }
     } catch (SocketException e) {
-      throw new RosRuntimeException(e);
-    }
-    List<InetAddress> inetAddresses = new ArrayList<InetAddress>();
-    for (NetworkInterface networkInterface : networkInterfaces) {
-      inetAddresses.addAll(Collections.list(networkInterface.getInetAddresses()));
+        throw new RosRuntimeException(e);
     }
     return inetAddresses;
   }
