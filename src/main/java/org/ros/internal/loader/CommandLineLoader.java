@@ -16,7 +16,6 @@
 
 package org.ros.internal.loader;
 
-
 import org.ros.CommandLineVariables;
 import org.ros.EnvironmentVariables;
 
@@ -43,6 +42,14 @@ import java.util.Map;
  * Create {@link NodeConfiguration} instances using a ROS command-line and
  * environment specification. When starting a node through RosRun, this class is used
  * to process the command line remappings.
+ * 
+ * Remappings ":= on cmdl", get put in 'remappingArguments'. Those that are prefixed with "__" are put
+ * into the speacialRemappings collection, those without into 'remappings' after taking Graph.nameOf of the remapped args.
+ * Args on the cmdl without a remapping ":=" get put into nodeArguments.
+ * 
+ * NOTE: If no constructor is detected during loadClass invocation, 
+ * A node with a static getInstance() returning a type of NodeMain will be invoked. If neither
+ * an InstantiationException is thrown. This is an enhancement to node creation in original RosJava.
  * 
  * @author kwc@willowgarage.com (Ken Conley)
  * @author damonkohler@google.com (Damon Kohler)
@@ -104,11 +111,27 @@ public class CommandLineLoader {
   public String getNodeClassName() {
     return nodeClassName;
   }
-
+  /**
+   * Return a list of args on the cmdl that are not delimited by special := mapping modifier
+   * @return
+   */
   public List<String> getNodeArguments() {
     return Collections.unmodifiableList(nodeArguments);
   }
-
+  /**
+   * Return cmdl args with := but not __ prefix that have been translated to GraphName.of
+   * @return
+   */
+  public Map<GraphName, GraphName> getRemappings() {
+	    return Collections.unmodifiableMap(remappings);
+  }
+  /**
+   * Return cmdl args with __ at prefix
+   * @return
+   */
+  public Map<String, String> getSpecialRemappings() {
+	  return Collections.unmodifiableMap(specialRemappings);
+  }
   /**
    * Create NodeConfiguration according to ROS command-line and environment
    * specification.
@@ -124,6 +147,7 @@ public class CommandLineLoader {
     if (specialRemappings.containsKey(CommandLineVariables.NODE_NAME)) {
       nodeConfiguration.setNodeName(specialRemappings.get(CommandLineVariables.NODE_NAME));
     }
+    nodeConfiguration.setCommandLineLoader(this);
     return nodeConfiguration;
   }
 

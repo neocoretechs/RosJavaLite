@@ -49,6 +49,7 @@ public class RosRun {
     String nodeClassName = loader.getNodeClassName();
     System.out.println("Loading node class: " + loader.getNodeClassName());
     NodeConfiguration nodeConfiguration = loader.build();
+    nodeConfiguration.setCommandLineLoader(loader);
 
     NodeMain nodeMain = null;
     try {

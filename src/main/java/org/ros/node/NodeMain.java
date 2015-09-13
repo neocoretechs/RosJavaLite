@@ -39,4 +39,5 @@ public interface NodeMain extends NodeListener {
    *         {@link NodeConfiguration}
    */
   GraphName getDefaultNodeName();
+ 
 }

@@ -161,4 +161,6 @@ public interface ConnectedNode extends Node {
    * @return {@link ParameterTree} with {@link NameResolver} in this namespace.
    */
   ParameterTree getParameterTree();
+  
+  NodeConfiguration getNodeConfiguration(); 
 }

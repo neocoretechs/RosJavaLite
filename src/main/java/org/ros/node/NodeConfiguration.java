@@ -16,6 +16,7 @@
 
 package org.ros.node;
 
+import org.ros.internal.loader.CommandLineLoader;
 import org.ros.internal.message.definition.MessageDefinitionReflectionProvider;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.AdvertiseAddressFactory;
@@ -38,7 +39,6 @@ import org.ros.time.WallTimeProvider;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
-
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -83,8 +83,10 @@ public class NodeConfiguration {
   private AdvertiseAddressFactory rpcAdvertiseAddressFactory;
   private ScheduledExecutorService scheduledExecutorService;
   private TimeProvider timeProvider;
+  private CommandLineLoader commandLineLoader = null;
 
-  /**
+
+/**
    * @param nodeConfiguration
    *          the {@link NodeConfiguration} to copy
    * @return a copy of the supplied {@link NodeConfiguration}
@@ -107,6 +109,7 @@ public class NodeConfiguration {
     copy.rpcAdvertiseAddressFactory = nodeConfiguration.rpcAdvertiseAddressFactory;
     copy.scheduledExecutorService = nodeConfiguration.scheduledExecutorService;
     copy.timeProvider = nodeConfiguration.timeProvider;
+    copy.commandLineLoader = nodeConfiguration.commandLineLoader;
     return copy;
   }
 
@@ -200,7 +203,18 @@ public class NodeConfiguration {
   public InetSocketAddress getMasterUri() {
     return masterUri;
   }
+  
+  /**
+   * 
+   * @return CommandLineLoader used to initiate node, if used
+   */
+  public CommandLineLoader getCommandLineLoader() {
+		return commandLineLoader;
+  }
 
+  public void setCommandLineLoader(CommandLineLoader commandLineLoader) {
+		this.commandLineLoader = commandLineLoader;
+  }
   /**
    * @see <a
    *      href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_MASTER_URI">ROS_MASTER_URI

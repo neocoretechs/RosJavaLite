@@ -427,7 +427,11 @@ public class DefaultNode implements ConnectedNode {
     return slaveServer.getUri();
   }
 
-
+  @Override
+  public NodeConfiguration getNodeConfiguration() {
+  	return nodeConfiguration;
+  }
+  
   @Override
   public MessageFactory getTopicMessageFactory() {
     return nodeConfiguration.getTopicMessageFactory();
@@ -554,4 +558,6 @@ public class DefaultNode implements ConnectedNode {
       }
     });
   }
+
+
 }
