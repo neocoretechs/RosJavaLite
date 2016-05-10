@@ -24,12 +24,13 @@ import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.transport.ProtocolNames;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
 import org.ros.internal.transport.tcp.TcpClientManager;
-
 import org.ros.message.MessageListener;
 import org.ros.node.topic.DefaultSubscriberListener;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.SubscriberListener;
+
+import io.netty.util.concurrent.EventExecutor;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
@@ -78,7 +79,7 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
     this.executorService = executorService;
     incomingMessageQueue = new IncomingMessageQueue<T>(executorService);
     knownPublishers = new HashSet<PublisherIdentifier>();
-    tcpClientManager = new TcpClientManager(executorService);
+    tcpClientManager = new TcpClientManager((EventExecutor) executorService);
     mutex = new Object();
     SubscriberHandshakeHandler<T> subscriberHandshakeHandler =
         new SubscriberHandshakeHandler<T>(toDeclaration().toConnectionHeader(),

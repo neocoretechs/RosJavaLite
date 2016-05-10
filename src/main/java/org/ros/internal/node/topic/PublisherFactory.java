@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.topic;
 
 import org.ros.internal.node.server.NodeIdentifier;
@@ -22,24 +6,24 @@ import org.ros.namespace.GraphName;
 import org.ros.node.topic.DefaultPublisherListener;
 import org.ros.node.topic.Publisher;
 
-import java.util.concurrent.ScheduledExecutorService;
+import io.netty.channel.nio.NioEventLoop;
+
+//import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A factory for {@link Publisher} instances.
- * 
- * @author damonkohler@google.com (Damon Kohler)
  */
 public class PublisherFactory {
 
   private final TopicParticipantManager topicParticipantManager;
   private final MessageFactory messageFactory;
-  private final ScheduledExecutorService executorService;
+  private final /*ScheduledExecutorService*/ NioEventLoop executorService;
   private final NodeIdentifier nodeIdentifier;
   private final Object mutex;
 
   public PublisherFactory(NodeIdentifier nodeIdentifier,
       TopicParticipantManager topicParticipantManager, MessageFactory messageFactory,
-      ScheduledExecutorService executorService) {
+      /*ScheduledExecutorService*/NioEventLoop executorService) {
     this.nodeIdentifier = nodeIdentifier;
     this.topicParticipantManager = topicParticipantManager;
     this.messageFactory = messageFactory;

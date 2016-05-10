@@ -1,29 +1,24 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.transport.tcp;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelHandler;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+//import org.jboss.netty.buffer.ChannelBuffer;
+//import org.jboss.netty.channel.Channel;
+//import org.jboss.netty.channel.ChannelFuture;
+//import org.jboss.netty.channel.ChannelHandler;
+//import org.jboss.netty.channel.ChannelHandlerContext;
+//import org.jboss.netty.channel.ChannelPipeline;
+//import org.jboss.netty.channel.MessageEvent;
+//import org.jboss.netty.channel.SimpleChannelHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerAdapter;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
+
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.service.DefaultServiceServer;
@@ -40,10 +35,10 @@ import org.ros.namespace.GraphName;
 /**
  * A {@link ChannelHandler} which will process the TCP server handshake.
  * 
- * @author damonkohler@google.com (Damon Kohler)
- * @author kwc@willowgarage.com (Ken Conley)
+ * @author jg
+
  */
-public class TcpServerHandshakeHandler extends SimpleChannelHandler {
+public class TcpServerHandshakeHandler extends ChannelDuplexHandler {
 
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
@@ -55,26 +50,26 @@ public class TcpServerHandshakeHandler extends SimpleChannelHandler {
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-    ChannelBuffer incomingBuffer = (ChannelBuffer) e.getMessage();
-    ChannelPipeline pipeline = e.getChannel().getPipeline();
+  public void channelRead(ChannelHandlerContext ctx, Object e) throws Exception {
+    ByteBuf incomingBuffer = (ByteBuf) e;
+    ChannelPipeline pipeline = ctx.channel().pipeline();
     ConnectionHeader incomingHeader = ConnectionHeader.decode(incomingBuffer);
     if (incomingHeader.hasField(ConnectionHeaderFields.SERVICE)) {
-      handleServiceHandshake(e, pipeline, incomingHeader);
+      handleServiceHandshake(ctx, e, pipeline, incomingHeader);
     } else {
       handleSubscriberHandshake(ctx, e, pipeline, incomingHeader);
     }
   }
 
-  private void handleServiceHandshake(MessageEvent e, ChannelPipeline pipeline,
+  private void handleServiceHandshake(ChannelHandlerContext ctx, Object e, ChannelPipeline pipeline,
       ConnectionHeader incomingHeader) {
     GraphName serviceName = GraphName.of(incomingHeader.getField(ConnectionHeaderFields.SERVICE));
     assert(serviceManager.hasServer(serviceName));
     DefaultServiceServer<?, ?> serviceServer = serviceManager.getServer(serviceName);
-    e.getChannel().write(serviceServer.finishHandshake(incomingHeader));
+    ctx.channel().write(serviceServer.finishHandshake(incomingHeader));
     String probe = incomingHeader.getField(ConnectionHeaderFields.PROBE);
     if (probe != null && probe.equals("1")) {
-      e.getChannel().close();
+      ctx.channel().close();
     } else {
       pipeline.replace(TcpServerPipelineFactory.LENGTH_FIELD_PREPENDER, "ServiceResponseEncoder",
           new ServiceResponseEncoder());
@@ -82,7 +77,7 @@ public class TcpServerHandshakeHandler extends SimpleChannelHandler {
     }
   }
 
-  private void handleSubscriberHandshake(ChannelHandlerContext ctx, MessageEvent e,
+  private void handleSubscriberHandshake(ChannelHandlerContext ctx, Object e,
       ChannelPipeline pipeline, ConnectionHeader incomingConnectionHeader)
       throws InterruptedException, Exception {
     assert(incomingConnectionHeader.hasField(ConnectionHeaderFields.TOPIC)) :
@@ -92,11 +87,11 @@ public class TcpServerHandshakeHandler extends SimpleChannelHandler {
     assert(topicParticipantManager.hasPublisher(topicName)) :
         "No publisher for topic: " + topicName;
     DefaultPublisher<?> publisher = topicParticipantManager.getPublisher(topicName);
-    ChannelBuffer outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
-    Channel channel = ctx.getChannel();
+    ByteBuf outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
+    Channel channel = ctx.channel();
     ChannelFuture future = channel.write(outgoingBuffer).await();
     if (!future.isSuccess()) {
-      throw new RosRuntimeException(future.getCause());
+      throw new RosRuntimeException(future.cause());
     }
     String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
     publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName),
@@ -105,6 +100,6 @@ public class TcpServerHandshakeHandler extends SimpleChannelHandler {
     // Once the handshake is complete, there will be nothing incoming on the
     // channel. So, we replace the handshake handler with a handler which will
     // drop everything.
-    pipeline.replace(this, "DiscardHandler", new SimpleChannelHandler());
+    pipeline.replace(this, "DiscardHandler", new ChannelInboundHandlerAdapter());
   }
 }

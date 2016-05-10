@@ -1,23 +1,8 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 
 package org.ros.internal.node.service;
 
 
-import org.jboss.netty.buffer.ChannelBuffer;
+//import org.jboss.netty.buffer.ChannelBuffer;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.system.Utility;
@@ -30,6 +15,9 @@ import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.util.concurrent.EventExecutor;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -111,7 +99,7 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
     // TODO(damonkohler): Support non-persistent connections.
     connectionHeader.addField(ConnectionHeaderFields.PERSISTENT, "1");
     connectionHeader.merge(serviceDeclaration.toConnectionHeader());
-    tcpClientManager = new TcpClientManager(executorService);
+    tcpClientManager = new TcpClientManager((EventExecutor) executorService);
     ServiceClientHandshakeHandler<T, S> serviceClientHandshakeHandler =
         new ServiceClientHandshakeHandler<T, S>(connectionHeader, responseListeners, executorService);
     handshakeLatch = new HandshakeLatch();
@@ -143,7 +131,7 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
 
   @Override
   public void call(T request, ServiceResponseListener<S> listener) {
-    ChannelBuffer buffer = messageBufferPool.acquire();
+    ByteBuf buffer = messageBufferPool.acquire();
     // serialize request to buffer
     Utility.serialize(request, buffer);
     responseListeners.add(listener);

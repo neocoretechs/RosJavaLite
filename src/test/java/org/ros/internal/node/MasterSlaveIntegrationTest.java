@@ -34,6 +34,8 @@ import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.namespace.GraphName;
 
+import io.netty.channel.nio.NioEventLoopGroup;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
@@ -54,7 +56,8 @@ public class MasterSlaveIntegrationTest {
 
   @Before
   public void setUp() throws IOException {
-    executorService = Executors.newScheduledThreadPool(10);
+    executorService = new NioEventLoopGroup().next();//Executors.newScheduledThreadPool(10);
+   
     try {
 		masterServer = new MasterServer(BindAddress.newPrivate(), AdvertiseAddress.newPrivate());
 	} catch (IOException e) {

@@ -69,8 +69,7 @@ public class SlaveServer extends RpcServer {
 		throw new IOException(e);
 	}
     this.tcpRosServer =
-        new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager,
-            serviceManager, executorService);
+        new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager, serviceManager, executorService);
   }
 
   public AdvertiseAddress getTcpRosAdvertiseAddress() {

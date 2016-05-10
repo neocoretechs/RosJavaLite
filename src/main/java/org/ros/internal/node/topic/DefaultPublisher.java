@@ -18,8 +18,6 @@ package org.ros.internal.node.topic;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -31,6 +29,11 @@ import org.ros.node.topic.DefaultPublisherListener;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.PublisherListener;
 import org.ros.node.topic.Subscriber;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.nio.NioEventLoop;
+import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +65,7 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
   private final MessageFactory messageFactory;
 
   public DefaultPublisher(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration, MessageFactory messageFactory,
-      ScheduledExecutorService executorService) {
+      /*ScheduledExecutorService*/ NioEventLoop executorService) {
     super(topicDeclaration);
     this.nodeIdentifier = nodeIdentifier;
     this.messageFactory = messageFactory;
@@ -150,7 +153,7 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
    * 
    * @return encoded connection header from subscriber
    */
-  public ChannelBuffer finishHandshake(ConnectionHeader incomingHeader) {
+  public ByteBuf finishHandshake(ConnectionHeader incomingHeader) {
     ConnectionHeader topicDefinitionHeader = getTopicDeclarationHeader();
     if (DEBUG) {
       //log.info("Subscriber handshake header: " + incomingHeader);

@@ -16,18 +16,24 @@
 
 package org.ros.internal.node.service;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
+import java.util.List;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ReplayingDecoder;
+
+//import org.jboss.netty.buffer.ChannelBuffer;
+//import org.jboss.netty.channel.Channel;
+//import org.jboss.netty.channel.ChannelHandlerContext;
+//import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 
 /**
  * Decodes service responses.
  * 
  * @author damonkohler@google.com (Damon Kohler)
  */
-class ServiceResponseDecoder<ResponseType> extends
-    ReplayingDecoder<ServiceResponseDecoderState> {
+class ServiceResponseDecoder<ResponseType> extends ReplayingDecoder<ServiceResponseDecoderState> {
 
   private ServiceServerResponse response;
 
@@ -37,9 +43,8 @@ class ServiceResponseDecoder<ResponseType> extends
 
   @SuppressWarnings("fallthrough")
   @Override
-  protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer,
-      ServiceResponseDecoderState state) throws Exception {
-    switch (state) {
+  protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> rstate) throws Exception {
+    switch (state()) {
       case ERROR_CODE:
         response.setErrorCode(buffer.readByte());
         checkpoint(ServiceResponseDecoderState.MESSAGE_LENGTH);
@@ -49,7 +54,8 @@ class ServiceResponseDecoder<ResponseType> extends
       case MESSAGE:
         response.setMessage(buffer.readBytes(response.getMessageLength()));
         try {
-          return response;
+          //return response;
+          rstate.add(response);
         } finally {
           reset();
         }
@@ -62,4 +68,6 @@ class ServiceResponseDecoder<ResponseType> extends
     checkpoint(ServiceResponseDecoderState.ERROR_CODE);
     response = new ServiceServerResponse();
   }
+
+
 }

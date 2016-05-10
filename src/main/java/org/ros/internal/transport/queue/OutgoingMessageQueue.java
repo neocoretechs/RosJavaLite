@@ -1,40 +1,34 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.transport.queue;
 
+import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.ChannelGroupFuture;
-import org.jboss.netty.channel.group.ChannelGroupFutureListener;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
+
+//import org.jboss.netty.buffer.ChannelBuffer;
+//import org.jboss.netty.channel.Channel;
+//import org.jboss.netty.channel.group.ChannelGroup;
+//import org.jboss.netty.channel.group.ChannelGroupFuture;
+//import org.jboss.netty.channel.group.ChannelGroupFutureListener;
+//import org.jboss.netty.channel.group.DefaultChannelGroup;
+
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.CircularBlockingDeque;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.system.Utility;
 
-import java.util.concurrent.ExecutorService;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.ChannelGroupFuture;
+import io.netty.channel.group.ChannelGroupFutureListener;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.concurrent.EventExecutor;
+
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
  */
 public class OutgoingMessageQueue<T> {
 
@@ -47,7 +41,7 @@ public class OutgoingMessageQueue<T> {
   private final ChannelGroup channelGroup;
   private final Writer writer;
   private final MessageBufferPool messageBufferPool;
-  private final ChannelBuffer latchedBuffer;
+  private final ByteBuf latchedBuffer;
   private final Object mutex;
 
   private boolean latchMode;
@@ -57,7 +51,7 @@ public class OutgoingMessageQueue<T> {
     @Override
     public void loop() throws InterruptedException {
       T message = deque.takeFirst();
-      final ChannelBuffer buffer = messageBufferPool.acquire();
+      final ByteBuf buffer = messageBufferPool.acquire();
       Utility.serialize(message, buffer);
       if (DEBUG && channelGroup.size() > 0 ) {
         log.info(String.format("Writing %d bytes to %d channels.", buffer.readableBytes(), channelGroup.size()));
@@ -77,7 +71,7 @@ public class OutgoingMessageQueue<T> {
 
   public OutgoingMessageQueue(ExecutorService executorService) {
     deque = new CircularBlockingDeque<T>(DEQUE_CAPACITY);
-    channelGroup = new DefaultChannelGroup();
+    channelGroup = new DefaultChannelGroup( ((NioEventLoopGroup) executorService).next());
     writer = new Writer();
     messageBufferPool = new MessageBufferPool();
     latchedBuffer = MessageBuffers.dynamicBuffer();

@@ -18,13 +18,14 @@ package org.ros.internal.message;
 
 import static org.junit.Assert.assertEquals;
 
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.junit.Before;
 import org.junit.Test;
 import org.ros.internal.message.definition.MessageDefinitionReflectionProvider;
 import org.ros.internal.system.Utility;
 import org.ros.message.Duration;
 import org.ros.message.Time;
+
+import io.netty.buffer.ByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ public class MessageSerializationTest {
   }
 
   private <T extends Message> void checkSerializeAndDeserialize(T message) {
-    ChannelBuffer buffer = MessageBuffers.dynamicBuffer();
+    ByteBuf buffer = MessageBuffers.dynamicBuffer();
     Utility.serialize(message, buffer);
     dumpBuffer(buffer);
     assertEquals(message, Utility.deserialize(buffer));
@@ -203,22 +204,22 @@ public class MessageSerializationTest {
   public void testOdometry() {
     nav_msgs.Odometry message = defaultMessageFactory.newFromType(nav_msgs.Odometry._TYPE);
     checkSerializeAndDeserialize(message);
-    ChannelBuffer buffer = MessageBuffers.dynamicBuffer();
+    ByteBuf buffer = MessageBuffers.dynamicBuffer();
     Utility.serialize(message, buffer);
     dumpBuffer(buffer);
     // Throw away sequence number.
     buffer.readInt();
-    while (buffer.readable()) {
+    while (buffer.isReadable()) {
       byte b = buffer.readByte();
       assertEquals("All serialized bytes should be 0. Check stdout.", 0, b);
     }
   }
 
-  private void dumpBuffer(ChannelBuffer buffer) {
+  private void dumpBuffer(ByteBuf buffer) {
     buffer = buffer.duplicate();
     System.out.printf("Dumping %d readable bytes:\n", buffer.readableBytes());
     int i = 0;
-    while (buffer.readable()) {
+    while (buffer.isReadable()) {
       byte b = buffer.readByte();
       System.out.printf("0x%02x ", b);
       if (++i % 8 == 0) {

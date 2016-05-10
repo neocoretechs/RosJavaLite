@@ -16,14 +16,18 @@
 
 package org.ros.internal.node.service;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelHandler;
+//import org.jboss.netty.buffer.ChannelBuffer;
+//import org.jboss.netty.channel.ChannelHandlerContext;
+//import org.jboss.netty.channel.MessageEvent;
+//import org.jboss.netty.channel.SimpleChannelHandler;
 import org.ros.exception.RemoteException;
 import org.ros.internal.node.response.StatusCode;
 import org.ros.internal.system.Utility;
 import org.ros.node.service.ServiceResponseListener;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.nio.charset.Charset;
 import java.util.Queue;
@@ -34,7 +38,7 @@ import java.util.concurrent.ExecutorService;
  * 
  * @author damonkohler@google.com (Damon Kohler)
  */
-class ServiceResponseHandler<ResponseType> extends SimpleChannelHandler {
+class ServiceResponseHandler<ResponseType> extends SimpleChannelInboundHandler {
 
   private final Queue<ServiceResponseListener<ResponseType>> responseListeners;
   private final ExecutorService executorService;
@@ -45,21 +49,23 @@ class ServiceResponseHandler<ResponseType> extends SimpleChannelHandler {
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+  public void channelRead0(ChannelHandlerContext ctx, Object e) throws Exception {
     final ServiceResponseListener<ResponseType> listener = responseListeners.poll();
     assert(listener != null) : "No listener for incoming service response.";
-    final ServiceServerResponse response = (ServiceServerResponse) e.getMessage();
-    final ChannelBuffer buffer = response.getMessage();
+    final ServiceServerResponse response = (ServiceServerResponse) e;
+    final ByteBuf buffer = response.getMessage();
     executorService.execute(new Runnable() {
       @Override
       public void run() {
         if (response.getErrorCode() == 1) {
           listener.onSuccess((ResponseType) Utility.deserialize(buffer));
         } else {
-          String message = Charset.forName("US-ASCII").decode(buffer.toByteBuffer()).toString();
+          String message = Charset.forName("US-ASCII").decode(buffer.nioBuffer()).toString();
           listener.onFailure(new RemoteException(StatusCode.ERROR, message));
         }
       }
     });
   }
+
+
 }

@@ -7,12 +7,12 @@ import java.io.ObjectOutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
-import org.jboss.netty.buffer.ChannelBuffer;
+import io.netty.buffer.ByteBuf;
 import org.ros.internal.message.Message;
 import org.ros.internal.message.field.DirectByteArrayOutputStream;
 
 public class Utility {
-	 public static <T> void serialize(T value, ChannelBuffer buffer) {
+	 public static <T> void serialize(T value, ByteBuf buffer) {
 		    //serializer.serialize((Message) value, buffer);
 			DirectByteArrayOutputStream dbaos = new DirectByteArrayOutputStream();
 			ObjectOutputStream oos;
@@ -28,7 +28,7 @@ public class Utility {
 	}
 
 	
-	 public static Object deserialize(ChannelBuffer buffer) {
+	 public static Object deserialize(ByteBuf buffer) {
 		    //return deserializer.deserialize(buffer);
 			byte[] obuf = buffer.array();
 			Object Od = null;

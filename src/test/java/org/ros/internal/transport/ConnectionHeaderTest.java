@@ -17,8 +17,8 @@
 package org.ros.internal.transport;
 
 import static org.junit.Assert.assertEquals;
+import io.netty.buffer.ByteBuf;
 
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.junit.Test;
 
 /**
@@ -31,7 +31,7 @@ public class ConnectionHeaderTest {
     ConnectionHeader connectionHeader = new ConnectionHeader();
     connectionHeader.addField("foo", "bar");
     connectionHeader.addField("bloop", "");
-    ChannelBuffer encoded = connectionHeader.encode();
+    ByteBuf encoded = connectionHeader.encode();
     assertEquals(connectionHeader, ConnectionHeader.decode(encoded));
   }
 }

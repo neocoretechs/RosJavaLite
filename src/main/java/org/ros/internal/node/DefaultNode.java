@@ -64,11 +64,11 @@ import org.ros.node.topic.Subscriber;
 import org.ros.time.ClockTopicTimeProvider;
 import org.ros.time.TimeProvider;
 
-import java.io.IOException;
+import io.netty.channel.nio.NioEventLoop;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
@@ -96,7 +96,7 @@ public class DefaultNode implements ConnectedNode {
 
   private final NodeConfiguration nodeConfiguration;
   private final ListenerGroup<NodeListener> nodeListeners;
-  private final ScheduledExecutorService scheduledExecutorService;
+  private final /*ScheduledExecutorService*/NioEventLoop scheduledExecutorService;
   private final InetSocketAddress masterUri;
   private final MasterClient masterClient;
   private final TopicParticipantManager topicParticipantManager;
@@ -125,7 +125,7 @@ public class DefaultNode implements ConnectedNode {
    *          to this {@link Node} before it starts
    */
   public DefaultNode(NodeConfiguration nodeConfiguration, Collection<NodeListener> nodeListeners,
-      ScheduledExecutorService scheduledExecutorService) {
+      /*ScheduledExecutorService*/NioEventLoop scheduledExecutorService) {
     this.nodeConfiguration = NodeConfiguration.copyOf(nodeConfiguration);
     this.nodeListeners = new ListenerGroup<NodeListener>(scheduledExecutorService);
     this.nodeListeners.addAll(nodeListeners);

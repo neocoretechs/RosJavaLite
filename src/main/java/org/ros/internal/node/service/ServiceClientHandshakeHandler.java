@@ -18,15 +18,17 @@ package org.ros.internal.node.service;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.MessageEvent;
+//import org.jboss.netty.channel.ChannelHandlerContext;
+//import org.jboss.netty.channel.ChannelPipeline;
+//import org.jboss.netty.channel.MessageEvent;
 import org.ros.internal.transport.BaseClientHandshakeHandler;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.tcp.TcpClientPipelineFactory;
-
 import org.ros.node.service.ServiceResponseListener;
 import org.ros.node.service.ServiceServer;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
@@ -57,9 +59,8 @@ class ServiceClientHandshakeHandler<T, S> extends BaseClientHandshakeHandler {
   }
 
   @Override
-  protected void onSuccess(ConnectionHeader incommingConnectionHeader, ChannelHandlerContext ctx,
-      MessageEvent e) {
-    ChannelPipeline pipeline = e.getChannel().getPipeline();
+  protected void onSuccess(ConnectionHeader incommingConnectionHeader, ChannelHandlerContext ctx) {
+    ChannelPipeline pipeline = ctx.channel().pipeline();
     pipeline.remove(TcpClientPipelineFactory.LENGTH_FIELD_BASED_FRAME_DECODER);
     pipeline.remove(ServiceClientHandshakeHandler.this);
     pipeline.addLast("ResponseDecoder", new ServiceResponseDecoder<S>());
@@ -67,13 +68,66 @@ class ServiceClientHandshakeHandler<T, S> extends BaseClientHandshakeHandler {
   }
 
   @Override
-  protected void onFailure(String errorMessage, ChannelHandlerContext ctx, MessageEvent e) {
+  protected void onFailure(String errorMessage, ChannelHandlerContext ctx) {
     log.error("Service client handshake failed: " + errorMessage);
-    e.getChannel().close();
+    ctx.channel().close();
   }
 
   @Override
   public String getName() {
     return "ServiceClientHandshakeHandler";
   }
+
+@Override
+public void channelInactive(ChannelHandlerContext arg0) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void channelRegistered(ChannelHandlerContext arg0) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void channelUnregistered(ChannelHandlerContext arg0) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void channelWritabilityChanged(ChannelHandlerContext arg0)
+		throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1)
+		throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void userEventTriggered(ChannelHandlerContext arg0, Object arg1)
+		throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+
 }

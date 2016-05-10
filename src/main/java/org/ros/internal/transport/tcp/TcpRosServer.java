@@ -1,35 +1,29 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.transport.tcp;
-
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.buffer.HeapChannelBufferFactory;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.group.ChannelGroup;
-import org.jboss.netty.channel.group.DefaultChannelGroup;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+//import org.jboss.netty.bootstrap.ServerBootstrap;
+//import org.jboss.netty.buffer.HeapChannelBufferFactory;
+//import org.jboss.netty.channel.Channel;
+//import org.jboss.netty.channel.ChannelFactory;
+//import org.jboss.netty.channel.group.ChannelGroup;
+//import org.jboss.netty.channel.group.DefaultChannelGroup;
+//import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
+
+import io.netty.bootstrap.ChannelFactory;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoop;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.EventExecutor;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
@@ -45,7 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * This server is used after publishers, subscribers, services and service
  * clients have been told about each other by the master.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class TcpRosServer implements Serializable {
   private static final long serialVersionUID = 1298495789043968855L;
@@ -56,9 +50,9 @@ public class TcpRosServer implements Serializable {
   private AdvertiseAddress advertiseAddress;
   private transient TopicParticipantManager topicParticipantManager;
   private transient ServiceManager serviceManager;
-  private transient ScheduledExecutorService executorService;
+  private transient NioEventLoop executorService;
+  private transient NioEventLoopGroup mainExecService;
 
-  private transient ChannelFactory channelFactory;
   private transient ServerBootstrap bootstrap;
   private transient Channel outgoingChannel;
   private transient ChannelGroup incomingChannelGroup;
@@ -72,10 +66,12 @@ public class TcpRosServer implements Serializable {
     this.advertiseAddress = advertiseAddress;
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
-    this.executorService = executorService;
+    this.executorService = (NioEventLoop) executorService;
+    this.mainExecService = new NioEventLoopGroup();
   }
 
   public void start() {
+	  /*
     assert(outgoingChannel == null);
     channelFactory = new NioServerSocketChannelFactory(executorService, executorService);
     bootstrap = new ServerBootstrap(channelFactory);
@@ -88,6 +84,7 @@ public class TcpRosServer implements Serializable {
 
     outgoingChannel = bootstrap.bind(bindAddress.toInetSocketAddress());
     advertiseAddress.setPort(((InetSocketAddress)(outgoingChannel.getLocalAddress())).getPort());
+    */
     /*
     advertiseAddress.setPortCallable(new Callable<Integer>() {
       @Override
@@ -96,6 +93,47 @@ public class TcpRosServer implements Serializable {
       }
     });
     */
+	
+		//InetSocketAddress isock = new InetSocketAddress(0);
+	    //topicParticipantManager = new TopicParticipantManager();
+	    //serviceManager = new ServiceManager();
+	    //NioServerSocketChannelFactory channelFactory =
+	    //    new NioServerSocketChannelFactory(executorService, executorService);
+	    //ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
+	  try {
+	    bootstrap = new ServerBootstrap();
+	    bootstrap.group(mainExecService, executorService).
+	    	channel(NioServerSocketChannel.class).
+	    	option(ChannelOption.SO_BACKLOG, 100).
+	    	localAddress(bindAddress.toInetSocketAddress()).
+	    	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
+	    	childOption(ChannelOption.SO_KEEPALIVE, true);
+	    ChannelGroup serverChannelGroup = new DefaultChannelGroup((EventExecutor) executorService);
+	    TcpServerPipelineFactory serverPipelineFactory =
+	        new TcpServerPipelineFactory(serverChannelGroup, topicParticipantManager, serviceManager); /*{
+	          //@Override
+	          public ChannelPipeline pipeline() {
+	            ChannelPipeline pipeline = super.getPipeline();
+	            // We're not interested firstIncomingMessageQueue testing the
+	            // handshake here. Removing it means connections are established
+	            // immediately.
+	            pipeline.remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
+	            pipeline.addLast( new ServerHandler());
+	            return pipeline;
+	          }
+	        };*/
+	       bootstrap.childHandler(serverPipelineFactory);
+	       advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
+	       bootstrap.bind().sync().channel().closeFuture().await();
+      } catch (InterruptedException e) {
+      } finally {
+          mainExecService.shutdownGracefully();
+          executorService.shutdownGracefully();
+      }
+  
+	    //bootstrap.setPipelineFactory(serverPipelineFactory);
+	    //Channel serverChannel = bootstrap.bind(new InetSocketAddress(0));
+	  
     if (DEBUG) {
       log.info("TcpRosServer starting and Bound to: " + bindAddress);
       log.info("TcpRosServer starting and Advertising: " + advertiseAddress);

@@ -19,9 +19,11 @@ package org.ros.internal.transport;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
+//import org.jboss.netty.buffer.ChannelBuffer;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.MessageBuffers;
+
+import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -48,7 +50,7 @@ public class ConnectionHeader {
    *          the incoming {@link ChannelBuffer} containing the header
    * @return a {@link Map} of header fields and values
    */
-  public static ConnectionHeader decode(ChannelBuffer buffer) {
+  public static ConnectionHeader decode(ByteBuf buffer) {
     Map<String, String> fields = new HashMap<String, String>();
     int position = 0;
     int readableBytes = buffer.readableBytes();
@@ -79,7 +81,7 @@ public class ConnectionHeader {
     return connectionHeader;
   }
 
-  private static String decodeAsciiString(ChannelBuffer buffer, int length) {
+  private static String decodeAsciiString(ByteBuf buffer, int length) {
     return buffer.readBytes(length).toString(Charset.forName("US-ASCII"));
   }
 
@@ -93,8 +95,8 @@ public class ConnectionHeader {
    * @return a {@link ChannelBuffer} containing the encoded header for wire
    *         transmission
    */
-  public ChannelBuffer encode() {
-    ChannelBuffer buffer = MessageBuffers.dynamicBuffer();
+  public ByteBuf encode() {
+    ByteBuf buffer = MessageBuffers.dynamicBuffer();
     for (Entry<String, String> entry : fields.entrySet()) {
       String field = entry.getKey() + "=" + entry.getValue();
       buffer.writeInt(field.length());
