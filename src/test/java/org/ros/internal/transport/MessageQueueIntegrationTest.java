@@ -52,6 +52,7 @@ import org.ros.message.MessageIdentifier;
 import org.ros.message.MessageListener;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
@@ -175,14 +176,15 @@ public class MessageQueueIntegrationTest {
     bootstrap.group(executorService).
     	channel(NioServerSocketChannel.class).
     	option(ChannelOption.SO_BACKLOG, 100).
+    	option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
     	localAddress(isock).
     	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
     	childOption(ChannelOption.SO_KEEPALIVE, true);
-    ChannelGroup serverChannelGroup = new DefaultChannelGroup((EventExecutor) executorService);
+    ChannelGroup serverChannelGroup = new DefaultChannelGroup(executorService.next());
     TcpServerPipelineFactory serverPipelineFactory =
         new TcpServerPipelineFactory(serverChannelGroup, topicParticipantManager, serviceManager) {
             @Override
-            protected void initChannel(SocketChannel ch) {
+            protected void initChannel(Channel ch) {
                 ch.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
                 ch.pipeline().addLast( new ServerHandler());
             

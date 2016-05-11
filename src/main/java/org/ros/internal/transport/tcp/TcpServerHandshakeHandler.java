@@ -38,7 +38,7 @@ import org.ros.namespace.GraphName;
  * @author jg
 
  */
-public class TcpServerHandshakeHandler extends ChannelDuplexHandler {
+public class TcpServerHandshakeHandler extends ChannelInboundHandlerAdapter {
 
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;

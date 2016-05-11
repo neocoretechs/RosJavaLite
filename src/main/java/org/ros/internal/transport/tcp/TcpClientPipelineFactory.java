@@ -1,5 +1,6 @@
 package org.ros.internal.transport.tcp;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -19,7 +20,7 @@ public class TcpClientPipelineFactory extends ConnectionTrackingChannelPipelineF
   }
 
   @Override
-  protected void initChannel(SocketChannel ch) {
+  protected void initChannel(Channel ch) {
     ChannelPipeline pipeline = ch.pipeline();
     pipeline.addLast(LENGTH_FIELD_PREPENDER, new LengthFieldPrepender(4));
     pipeline.addLast(LENGTH_FIELD_BASED_FRAME_DECODER, new LengthFieldBasedFrameDecoder(

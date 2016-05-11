@@ -27,6 +27,8 @@ import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.address.InetSocketAddressFactory;
 
+import io.netty.channel.nio.NioEventLoopGroup;
+
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
@@ -41,7 +43,7 @@ public class TcpRosServerTest {
 
   @Before
   public void setup() {
-    executorService = Executors.newScheduledThreadPool(10);
+    executorService = new NioEventLoopGroup().next();//Executors.newScheduledThreadPool(10);
   }
 
   @After

@@ -21,6 +21,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
@@ -56,7 +57,6 @@ public class TcpClient {
   private static final boolean DEFAULT_KEEP_ALIVE = true;
 
   private final ChannelGroup channelGroup;
-  private NioEventLoop executorServiceMain;
   private final Bootstrap bootstrap;
   private final List<NamedChannelHandler> namedChannelHandlers;
   
@@ -76,9 +76,10 @@ public class TcpClient {
       bootstrap.group(executor).
       	channel(NioServerSocketChannel.class).
       	option(ChannelOption.SO_BACKLOG, 100).
+      	option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
       	option(ChannelOption.SO_TIMEOUT,DEFAULT_CONNECTION_TIMEOUT_DURATION).
       	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
-      	option(ChannelOption.SO_KEEPALIVE, true);
+      	option(ChannelOption.SO_KEEPALIVE, DEFAULT_KEEP_ALIVE);
     namedChannelHandlers = new ArrayList<NamedChannelHandler>();
   }
 
@@ -101,7 +102,7 @@ public class TcpClient {
   public Channel connect(String connectionName, SocketAddress socketAddress) {
     TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(channelGroup) {
       @Override
-      public void initChannel(SocketChannel ch) {
+      public void initChannel(Channel ch) {
         for (NamedChannelHandler namedChannelHandler : namedChannelHandlers) {
           ch.pipeline().addLast(namedChannelHandler.getName(), (ChannelHandler) namedChannelHandler);
         }

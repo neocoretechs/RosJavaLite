@@ -16,6 +16,7 @@ import org.ros.internal.node.topic.TopicParticipantManager;
 
 import io.netty.bootstrap.ChannelFactory;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
@@ -105,6 +106,7 @@ public class TcpRosServer implements Serializable {
 	    bootstrap.group(mainExecService, executorService).
 	    	channel(NioServerSocketChannel.class).
 	    	option(ChannelOption.SO_BACKLOG, 100).
+	    	option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
 	    	localAddress(bindAddress.toInetSocketAddress()).
 	    	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
 	    	childOption(ChannelOption.SO_KEEPALIVE, true);
