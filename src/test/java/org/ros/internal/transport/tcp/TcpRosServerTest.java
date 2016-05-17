@@ -63,7 +63,7 @@ public class TcpRosServerTest {
     } catch (RuntimeException e) {
       // getAddress() must fail when the server is not running.
     }
-
+    System.out.println("start server");
     tcpRosServer.start();
     InetSocketAddress address = tcpRosServer.getAddress();
     assertTrue(address.getPort() > 0);

@@ -17,16 +17,14 @@ import java.util.concurrent.ScheduledExecutorService;
 public class DefaultNodeFactory implements NodeFactory {
 
   private final ScheduledExecutorService scheduledExecutorService;
-  private final NioEventLoop eventLoop;
 
   public DefaultNodeFactory(ScheduledExecutorService scheduledExecutorService) {
-	this.eventLoop = (NioEventLoop) scheduledExecutorService;
-    this.scheduledExecutorService = eventLoop.next();//new SharedScheduledExecutorService(scheduledExecutorService);
+    this.scheduledExecutorService = scheduledExecutorService;
   }
 
   @Override
   public Node newNode(NodeConfiguration nodeConfiguration, Collection<NodeListener> listeners) {
-    return new DefaultNode(nodeConfiguration, listeners, eventLoop);
+    return new DefaultNode(nodeConfiguration, listeners, (NioEventLoop) scheduledExecutorService);
   }
 
   @Override

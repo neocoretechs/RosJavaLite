@@ -65,10 +65,10 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
   public void run() {
     SlaveClient slaveClient;
     try {
-      System.out.println("Attempting to create SlaveClient:"+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
+      log.info("Attempting to create SlaveClient:"+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
       slaveClient = new SlaveClient(nodeIdentifier.getName(), publisherIdentifier.getNodeUri());
-      System.out.println("Slave client created "+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
-      System.out.println("Requesting topic name "+subscriber.getTopicName());
+      log.info("Slave client created "+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
+      log.info("Requesting topic name "+subscriber.getTopicName());
       Response<ProtocolDescription> response =
           slaveClient.requestTopic(subscriber.getTopicName(), ProtocolNames.SUPPORTED);
       // If null there is no publisher for the requested topic

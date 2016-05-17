@@ -276,8 +276,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
 	try {
 		client = new SlaveClient(MASTER_NODE_NAME, subscriberSlaveUri);
 	} catch (IOException e) {
-		System.out.println("MasterServer cannot construct slave cleint to unknown host "+subscriberSlaveUri);
-		e.printStackTrace();
+		log.error("MasterServer cannot construct slave cleint to unknown host "+subscriberSlaveUri,e);
 		throw new RosRuntimeException(e);
 	}
     client.publisherUpdate(topicName, publisherUris);

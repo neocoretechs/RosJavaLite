@@ -2,6 +2,10 @@ package org.ros.internal.node.server;
 
 import java.lang.reflect.*;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.ros.internal.transport.tcp.TcpRosServer;
+
 /**
 * The remote call mechanism depends on Java reflection to provide access to methods that can be
 * remotely invoked via serializable arguments and method name. By designating the reflected classes at startup
@@ -14,6 +18,7 @@ import java.lang.reflect.*;
 */
 public final class ServerInvokeMethod {
 	private static final boolean DEBUG = false;
+	private static final Log log = LogFactory.getLog(ServerInvokeMethod.class);
     protected int skipArgs;
     int skipArgIndex;
     private Method[] methods;
@@ -38,7 +43,7 @@ public final class ServerInvokeMethod {
                 for(int i = m.length-1; i >= 0 ; i--) {
                         //if( m[i].getName().startsWith("Relatrix_") ) {
                                 pkmnap.methodNames.add(m[i].getName()/*.substring(9)*/);
-                                System.out.println("Method :"+m[i].getName()/*.substring(9)*/);
+                                log.info("Method :"+m[i].getName()/*.substring(9)*/);
                         //}
                 }
                 // create arrays
@@ -65,7 +70,7 @@ public final class ServerInvokeMethod {
                                         ind2 = pkmnap.methodSigs[methCnt].indexOf(",",ind2+1);
                                         pkmnap.methodSigs[methCnt] = pkmnap.methodSigs[methCnt].substring(0,ind1+1)+pkmnap.methodSigs[methCnt].substring(ind2+1);
                                    } catch(StringIndexOutOfBoundsException sioobe) {
-                                        System.out.println("<<Relatrix: The method "+pkmnap.methodSigs[methCnt]+" contains too few arguments (first "+skipArgIndex+" skipped)");
+                                        log.error("The method "+pkmnap.methodSigs[methCnt]+" contains too few arguments (first "+skipArgIndex+" skipped)");
                                    }
                                 }
                                 methods[methCnt++] = m[i];
@@ -100,10 +105,10 @@ public final class ServerInvokeMethod {
                         //
                         if (DEBUG) {
                         	for(int iparm1 = 0; iparm1 < params.length ; iparm1++) {        
-                                System.out.println("Calling param: "+params[iparm1]);
+                                log.info("Calling param: "+params[iparm1]);
                         	}
                         	for(int iparm2 = skipArgIndex ; iparm2 < pkmnap.methodParams[methodIndex].length; iparm2++) {
-                                System.out.println("Method param: "+pkmnap.methodParams[methodIndex][iparm2]);
+                                log.info("Method param: "+pkmnap.methodParams[methodIndex][iparm2]);
                         	}
                         }
                         //

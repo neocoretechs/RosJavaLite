@@ -1,10 +1,11 @@
 package org.ros.internal.node.server;
 
 import java.io.IOException;
-
 import java.net.InetAddress;
 import java.net.Socket;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Functionally this class Extends TCPServer, takes connections and spins the worker thread to handle each one 
@@ -13,6 +14,7 @@ import java.net.Socket;
  */
 public final class BaseServer extends TCPServer {
 	private static boolean DEBUG = true;
+    private static final Log log = LogFactory.getLog(BaseServer.class);
 	public int WORKBOOTPORT = 8090;
 	public InetAddress address = null;
 	private RpcServer rpcserver = null;
@@ -45,7 +47,7 @@ public final class BaseServer extends TCPServer {
 	 */
 	public static void main(String args[]) throws Exception {
 		BaseServer bs = new BaseServer();
-		System.out.println("ROSLite Server started on "+InetAddress.getLocalHost().getHostName()+" port "+bs.WORKBOOTPORT);
+		log.info("ROSLite Server started on "+InetAddress.getLocalHost().getHostName()+" port "+bs.WORKBOOTPORT);
 	}
 	
 	public void run() {
@@ -62,12 +64,11 @@ public final class BaseServer extends TCPServer {
                     ThreadPoolManager.getInstance().spin(uworker);
                     
                     if( DEBUG ) {
-                    	System.out.println("ROS Server node worker starting");
+                    	log.info("ROS Server node worker starting");
                     }
                     
 				} catch(IOException e) {
-                    System.out.println("Server socket accept exception "+e);
-                    e.printStackTrace();
+                    log.error("Server socket accept exception "+e,e);
                }
 		}
 	

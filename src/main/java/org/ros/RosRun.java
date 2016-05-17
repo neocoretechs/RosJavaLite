@@ -19,8 +19,11 @@ package org.ros;
 
 import java.util.ArrayList;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.loader.CommandLineLoader;
+import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.node.DefaultNodeMainExecutor;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
@@ -33,7 +36,7 @@ import org.ros.node.NodeMainExecutor;
  * @author damonkohler@google.com (Damon Kohler)
  */
 public class RosRun {
-
+  private static final Log log = LogFactory.getLog(RosRun.class);
   public static void printUsage() {
     System.err.println("Usage: java -jar my_package.jar com.example.MyNodeMain [args]");
   }
@@ -47,7 +50,7 @@ public class RosRun {
     for(int i = 0; i < argv.length; i++) l1.add(argv[i]);
     CommandLineLoader loader = new CommandLineLoader(l1);
     String nodeClassName = loader.getNodeClassName();
-    System.out.println("Loading node class: " + loader.getNodeClassName());
+    log.info("Loading node class: " + loader.getNodeClassName());
     NodeConfiguration nodeConfiguration = loader.build();
     nodeConfiguration.setCommandLineLoader(loader);
 

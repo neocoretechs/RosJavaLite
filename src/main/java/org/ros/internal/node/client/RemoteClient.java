@@ -13,9 +13,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 
 
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.response.VoidResultFactory;
 import org.ros.internal.node.server.RemoteRequestInterface;
 import org.ros.internal.node.server.ThreadPoolManager;
+import org.ros.internal.transport.tcp.TcpRosServer;
 
 /**
  * This class functions as client to the  remote node.
@@ -25,7 +29,7 @@ import org.ros.internal.node.server.ThreadPoolManager;
 public class RemoteClient implements Runnable {
 	private static final boolean DEBUG = false;
 	public static final boolean TEST = false; // true to run in local cluster test mode
-	
+	private static final Log log = LogFactory.getLog(RemoteClient.class);
 	private int remotePort; // temp master port, accepts connection from remote server
 	
 	private InetAddress IPAddress = null;
@@ -63,7 +67,7 @@ public class RemoteClient implements Runnable {
 			}
 		}
 		if( DEBUG ) {
-			System.out.println("RemoteClient constructed with Boot:"+IPAddress);
+			log.debug("RemoteClient constructed with Boot:"+IPAddress);
 		}
 		remotePort = bootPort;
 		// spin up 'this' to receive connection request from remote server 'slave' to our 'master'
@@ -88,16 +92,16 @@ public class RemoteClient implements Runnable {
 				if( ret == null )
 					ret = new Object(); // let voidResultFactory handle this, we cant put null to queue
 				if( DEBUG )
-					 System.out.println("FROM Remote, response:"+ret);
+					 log.debug("FROM Remote, response:"+ret);
 				 responses.put(ret);
 			} catch (SocketException e) {
-					System.out.println("RemoteClient: receive socket error "+e+" Address:"+IPAddress+" port:"+remotePort);
+					log.error("RemoteClient: receive socket error "+e+" Address:"+IPAddress+" port:"+remotePort);
 					break;
 			} catch (IOException e) {
 				// we lost the remote, try to close worker and wait for reconnect
-				System.out.println("RemoteClient: receive IO error "+e+" Address:"+IPAddress+" port:"+remotePort);
+				log.debug("RemoteClient: receive IO error "+e+" Address:"+IPAddress+" port:"+remotePort);
 			} catch (ClassNotFoundException e1) {
-				System.out.println("Class not found for deserialization "+e1+" Address:"+IPAddress+" port:"+remotePort);
+				log.error("Class not found for deserialization "+e1+" Address:"+IPAddress+" port:"+remotePort);
 				break;
 			} catch (InterruptedException e) {
 				break;
@@ -140,9 +144,9 @@ public class RemoteClient implements Runnable {
 			oos.flush();
 			
 		} catch (SocketException e) {
-				System.out.println("Exception setting up socket to remote host:"+IPAddress+" port "+remotePort+" "+e);
+				log.error("Exception setting up socket to remote host:"+IPAddress+" port "+remotePort+" "+e);
 		} catch (IOException e) {
-				System.out.println("Socket send error "+e+" to address "+IPAddress+" on port "+remotePort);
+				log.error("Socket send error "+e+" to address "+IPAddress+" on port "+remotePort);
 		}
 	}
 	

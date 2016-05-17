@@ -10,6 +10,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.ros.internal.transport.tcp.TcpRosServer;
+
 
 /**
  * Class to manage thread resources throughout the application. Singleton
@@ -23,7 +27,8 @@ import java.util.concurrent.ThreadFactory;
  *
  */
 public class ThreadPoolManager {
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
+	  private static final Log log = LogFactory.getLog(ThreadPoolManager.class);
 	private static String DEFAULT_THREAD_POOL = "RPCSERVER";
 	private int threadNum = 0;
     private static Map<String, ExecutorService> executor = new HashMap<String, ExecutorService>();// = Executors.newCachedThreadPool(dtf);
@@ -101,7 +106,7 @@ public class ThreadPoolManager {
 			List<Runnable> spun = e.shutdownNow();
 			for(Runnable rs : spun) {
 				if( DEBUG )
-				System.out.println("Marked for Termination:"+rs.toString()+" "+e.toString());
+					log.debug("Marked for Termination:"+rs.toString()+" "+e.toString());
 			}
 		}
 	}
@@ -111,7 +116,7 @@ public class ThreadPoolManager {
 		List<Runnable> spun = ex.shutdownNow();
 		for(Runnable rs : spun) {
 			if( DEBUG )
-				System.out.println("Marked for Termination:"+rs.toString()+" "+ex.toString());
+				log.debug("Marked for Termination:"+rs.toString()+" "+ex.toString());
 		}
 	}
 	
@@ -147,16 +152,16 @@ public class ThreadPoolManager {
      */
     public static void waitForCompletion(Future<?>[] futures)
     {
-    	System.out.println("waitForCompletion on:"+futures.length);
+    	log.debug("waitForCompletion on:"+futures.length);
         int size = futures.length;
         try {
             for (int j = 0; j < size; j++) {
                 futures[j].get();
             }
         } catch (ExecutionException ex) {
-            ex.printStackTrace();
+           log.error(ex);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+           log.error(e);
         }
     }
     

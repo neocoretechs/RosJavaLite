@@ -18,6 +18,7 @@ package org.ros.internal.node;
 
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.Parameters;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.ListenerGroup;
@@ -43,6 +44,7 @@ import org.ros.internal.node.topic.PublisherFactory;
 import org.ros.internal.node.topic.SubscriberFactory;
 import org.ros.internal.node.topic.TopicDeclaration;
 import org.ros.internal.node.topic.TopicParticipantManager;
+import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.namespace.GraphName;
@@ -82,9 +84,8 @@ import java.util.concurrent.TimeUnit;
  * @author damonkohler@google.com (Damon Kohler)
  */
 public class DefaultNode implements ConnectedNode {
-
-  private static final boolean DEBUG = false;
-
+  private static final boolean DEBUG = true;
+  private static final Log log = LogFactory.getLog(TcpRosServer.class);
   // TODO(damonkohler): Move to NodeConfiguration.
   /**
    * The maximum delay before shutdown will begin even if all
@@ -111,7 +112,7 @@ public class DefaultNode implements ConnectedNode {
   private final ServiceFactory serviceFactory;
   private final Registrar registrar;
 
-  private RosoutLogger log;
+  private RosoutLogger rlog;
   private TimeProvider timeProvider;
 
   /**
@@ -134,8 +135,8 @@ public class DefaultNode implements ConnectedNode {
     try {
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 	} catch (IOException e1) {
-		System.out.println("Unknown host for master client:"+masterUri);
-		e1.printStackTrace();
+		log.error("Unknown host for master client:"+masterUri,e1);
+		//e1.printStackTrace();
 		throw new RosRuntimeException(e1);
 	}
     topicParticipantManager = new TopicParticipantManager();
@@ -154,10 +155,10 @@ public class DefaultNode implements ConnectedNode {
 		        nodeConfiguration.getRpcAdvertiseAddress(), masterClient, topicParticipantManager,
 		        serviceManager, parameterManager, scheduledExecutorService);
 	} catch (IOException e) {
-		System.out.println("Can not configure slave server from DefaultNode "+e);
-		e.printStackTrace();
+		log.error("Can not configure slave server from DefaultNode "+e,e);
 		throw new RosRuntimeException(e);
 	}
+    // start TcpRosServer and SlaveServer
     slaveServer.start();
 
     NodeIdentifier nodeIdentifier = slaveServer.toNodeIdentifier();
@@ -167,8 +168,7 @@ public class DefaultNode implements ConnectedNode {
 		    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
 		        resolver, parameterManager);
 	} catch (IOException e) {
-		System.out.println("Cannot construct parameter tree due to "+e);
-		e.printStackTrace();
+		log.error("Cannot construct parameter tree due to "+e,e);
 	}
 
     publisherFactory =
@@ -199,8 +199,8 @@ public class DefaultNode implements ConnectedNode {
     // During startup, we wait for 1) the RosoutLogger and 2) the TimeProvider.
     final CountDownLatch latch = new CountDownLatch(2);
 
-    log = new RosoutLogger(this);
-    log.getPublisher().addListener(new DefaultPublisherListener<rosgraph_msgs.Log>() {
+    rlog = new RosoutLogger(this);
+    rlog.getPublisher().addListener(new DefaultPublisherListener<rosgraph_msgs.Log>() {
       @Override
       public void onMasterRegistrationSuccess(Publisher<rosgraph_msgs.Log> registrant) {
         latch.countDown();
@@ -239,6 +239,9 @@ public class DefaultNode implements ConnectedNode {
     }
 
     signalOnStart();
+    if(DEBUG)
+    	log.debug("DefaultNode start signaled");
+    	
   }
 
   Registrar getRegistrar() {
@@ -358,7 +361,7 @@ public class DefaultNode implements ConnectedNode {
 
   @Override
   public Log getLog() {
-    return log;
+    return rlog;
   }
 
   @Override
@@ -389,11 +392,11 @@ public class DefaultNode implements ConnectedNode {
             masterClient.unregisterService(slaveServer.toNodeIdentifier(), serviceServer);
         if (DEBUG) {
           if (response.getResult().toString().equals("0")) {
-            System.err.println("Failed to unregister service: " + serviceServer.getName());
+            log.error("Failed to unregister service: " + serviceServer.getName());
           }
         }
       } catch (RemoteException e) {
-        log.error(e);
+        rlog.error(e);
       }
     }
     for (ServiceClient<?, ?> serviceClient : serviceManager.getClients()) {
@@ -519,7 +522,7 @@ public class DefaultNode implements ConnectedNode {
         try {
           listener.onShutdownComplete(node);
         } catch (Throwable e) {
-          System.out.println(listener);
+          log.error(listener);
         }
       }
     });

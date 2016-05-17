@@ -8,10 +8,15 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
 import io.netty.buffer.ByteBuf;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.internal.message.Message;
 import org.ros.internal.message.field.DirectByteArrayOutputStream;
+import org.ros.internal.transport.tcp.TcpRosServer;
 
 public class Utility {
+	  private static final Log log = LogFactory.getLog(Utility.class);
 	 public static <T> void serialize(T value, ByteBuf buffer) {
 		    //serializer.serialize((Message) value, buffer);
 			DirectByteArrayOutputStream dbaos = new DirectByteArrayOutputStream();
@@ -43,7 +48,7 @@ public class Utility {
 						rbc.close();
 			} catch (IOException ioe) {
 			} catch (ClassNotFoundException cnf) {
-					System.out.println("Class cannot be deserialized, may have been modified beyond version compatibility");
+					log.error("Class cannot be deserialized, may have been modified beyond version compatibility");
 			}
 			return  Od;
 				

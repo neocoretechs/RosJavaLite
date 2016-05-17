@@ -22,7 +22,7 @@ import java.nio.channels.Channels;
  */
 public class ConnectionTrackingHandler extends ChannelInboundHandlerAdapter {
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(ConnectionTrackingHandler.class);
 
   /**
@@ -31,25 +31,30 @@ public class ConnectionTrackingHandler extends ChannelInboundHandlerAdapter {
   private final ChannelGroup channelGroup;
 
   public ConnectionTrackingHandler(ChannelGroup channelGroup) {
+	super();
     this.channelGroup = channelGroup;
+    if (DEBUG) {
+        log.info("ConnectionTrackingHandler ctor");
+      }
   }
 
   @Override
   public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
     if (DEBUG) {
-      log.info("Channel opened: " + ctx.channel());
+      log.info("ConnectionTrackingHandler added to channel(Channel open):" + ctx.channel());
     }
-    channelGroup.add(ctx.channel());
     super.handlerAdded(ctx);
+    channelGroup.add(ctx.channel());
   }
 
   @Override
   //public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
   public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
     if (DEBUG) {
-      log.info("Channel closed: " + ctx.channel());
+      log.info("ConnectionTrackingHandler removed(Channel closed):" + ctx.channel());
     }
     super.handlerRemoved(ctx);
+    channelGroup.remove(ctx);
   }
 
   @Override

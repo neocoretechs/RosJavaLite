@@ -7,6 +7,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * This TCPWorker is spawned for servicing traffic from a master or slave node and invoking methods thereupon.
  * @author jg
@@ -15,6 +18,7 @@ import java.net.SocketException;
  */
 public class TCPWorker implements Runnable {
 	private static final boolean DEBUG = true;
+	private static final Log log = LogFactory.getLog(TCPWorker.class);
 	public boolean shouldRun = true;
 	private Socket dataSocket;
 	private Object waitHalt = new Object(); 
@@ -24,7 +28,7 @@ public class TCPWorker implements Runnable {
     	this.dataSocket = datasocket;
     	this.server = server;
     	if( DEBUG )
-    		System.out.println("TCPWorker constructed with socket "+dataSocket+" for server "+server);
+    		log.info("TCPWorker constructed with socket "+dataSocket+" for server "+server);
 	}
 	
 	/**
@@ -37,7 +41,7 @@ public class TCPWorker implements Runnable {
 	public void queueResponse(Object res) {
 	
 		if( DEBUG ) {
-			System.out.println("Adding response "+res+" to outbound from worker");
+			log.debug("Adding response "+res+" to outbound from worker");
 		}
 		try {
 			// Write response to master for forwarding to client
@@ -46,7 +50,7 @@ public class TCPWorker implements Runnable {
 			oos.writeObject(res);
 			oos.flush();
 		} catch (IOException e) {
-				System.out.println("Exception writing socket to remote master port "+e);
+				log.error("Exception writing socket to remote master port "+e);
 				throw new RuntimeException(e);
 		}
 	}
@@ -62,17 +66,16 @@ public class TCPWorker implements Runnable {
 					ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
 					RemoteRequestInterface o = (RemoteRequestInterface) ois.readObject();
 					if( DEBUG )
-						System.out.println("ROS TCPWorker for "+server+" at address "+dataSocket+" command received:"+o);
+						log.debug("ROS TCPWorker for "+server+" at address "+dataSocket+" command received:"+o);
 					Object res = server.invokeMethod(o);
 					queueResponse(res);
 				}
 				dataSocket.close();
 			} catch(Exception se) {
 				if( se instanceof SocketException ) {
-					System.out.println("Received SocketException, connection reset..");
+					log.error("Received SocketException, connection reset..");
 				} else {
-					System.out.println("Remote invocation failure "+se);
-					se.printStackTrace();
+					log.error("Remote invocation failure ",se);
 				}
 			} finally {
 				try {

@@ -17,6 +17,8 @@
 package org.ros.internal.node.client;
 
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.response.BooleanResultFactory;
 import org.ros.internal.node.response.GraphNameListResultFactory;
 import org.ros.internal.node.response.IntegerResultFactory;
@@ -30,6 +32,7 @@ import org.ros.internal.node.rpc.MasterRpcEndpointImpl;
 import org.ros.internal.node.rpc.ParameterServerRpcEndpoint;
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.server.ParameterServer;
+import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.namespace.GraphName;
 
 import java.io.IOException;
@@ -50,6 +53,7 @@ import java.util.Map;
  */
 public class ParameterClient extends Client<ParameterServerRpcEndpoint> {
   private static final boolean DEBUG = true;
+  private static final Log log = LogFactory.getLog(ParameterClient.class);  
   private final NodeIdentifier nodeIdentifier;
   private final String nodeName;
 
@@ -103,7 +107,7 @@ public Response<Object> getParam(GraphName parameterName) {
 
   public Response<Boolean> hasParam(GraphName parameterName) {
 	  if( DEBUG )
-		  System.out.println("ParameterClient.hasParam name:"+parameterName+" node "+nodeName+" for RPC endpoint:"+rpcEndpoint);
+		  log.debug("ParameterClient.hasParam name:"+parameterName+" node "+nodeName+" for RPC endpoint:"+rpcEndpoint);
     return Response.fromListChecked(rpcEndpoint.hasParam(nodeName, parameterName.toString()),
         new BooleanResultFactory());
   }

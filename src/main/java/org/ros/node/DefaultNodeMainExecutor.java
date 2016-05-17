@@ -39,7 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class DefaultNodeMainExecutor implements NodeMainExecutor {
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(DefaultNodeMainExecutor.class);
 
   private final NodeFactory nodeFactory;
@@ -93,8 +93,7 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
    * @param scheduledExecutorService
    *          {@link NodeMain}s will be executed using this
    */
-  private DefaultNodeMainExecutor(NodeFactory nodeFactory,
-      ScheduledExecutorService scheduledExecutorService) {
+  private DefaultNodeMainExecutor(NodeFactory nodeFactory, ScheduledExecutorService scheduledExecutorService) {
     this.nodeFactory = nodeFactory;
     this.scheduledExecutorService = scheduledExecutorService;
     connectedNodes = new ConcurrentHashMap<GraphName, List<ConnectedNode>>();

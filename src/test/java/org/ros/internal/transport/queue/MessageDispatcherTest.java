@@ -26,7 +26,10 @@ import org.ros.internal.message.DefaultMessageFactory;
 import org.ros.internal.message.definition.MessageDefinitionReflectionProvider;
 import org.ros.message.MessageFactory;
 import org.ros.message.MessageListener;
+
 import std_msgs.Int32;
+import io.netty.channel.EventLoop;
+import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -47,7 +50,7 @@ public class MessageDispatcherTest {
 
   @Before
   public void before() {
-    executorService = Executors.newCachedThreadPool();
+    executorService = new NioEventLoopGroup().next();//Executors.newCachedThreadPool();
     lazyMessages = new CircularBlockingDeque<LazyMessage<std_msgs.Int32>>(128);
     messageFactory = new DefaultMessageFactory(new MessageDefinitionReflectionProvider());
   }
@@ -59,6 +62,7 @@ public class MessageDispatcherTest {
 
     MessageDispatcher<std_msgs.Int32> messageDispatcher =
         new MessageDispatcher<std_msgs.Int32>(lazyMessages, executorService);
+    
     messageDispatcher.addListener(new MessageListener<std_msgs.Int32>() {
       private AtomicInteger count = new AtomicInteger();
 

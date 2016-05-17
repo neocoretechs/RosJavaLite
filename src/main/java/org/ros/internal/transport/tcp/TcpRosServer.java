@@ -18,13 +18,17 @@ import io.netty.bootstrap.ChannelFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoop;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.GlobalEventExecutor;
 
 import java.io.Serializable;
 import java.net.InetSocketAddress;
@@ -52,7 +56,6 @@ public class TcpRosServer implements Serializable {
   private transient TopicParticipantManager topicParticipantManager;
   private transient ServiceManager serviceManager;
   private transient NioEventLoop executorService;
-  private transient NioEventLoopGroup mainExecService;
 
   private transient ServerBootstrap bootstrap;
   private transient Channel outgoingChannel;
@@ -68,7 +71,6 @@ public class TcpRosServer implements Serializable {
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     this.executorService = (NioEventLoop) executorService;
-    this.mainExecService = new NioEventLoopGroup();
   }
 
   public void start() {
@@ -102,17 +104,18 @@ public class TcpRosServer implements Serializable {
 	    //    new NioServerSocketChannelFactory(executorService, executorService);
 	    //ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
 	  try {
+		NioEventLoopGroup mainExec = new NioEventLoopGroup(1);
 	    bootstrap = new ServerBootstrap();
-	    bootstrap.group(mainExecService, executorService).
+	    bootstrap.group(mainExec,executorService).
 	    	channel(NioServerSocketChannel.class).
 	    	option(ChannelOption.SO_BACKLOG, 100).
 	    	option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
 	    	localAddress(bindAddress.toInetSocketAddress()).
 	    	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
 	    	childOption(ChannelOption.SO_KEEPALIVE, true);
-	    ChannelGroup serverChannelGroup = new DefaultChannelGroup((EventExecutor) executorService);
+	    incomingChannelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	    TcpServerPipelineFactory serverPipelineFactory =
-	        new TcpServerPipelineFactory(serverChannelGroup, topicParticipantManager, serviceManager); /*{
+	        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); /*{
 	          //@Override
 	          public ChannelPipeline pipeline() {
 	            ChannelPipeline pipeline = super.getPipeline();
@@ -124,22 +127,24 @@ public class TcpRosServer implements Serializable {
 	            return pipeline;
 	          }
 	        };*/
-	       bootstrap.childHandler(serverPipelineFactory);
+	       bootstrap.handler((ChannelHandler) new LoggingHandler(LogLevel.INFO)).
+	       childHandler(serverPipelineFactory);
 	       advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
-	       bootstrap.bind().sync().channel().closeFuture().await();
+	       outgoingChannel = bootstrap.bind().sync().channel();
+	       if (DEBUG) {
+	    	      log.info("TcpRosServer starting and Bound to:" + bindAddress + " with advertise address:"+advertiseAddress);
+	       }
+	       outgoingChannel.closeFuture().await();
       } catch (InterruptedException e) {
       } finally {
-          mainExecService.shutdownGracefully();
           executorService.shutdownGracefully();
+	       if (DEBUG) {
+	    	      log.info("TcpRosServer shut down for:" + bindAddress + " with advertise address:"+advertiseAddress);
+	       }
       }
-  
+	  // old v.3:
 	    //bootstrap.setPipelineFactory(serverPipelineFactory);
-	    //Channel serverChannel = bootstrap.bind(new InetSocketAddress(0));
-	  
-    if (DEBUG) {
-      log.info("TcpRosServer starting and Bound to: " + bindAddress);
-      log.info("TcpRosServer starting and Advertising: " + advertiseAddress);
-    }
+	    //Channel serverChannel = bootstrap.bind(new InetSocketAddress(0))
   }
 
   /**

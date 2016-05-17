@@ -16,10 +16,13 @@
 
 package org.ros;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.server.ParameterServer;
 import org.ros.internal.node.server.master.MasterServer;
+import org.ros.internal.transport.tcp.TcpRosServer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -39,6 +42,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class RosCore {
   private static boolean DEBUG = true;
+  private static final Log log = LogFactory.getLog(RosCore.class);
   private MasterServer masterServer = null;
   private ParameterServer parameterServer = null;
 
@@ -58,13 +62,13 @@ public class RosCore {
 
   private RosCore(BindAddress bindAddress, AdvertiseAddress advertiseAddress) {
 	  if(DEBUG)
-		  System.out.println("RosCore initialization with bind:"+bindAddress+" advertise:"+advertiseAddress);
+		  log.info("RosCore initialization with bind:"+bindAddress+" advertise:"+advertiseAddress);
     try {
 		masterServer = new MasterServer(bindAddress, advertiseAddress);
 		parameterServer = new ParameterServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+1));
 	} catch (IOException e) {
-		System.out.println("RosCore fault, master server can not be constructed due to "+e);
-		e.printStackTrace();
+		log.error("RosCore fault, master server can not be constructed due to "+e,e);
+		//e.printStackTrace();
 	}
   }
 
@@ -93,8 +97,8 @@ public class RosCore {
     	parameterServer.shutdown();
 		masterServer.shutdown();
 	} catch (IOException e) {
-		System.out.println("Can not shut down master server due to "+e);
-		e.printStackTrace();
+		log.error("Can not shut down master server due to "+e,e);
+		//e.printStackTrace();
 	}
   }
 
@@ -110,6 +114,6 @@ public class RosCore {
 	   RosCore rosCore = RosCore.newPublic(8090);
 	   rosCore.start();
 	   rosCore.awaitStart(1, TimeUnit.SECONDS);
-	   System.out.println("RosLite Master started @ address "+rosCore.getUri());
+	   log.info("RosLite Master started @ address "+rosCore.getUri());
   }
 }

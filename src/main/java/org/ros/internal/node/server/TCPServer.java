@@ -2,10 +2,15 @@ package org.ros.internal.node.server;
 import java.net.*;
 import java.io.*;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
 * TCPServer is the superclass of all objects using ServerSockets.
 */
 public abstract class TCPServer implements Cloneable, Runnable {
+	private static boolean DEBUG = true;
+	private static final Log log = LogFactory.getLog(TCPServer.class);
 	ServerSocket server = null;
 	Socket data = null;
 	boolean shouldStop = false;
@@ -20,7 +25,8 @@ public abstract class TCPServer implements Cloneable, Runnable {
 	}
 	public synchronized void startServer(int port, InetAddress binder) throws IOException {
 		if( server == null ) {
-            System.out.println("TCPServer attempt local bind "+binder+" port "+port);
+			if( DEBUG )
+				log.info("TCPServer attempt local bind "+binder+" port "+port);
 			server = new ServerSocket(port, 1000, binder);
 			//runner = new Thread(this);
 			//runner.start();

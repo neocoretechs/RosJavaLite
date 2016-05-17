@@ -24,9 +24,7 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.ChannelGroupFutureListener;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.EventExecutor;
-
+import io.netty.channel.nio.NioEventLoop;
 
 /**
  */
@@ -60,7 +58,7 @@ public class OutgoingMessageQueue<T> {
       // race conditions. However, the duplicated buffer and the original buffer
       // share the same backing array. So, we have to wait until the write
       // operation is complete before returning the buffer to the pool.
-      channelGroup.write(buffer).addListener(new ChannelGroupFutureListener() {
+      channelGroup.writeAndFlush(buffer).addListener(new ChannelGroupFutureListener() {
         @Override
         public void operationComplete(ChannelGroupFuture future) throws Exception {
           messageBufferPool.release(buffer);
@@ -71,7 +69,7 @@ public class OutgoingMessageQueue<T> {
 
   public OutgoingMessageQueue(ExecutorService executorService) {
     deque = new CircularBlockingDeque<T>(DEQUE_CAPACITY);
-    channelGroup = new DefaultChannelGroup( ((NioEventLoopGroup) executorService).next());
+    channelGroup = new DefaultChannelGroup( (NioEventLoop) executorService);
     writer = new Writer();
     messageBufferPool = new MessageBufferPool();
     latchedBuffer = MessageBuffers.dynamicBuffer();

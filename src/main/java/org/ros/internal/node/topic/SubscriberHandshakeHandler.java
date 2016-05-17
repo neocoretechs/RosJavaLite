@@ -40,6 +40,8 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
       final IncomingMessageQueue<T> incomingMessageQueue, ExecutorService executorService) {
     super(new SubscriberHandshake(outgoingConnectionHeader), executorService);
     this.incomingMessageQueue = incomingMessageQueue;
+    if( DEBUG )
+    	log.debug("subscriberhandshakeHandler ctor:"+this);
   }
 
   @Override
@@ -68,7 +70,7 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
 @Override
 public void channelInactive(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		System.out.println("SubscriberHandshakeHandler.channelInactive:"+arg0);
+		log.debug("SubscriberHandshakeHandler.channelInactive:"+arg0);
 	
 }
 
@@ -76,14 +78,14 @@ public void channelInactive(ChannelHandlerContext arg0) throws Exception {
 @Override
 public void channelRegistered(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		System.out.println("SubscriberHandshakeHandler.channelRegistered:"+arg0);
+		log.debug("SubscriberHandshakeHandler.channelRegistered:"+arg0);
 	
 }
 
 @Override
 public void channelUnregistered(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		System.out.println("SubscriberHandshakeHandler.channelUnregistered:"+arg0);
+		log.debug("SubscriberHandshakeHandler.channelUnregistered:"+arg0);
 	
 }
 
@@ -91,7 +93,7 @@ public void channelUnregistered(ChannelHandlerContext arg0) throws Exception {
 public void channelWritabilityChanged(ChannelHandlerContext arg0)
 		throws Exception {
 	if( DEBUG )
-		System.out.println("SubscriberHandshakeHandler.channelWritabilityChanged:"+arg0);
+		log.debug("SubscriberHandshakeHandler.channelWritabilityChanged:"+arg0);
 	
 }
 
@@ -105,14 +107,14 @@ public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1)
 @Override
 public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		System.out.println("SubscriberHandshakeHandler.handlerAdded:"+arg0);
+		log.debug("SubscriberHandshakeHandler.handlerAdded:"+arg0);
 	
 }
 
 @Override
 public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		System.out.println("SubscriberHandshakeHandler.handlerRemoved:"+arg0);
+		log.debug("SubscriberHandshakeHandler.handlerRemoved:"+arg0);
 	
 }
 
@@ -120,7 +122,7 @@ public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
 public void userEventTriggered(ChannelHandlerContext arg0, Object arg1)
 		throws Exception {
 	if( DEBUG )
-		System.out.println("SubscriberHandshakeHandler.userEventTrigglyPuffed:"+arg0);
+		log.debug("SubscriberHandshakeHandler.userEventTrigglyPuffed:"+arg0);
 	
 	
 }

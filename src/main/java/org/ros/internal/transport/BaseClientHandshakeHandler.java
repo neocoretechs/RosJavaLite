@@ -5,9 +5,12 @@ package org.ros.internal.transport;
 //import org.jboss.netty.channel.ChannelStateEvent;
 //import org.jboss.netty.channel.MessageEvent;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
 import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
+import org.ros.internal.transport.tcp.TcpRosServer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -20,6 +23,7 @@ import java.util.concurrent.ExecutorService;
  */
 public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHandler {
   private static boolean DEBUG = true;
+  private static final Log log = LogFactory.getLog(BaseClientHandshakeHandler.class);
   private final ClientHandshake clientHandshake;
   private final ListenerGroup<ClientHandshakeListener> clientHandshakeListeners;
 
@@ -53,7 +57,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
   @Override
   public void channelReadComplete(ChannelHandlerContext arg0) throws Exception {
   	if( DEBUG )
-  		System.out.println("SubscriberHandshakeHandler.channelReadComplete:"+arg0);
+  		log.debug("SubscriberHandshakeHandler.channelReadComplete:"+arg0);
   	
   }
   /**

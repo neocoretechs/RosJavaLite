@@ -34,6 +34,9 @@ import org.ros.internal.transport.tcp.TcpRosProtocolDescription;
 import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.namespace.GraphName;
 
+import io.netty.channel.EventLoop;
+import io.netty.channel.nio.NioEventLoopGroup;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -68,8 +71,9 @@ public class SlaveServer extends RpcServer {
 	} catch (ClassNotFoundException e) {
 		throw new IOException(e);
 	}
+    EventLoop exec = new NioEventLoopGroup().next();
     this.tcpRosServer =
-        new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager, serviceManager, executorService);
+        new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager, serviceManager, exec/*utorService*/);
   }
 
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
