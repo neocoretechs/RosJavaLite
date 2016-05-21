@@ -1,27 +1,8 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.topic;
-
-import java.io.IOException;
-import java.net.UnknownHostException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.exception.RemoteException;
+
 import org.ros.internal.node.client.SlaveClient;
 import org.ros.internal.node.response.Response;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -36,7 +17,7 @@ import org.ros.node.topic.Subscriber;
  * {@link DefaultSubscriber}. It takes care of registration between the {@link Subscriber}
  * and remote {@link Publisher}.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 class UpdatePublisherRunnable<MessageType> implements Runnable {
 
@@ -82,7 +63,7 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
       } else {
     	  log.error("There are NO publishers available for topic "+subscriber.getTopicName());
       }
-    } catch (IOException | RemoteException e) {
+    } catch (Exception e) {
       // TODO(damonkohler): Retry logic is needed at the RPC layer.
       log.error(e);
     }

@@ -21,6 +21,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.topic.DefaultSubscriberListener;
 import org.ros.node.topic.Subscriber;
 
+import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -54,9 +55,10 @@ public class SubscriberFactory {
    * @param messageDeserializer
    *          the {@link MessageDeserializer} to use for incoming messages
    * @return a new or cached {@link Subscriber} instance
+ * @throws IOException 
    */
   @SuppressWarnings("unchecked")
-  public <T> Subscriber<T> newOrExisting(TopicDeclaration topicDeclaration) {
+  public <T> Subscriber<T> newOrExisting(TopicDeclaration topicDeclaration) throws IOException {
     synchronized (mutex) {
       GraphName topicName = topicDeclaration.getName();
       if (topicParticipantManager.hasSubscriber(topicName)) {

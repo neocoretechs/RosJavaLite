@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.transport;
 
 
@@ -23,8 +7,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.MessageBuffers;
 
-import io.netty.buffer.ByteBuf;
-
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,7 +16,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class ConnectionHeader {
 
@@ -50,12 +33,12 @@ public class ConnectionHeader {
    *          the incoming {@link ChannelBuffer} containing the header
    * @return a {@link Map} of header fields and values
    */
-  public static ConnectionHeader decode(ByteBuf buffer) {
+  public static ConnectionHeader decode(ByteBuffer buffer) {
     Map<String, String> fields = new HashMap<String, String>();
     int position = 0;
-    int readableBytes = buffer.readableBytes();
+    int readableBytes = buffer.limit();
     while (position < readableBytes) {
-      int fieldSize = buffer.readInt();
+      int fieldSize = buffer.getInt();
       position += 4;
       if (fieldSize == 0) {
         throw new IllegalStateException("Invalid 0 length handshake header field.");
@@ -81,8 +64,9 @@ public class ConnectionHeader {
     return connectionHeader;
   }
 
-  private static String decodeAsciiString(ByteBuf buffer, int length) {
-    return buffer.readBytes(length).toString(Charset.forName("US-ASCII"));
+  private static String decodeAsciiString(ByteBuffer buffer, int length) {
+	byte[] b = new byte[length];
+    return buffer.get(b).toString();//Charset.forName("US-ASCII"));
   }
 
   public ConnectionHeader() {
@@ -95,12 +79,12 @@ public class ConnectionHeader {
    * @return a {@link ChannelBuffer} containing the encoded header for wire
    *         transmission
    */
-  public ByteBuf encode() {
-    ByteBuf buffer = MessageBuffers.dynamicBuffer();
+  public ByteBuffer encode() {
+    ByteBuffer buffer = MessageBuffers.dynamicBuffer();
     for (Entry<String, String> entry : fields.entrySet()) {
       String field = entry.getKey() + "=" + entry.getValue();
-      buffer.writeInt(field.length());
-      buffer.writeBytes(field.getBytes(Charset.forName("US-ASCII")));
+      buffer.putInt(field.length());
+      buffer.put(field.getBytes(Charset.forName("US-ASCII")));
     }
     return buffer;
   }

@@ -25,8 +25,10 @@ import org.ros.internal.system.Utility;
 import org.ros.message.Duration;
 import org.ros.message.Time;
 
-import io.netty.buffer.ByteBuf;
 
+
+
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +69,7 @@ public class MessageSerializationTest {
   }
 
   private <T extends Message> void checkSerializeAndDeserialize(T message) {
-    ByteBuf buffer = MessageBuffers.dynamicBuffer();
+    ByteBuffer buffer = MessageBuffers.dynamicBuffer();
     Utility.serialize(message, buffer);
     dumpBuffer(buffer);
     assertEquals(message, Utility.deserialize(buffer));
@@ -204,23 +206,23 @@ public class MessageSerializationTest {
   public void testOdometry() {
     nav_msgs.Odometry message = defaultMessageFactory.newFromType(nav_msgs.Odometry._TYPE);
     checkSerializeAndDeserialize(message);
-    ByteBuf buffer = MessageBuffers.dynamicBuffer();
+    ByteBuffer buffer = MessageBuffers.dynamicBuffer();
     Utility.serialize(message, buffer);
     dumpBuffer(buffer);
     // Throw away sequence number.
-    buffer.readInt();
-    while (buffer.isReadable()) {
-      byte b = buffer.readByte();
+    buffer.getInt();
+    while (buffer.hasRemaining()) {
+      byte b = buffer.get();
       assertEquals("All serialized bytes should be 0. Check stdout.", 0, b);
     }
   }
 
-  private void dumpBuffer(ByteBuf buffer) {
+  private void dumpBuffer(ByteBuffer buffer) {
     buffer = buffer.duplicate();
-    System.out.printf("Dumping %d readable bytes:\n", buffer.readableBytes());
+    System.out.printf("Dumping %d readable bytes:\n", buffer.limit());
     int i = 0;
-    while (buffer.isReadable()) {
-      byte b = buffer.readByte();
+    while (buffer.hasRemaining()) {
+      byte b = buffer.get();
       System.out.printf("0x%02x ", b);
       if (++i % 8 == 0) {
         System.out.print("   ");

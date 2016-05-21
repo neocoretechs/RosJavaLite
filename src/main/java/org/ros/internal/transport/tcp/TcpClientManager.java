@@ -4,32 +4,39 @@ package org.ros.internal.transport.tcp;
 //import org.jboss.netty.channel.group.ChannelGroup;
 //import org.jboss.netty.channel.group.DefaultChannelGroup;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.EventExecutor;
-
+import java.io.IOException;
 import java.net.SocketAddress;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+
+import org.ros.internal.transport.ChannelHandlerContext;
+import org.ros.internal.transport.ChannelHandlerContextImpl;
+import org.ros.internal.transport.ChannelPipeline;
+import org.ros.internal.transport.ChannelPipelineImpl;
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * TcpClientManager manages TCP clients which are the subscriber and service clients that communicate with
+ * remote peers outside master domain. 
+ * It requires the context with the channel group, and executor service constructed.
+ * @author jg
  */
 public class TcpClientManager {
 
-  private final ChannelGroup channelGroup;
+  private final AsynchronousChannelGroup channelGroup;
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
   private final Executor executor;
+  private ChannelPipeline pipeline;
 
-  public TcpClientManager(EventExecutor executor) {
+  public TcpClientManager(ExecutorService executor) throws IOException {
     this.executor = executor;
-    channelGroup = new DefaultChannelGroup(executor);
-    tcpClients = new ArrayList<TcpClient>();
-    namedChannelHandlers = new ArrayList<NamedChannelHandler>();
+    this.channelGroup = AsynchronousChannelGroup.withThreadPool(executor);
+    this.tcpClients = new ArrayList<TcpClient>();
+    this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();
   }
 
   public void addNamedChannelHandler(NamedChannelHandler namedChannelHandler) {
@@ -50,9 +57,10 @@ public class TcpClientManager {
    * @param socketAddress
    *          the {@link SocketAddress} to connect to
    * @return a new {@link TcpClient}
+ * @throws IOException 
    */
-  public TcpClient connect(String connectionName, SocketAddress socketAddress) {
-    TcpClient tcpClient = new TcpClient(channelGroup, (EventLoopGroup) executor);
+  public TcpClient connect(String connectionName, SocketAddress socketAddress) throws Exception {
+    TcpClient tcpClient = new TcpClient(executor, pipeline, channelGroup);
     tcpClient.addAllNamedChannelHandlers(namedChannelHandlers);
     tcpClient.connect(connectionName, socketAddress);
     tcpClients.add(tcpClient);
@@ -64,7 +72,7 @@ public class TcpClientManager {
    * {@link Channel}s.
    */
   public void shutdown() {
-    channelGroup.close().awaitUninterruptibly();
+    channelGroup.shutdown();
     tcpClients.clear();
     // We don't call channelFactory.releaseExternalResources() or
     // bootstrap.releaseExternalResources() since the only external resource is

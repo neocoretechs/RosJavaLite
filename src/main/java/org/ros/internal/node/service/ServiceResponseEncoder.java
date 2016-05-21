@@ -1,10 +1,7 @@
 package org.ros.internal.node.service;
 
+import java.nio.ByteBuffer;
 import java.util.List;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 
 //import org.jboss.netty.buffer.ChannelBuffer;
 //import org.jboss.netty.channel.Channel;
@@ -12,22 +9,21 @@ import io.netty.channel.ChannelHandlerContext;
 //import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
 
-import io.netty.handler.codec.MessageToMessageEncoder;
-
 import org.ros.internal.message.MessageBuffers;
+import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
  */
-public final class ServiceResponseEncoder extends MessageToMessageEncoder<ServiceServerResponse> {
+public final class ServiceResponseEncoder {//extends MessageToMessageEncoder<ServiceServerResponse> {
 
-  @Override
+  
   protected void encode(ChannelHandlerContext ctx, ServiceServerResponse msg, List<Object> out) throws Exception {
     if (msg instanceof ServiceServerResponse) {
       ServiceServerResponse response = msg;
-      ByteBuf buffer = MessageBuffers.dynamicBuffer();
-      buffer.writeByte(response.getErrorCode());
-      buffer.writeInt(response.getMessageLength());
-      buffer.writeBytes(response.getMessage());
+      ByteBuffer buffer = MessageBuffers.dynamicBuffer();
+      buffer.putInt(response.getErrorCode());
+      buffer.putInt(response.getMessageLength());
+      buffer.put(response.getMessage());
       //return buffer;
       out.add(buffer);
     } else {

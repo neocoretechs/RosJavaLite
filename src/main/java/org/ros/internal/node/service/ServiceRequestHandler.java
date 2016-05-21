@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.service;
 
 //import org.jboss.netty.buffer.ChannelBuffer;
@@ -24,22 +8,19 @@ package org.ros.internal.node.service;
 import org.ros.exception.ServiceException;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.system.Utility;
+import org.ros.internal.transport.ChannelHandler;
+import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.message.MessageFactory;
 import org.ros.node.service.ServiceResponseBuilder;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
-class ServiceRequestHandler<T, S> extends SimpleChannelInboundHandler<T> {
+class ServiceRequestHandler<T, S> implements ChannelHandler {
 
   private final ServiceDeclaration serviceDeclaration;
   private final ServiceResponseBuilder<T, S> responseBuilder;
@@ -58,7 +39,7 @@ class ServiceRequestHandler<T, S> extends SimpleChannelInboundHandler<T> {
     messageBufferPool = new MessageBufferPool();
   }
 
-  private void handleRequest(ByteBuf requestBuffer, ByteBuf responseBuffer)
+  private void handleRequest(ByteBuffer requestBuffer, ByteBuffer responseBuffer)
       throws ServiceException {
     T request = (T) Utility.deserialize(requestBuffer);
     S response = messageFactory.newFromType(serviceDeclaration.getType());
@@ -66,12 +47,11 @@ class ServiceRequestHandler<T, S> extends SimpleChannelInboundHandler<T> {
     Utility.serialize(response, responseBuffer);
   }
 
-  private void handleSuccess(final ChannelHandlerContext ctx, ServiceServerResponse response,
-      ByteBuf responseBuffer) {
+  private void handleSuccess(final ChannelHandlerContext ctx, ServiceServerResponse response, ByteBuffer responseBuffer) {
     response.setErrorCode(1);
-    response.setMessageLength(responseBuffer.readableBytes());
+    response.setMessageLength(responseBuffer.limit());
     response.setMessage(responseBuffer);
-    ctx.channel().write(response);
+    ctx.write(response);
   }
 
   private void handleError(final ChannelHandlerContext ctx, ServiceServerResponse response,
@@ -79,21 +59,21 @@ class ServiceRequestHandler<T, S> extends SimpleChannelInboundHandler<T> {
     response.setErrorCode(0);
     ByteBuffer encodedMessage = Charset.forName("US-ASCII").encode(message);
     response.setMessageLength(encodedMessage.limit());
-    response.setMessage(Unpooled.wrappedBuffer(encodedMessage));
-    ctx.channel().write(response);
+    response.setMessage(encodedMessage);
+    ctx.write(response);
   }
 
   @Override
-  public void channelRead0(final ChannelHandlerContext ctx, Object e) throws Exception {
+  public Object channelRead(final ChannelHandlerContext ctx, Object e) throws Exception {
     // Although the ChannelHandlerContext is explicitly documented as being safe
     // to keep for later use, the MessageEvent is not. So, we make a defensive
-    // copy of the ChannelBuffer.
-    final ByteBuf requestBuffer = ((ByteBuf) e).copy();
-    executorService.execute(new Runnable() {
+    // copy of the buffer.
+    final ByteBuffer requestBuffer = ((ByteBuffer) e);
+    this.executorService.execute(new Runnable() {
       @Override
       public void run() {
         ServiceServerResponse response = new ServiceServerResponse();
-        ByteBuf responseBuffer = messageBufferPool.acquire();
+        ByteBuffer responseBuffer = messageBufferPool.acquire();
         boolean success;
         try {
           handleRequest(requestBuffer, responseBuffer);
@@ -108,7 +88,51 @@ class ServiceRequestHandler<T, S> extends SimpleChannelInboundHandler<T> {
         messageBufferPool.release(responseBuffer);
       }
     });
-  
+    return requestBuffer;
   }
+
+@Override
+public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void channelActive(ChannelHandlerContext ctx) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void exceptionCaught(ChannelHandlerContext ctx, Throwable msg)
+		throws Exception {
+	// TODO Auto-generated method stub
+	
+}
+
+@Override
+public void userEventTriggered(ChannelHandlerContext ctx, Object event)
+		throws Exception {
+	// TODO Auto-generated method stub
+	
+}
 
 }

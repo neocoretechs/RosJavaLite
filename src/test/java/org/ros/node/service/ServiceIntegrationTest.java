@@ -31,6 +31,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -86,7 +87,7 @@ public class ServiceIntegrationTest extends RosTest {
 
       @Override
       public void onStart(ConnectedNode connectedNode) {
-        ServiceClient<test_ros.AddTwoIntsRequest, test_ros.AddTwoIntsResponse> serviceClient;
+        ServiceClient<test_ros.AddTwoIntsRequest, test_ros.AddTwoIntsResponse> serviceClient = null;
         try {
           serviceClient = connectedNode.newServiceClient(SERVICE_NAME, test_ros.AddTwoInts._TYPE);
           // Test that requesting another client for the same service returns
@@ -96,7 +97,10 @@ public class ServiceIntegrationTest extends RosTest {
           assertEquals(serviceClient, duplicate);
         } catch (ServiceNotFoundException e) {
           throw new RosRuntimeException(e);
-        }
+        } catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
         test_ros.AddTwoIntsRequest request = serviceClient.newMessage();
         request.setA(2);
         request.setB(2);
@@ -174,12 +178,15 @@ public class ServiceIntegrationTest extends RosTest {
 
       @Override
       public void onStart(ConnectedNode connectedNode) {
-        ServiceClient<test_ros.AddTwoIntsRequest, test_ros.AddTwoIntsResponse> serviceClient;
+        ServiceClient<test_ros.AddTwoIntsRequest, test_ros.AddTwoIntsResponse> serviceClient = null;
         try {
           serviceClient = connectedNode.newServiceClient(SERVICE_NAME, test_ros.AddTwoInts._TYPE);
         } catch (ServiceNotFoundException e) {
           throw new RosRuntimeException(e);
-        }
+        } catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
         test_ros.AddTwoIntsRequest request = serviceClient.newMessage();
         serviceClient.call(request, new ServiceResponseListener<test_ros.AddTwoIntsResponse>() {
           @Override

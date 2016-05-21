@@ -1,34 +1,34 @@
 package org.ros.internal.transport.tcp;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.group.ChannelGroup;
+import java.nio.channels.AsynchronousChannelGroup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ConnectionTrackingHandler;
 
 /**
  */
-public class ConnectionTrackingChannelPipelineFactory extends ChannelInitializer<Channel> {
+public class ConnectionTrackingChannelPipelineFactory extends ChannelInitializer {
   public static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(ConnectionTrackingChannelPipelineFactory.class);
   public static final String CONNECTION_TRACKING_HANDLER = "ConnectionTrackingHandler";
 
   private final ConnectionTrackingHandler connectionTrackingHandler;
   
-  public ConnectionTrackingChannelPipelineFactory(ChannelGroup channelGroup){
+  public ConnectionTrackingChannelPipelineFactory(AsynchronousChannelGroup channelGroup){
 	super();
-    this.connectionTrackingHandler = new ConnectionTrackingHandler(channelGroup);
+    this.connectionTrackingHandler = new ConnectionTrackingHandler();
     if(DEBUG)
     	log.debug("ConnectionTrackingChannelPipelineFactory ctor"+channelGroup);
   }
 
   @Override
-  protected void initChannel(Channel ch) throws Exception {
+  protected void initChannel(ChannelHandlerContext ch) throws Exception {
 	ch.pipeline().addLast(CONNECTION_TRACKING_HANDLER, connectionTrackingHandler);
-	   if(DEBUG)
+	if(DEBUG)
 	    	log.debug("ConnectionTrackingChannelPipelineFactory initchannel:"+ch);
   }
+
   
 }

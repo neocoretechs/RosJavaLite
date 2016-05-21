@@ -27,6 +27,7 @@ import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 
@@ -64,11 +65,13 @@ public interface ConnectedNode extends Node {
    * @param messageType
    *          the message data type (e.g. "std_msgs/String")
    * @return a {@link Publisher} for the specified topic
+ * @throws IOException 
    */
   <T> Publisher<T> newPublisher(GraphName topicName, String messageType);
 
   /**
-   * @see #newPublisher(GraphName, String)
+   * @throws IOException 
+ * @see #newPublisher(GraphName, String)
    */
   <T> Publisher<T> newPublisher(String topicName, String messageType);
 
@@ -80,11 +83,13 @@ public interface ConnectedNode extends Node {
    * @param messageType
    *          the message data type (e.g. "std_msgs/String")
    * @return a {@link Subscriber} for the specified topic
+ * @throws IOException 
    */
   <T> Subscriber<T> newSubscriber(GraphName topicName, String messageType);
 
   /**
-   * @see #newSubscriber(GraphName, String)
+   * @throws IOException 
+ * @see #newSubscriber(GraphName, String)
    */
   <T> Subscriber<T> newSubscriber(String topicName, String messageType);
 
@@ -144,15 +149,16 @@ public interface ConnectedNode extends Node {
    * @return a {@link ServiceClient}
    * @throws ServiceNotFoundException
    *           thrown if no matching service could be found
+ * @throws IOException 
+ * @throws Exception 
    */
-  <T, S> ServiceClient<T, S> newServiceClient(GraphName serviceName, String serviceType)
-      throws ServiceNotFoundException;
+  <T, S> ServiceClient<T, S> newServiceClient(GraphName serviceName, String serviceType) throws Exception;
 
   /**
-   * @see #newServiceClient(GraphName, String)
+ * @throws Exception 
+ * @see #newServiceClient(GraphName, String)
    */
-  <T, S> ServiceClient<T, S> newServiceClient(String serviceName, String serviceType)
-      throws ServiceNotFoundException;
+  <T, S> ServiceClient<T, S> newServiceClient(String serviceName, String serviceType) throws Exception;
 
   /**
    * Create a {@link ParameterTree} to query and set parameters on the ROS

@@ -1,16 +1,14 @@
 package org.ros.internal.transport.tcp;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LengthFieldPrepender;
+import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.Channel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
+import org.ros.internal.transport.ChannelHandlerContext;
+import org.ros.internal.transport.ChannelPipeline;
 
 /**
  * @author damonkohler@google.com (Damon Kohler)
@@ -25,7 +23,7 @@ public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineF
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
 
-  public TcpServerPipelineFactory(ChannelGroup channelGroup,
+  public TcpServerPipelineFactory(AsynchronousChannelGroup channelGroup,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
     super(channelGroup);
     if( DEBUG )
@@ -35,12 +33,12 @@ public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineF
   }
 
   @Override
-  protected void initChannel(Channel ch) throws Exception {
+  protected void initChannel(ChannelHandlerContext ch) throws Exception {
 	if( DEBUG )
-		log.debug("TcpServerPipelineFactory initChannel:"+ch);
+		log.info("TcpServerPipelineFactory initChannel:"+ch);
     ChannelPipeline pipeline = ch.pipeline();
-    pipeline.addLast(LENGTH_FIELD_PREPENDER, new LengthFieldPrepender(4));
-    pipeline.addLast(LENGTH_FIELD_BASED_FRAME_DECODER, new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
+    //pipeline.addLast(LENGTH_FIELD_PREPENDER, new LengthFieldPrepender(4));
+    //pipeline.addLast(LENGTH_FIELD_BASED_FRAME_DECODER, new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
     pipeline.addLast(HANDSHAKE_HANDLER, new TcpServerHandshakeHandler(topicParticipantManager,serviceManager));
   }
 }

@@ -1,27 +1,9 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.service;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ReplayingDecoder;
+import org.ros.internal.transport.ChannelHandlerContext;
 
 //import org.jboss.netty.buffer.ChannelBuffer;
 //import org.jboss.netty.channel.Channel;
@@ -31,28 +13,32 @@ import io.netty.handler.codec.ReplayingDecoder;
 /**
  * Decodes service responses.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
-class ServiceResponseDecoder<ResponseType> extends ReplayingDecoder<ServiceResponseDecoderState> {
+class ServiceResponseDecoder<ResponseType>  {
 
+  private static final int ERROR_CODE = 0;
+  private static final int MESSAGE_LENGTH = 1;
+  private static final int MESSAGE = 2;
   private ServiceServerResponse response;
 
   public ServiceResponseDecoder() {
     reset();
   }
 
-  @SuppressWarnings("fallthrough")
-  @Override
-  protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> rstate) throws Exception {
-    switch (state()) {
+  //@SuppressWarnings("fallthrough")
+  //@Override
+  protected void decode(ChannelHandlerContext ctx, ByteBuffer buffer, List<Object> rstate) throws Exception {
+	 int code =  buffer.getInt();
+    switch (code) {
       case ERROR_CODE:
-        response.setErrorCode(buffer.readByte());
-        checkpoint(ServiceResponseDecoderState.MESSAGE_LENGTH);
+        response.setErrorCode(buffer.get());
+        //checkpoint(ServiceResponseDecoderState.MESSAGE_LENGTH);
       case MESSAGE_LENGTH:
-        response.setMessageLength(buffer.readInt());
-        checkpoint(ServiceResponseDecoderState.MESSAGE);
+        response.setMessageLength(buffer.getInt());
+       // checkpoint(ServiceResponseDecoderState.MESSAGE);
       case MESSAGE:
-        response.setMessage(buffer.readBytes(response.getMessageLength()));
+        response.setMessage(buffer);
         try {
           //return response;
           rstate.add(response);
@@ -65,9 +51,10 @@ class ServiceResponseDecoder<ResponseType> extends ReplayingDecoder<ServiceRespo
   }
 
   private void reset() {
-    checkpoint(ServiceResponseDecoderState.ERROR_CODE);
+    //checkpoint(ServiceResponseDecoderState.ERROR_CODE);
     response = new ServiceServerResponse();
   }
+
 
 
 }

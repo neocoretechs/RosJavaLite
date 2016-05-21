@@ -1,6 +1,5 @@
 package org.ros.internal.transport;
 
-//import org.jboss.netty.buffer.ChannelBuffer;
 //import org.jboss.netty.channel.ChannelHandlerContext;
 //import org.jboss.netty.channel.ChannelStateEvent;
 //import org.jboss.netty.channel.MessageEvent;
@@ -10,14 +9,13 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
 import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
-import org.ros.internal.transport.tcp.TcpRosServer;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutorService;
 
 /**
+ * Abstraction of top level ChannelHandler interface
  * Common functionality for {@link ClientHandshake} handlers.
  * 
  */
@@ -38,12 +36,17 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
-    ctx.channel().write(clientHandshake.getOutgoingConnectionHeader().encode());
+    ctx.write(clientHandshake.getOutgoingConnectionHeader().encode());
+  }
+  
+  @Override
+  public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+  	log.debug("Channel inactive"+ctx);
   }
 
   @Override
-  public void channelRead(ChannelHandlerContext ctx, Object buff) throws Exception {
-    ByteBuf buffer = (ByteBuf) buff;
+  public Object channelRead(ChannelHandlerContext ctx, Object buff) throws Exception {
+    ByteBuffer buffer = (ByteBuffer) buff;
     ConnectionHeader connectionHeader = ConnectionHeader.decode(buffer);
     if (clientHandshake.handshake(connectionHeader)) {
       onSuccess(connectionHeader, ctx);
@@ -52,6 +55,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
       onFailure(clientHandshake.getErrorMessage(), ctx);
       signalOnFailure(clientHandshake.getErrorMessage());
     }
+    return buffer;
   }
 
   @Override
@@ -71,8 +75,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
    * @param ctx
    * @param e
    */
-  protected abstract void onSuccess(ConnectionHeader incommingConnectionHeader,
-      ChannelHandlerContext ctx);
+  protected abstract void onSuccess(ConnectionHeader incommingConnectionHeader,ChannelHandlerContext ctx);
 
   private void signalOnSuccess(final ConnectionHeader incommingConnectionHeader) {
     clientHandshakeListeners.signal(new SignalRunnable<ClientHandshakeListener>() {
@@ -83,7 +86,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
     });
   }
 
-  protected abstract void onFailure(String errorMessage, ChannelHandlerContext ctx);
+  protected abstract void onFailure(String errorMessage, ChannelHandlerContext ctx) throws IOException;
 
   private void signalOnFailure(final String errorMessage) {
     clientHandshakeListeners.signal(new SignalRunnable<ClientHandshakeListener>() {

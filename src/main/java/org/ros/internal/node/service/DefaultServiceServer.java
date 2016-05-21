@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.service;
 
 
@@ -26,6 +10,7 @@ import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
 import org.ros.internal.message.service.ServiceDescription;
 import org.ros.internal.node.topic.DefaultPublisher;
+import org.ros.internal.transport.ChannelHandler;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
 import org.ros.message.MessageFactory;
@@ -35,11 +20,9 @@ import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 import org.ros.node.service.ServiceServerListener;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
-
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -92,7 +75,7 @@ public class DefaultServiceServer<T, S> implements ServiceServer<T, S> {
     });
   }
 
-  public ByteBuf finishHandshake(ConnectionHeader incomingConnectionHeader) {
+  public ByteBuffer finishHandshake(ConnectionHeader incomingConnectionHeader) {
     if (DEBUG) {
       log.info("Client handshake header: " + incomingConnectionHeader);
     }

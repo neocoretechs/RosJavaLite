@@ -11,29 +11,27 @@ import org.apache.commons.logging.LogFactory;
 //import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
+import org.ros.exception.RosRuntimeException;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
+import org.ros.internal.transport.ChannelHandlerContext;
+import org.ros.internal.transport.ChannelHandlerContextImpl;
+import org.ros.internal.transport.ChannelPipeline;
+import org.ros.internal.transport.ChannelPipelineImpl;
 
-import io.netty.bootstrap.ChannelFactory;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
-import io.netty.util.concurrent.EventExecutor;
-import io.netty.util.concurrent.GlobalEventExecutor;
-
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.nio.ByteOrder;
+import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -55,22 +53,35 @@ public class TcpRosServer implements Serializable {
   private AdvertiseAddress advertiseAddress;
   private transient TopicParticipantManager topicParticipantManager;
   private transient ServiceManager serviceManager;
-  private transient NioEventLoop executorService;
+  private transient ScheduledExecutorService executorService;
 
-  private transient ServerBootstrap bootstrap;
-  private transient Channel outgoingChannel;
-  private transient ChannelGroup incomingChannelGroup;
+  private transient AsynchronousChannelGroup outgoingChannelGroup; // publisher with connected subscribers
+  private transient AsynchronousChannelGroup incomingChannelGroup; // subscriber connected to publishers
+  private transient TcpServerPipelineFactory serverPipelineFactory;
+  private transient ChannelPipeline pipeline;
+  private transient List<ChannelHandlerContext> contexts;
+  
+  public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
+  public static final String LENGTH_FIELD_PREPENDER = "LengthFieldPrepender";
+  public static final String HANDSHAKE_HANDLER = "HandshakeHandler";
   
   public TcpRosServer() {}
 
   public TcpRosServer(BindAddress bindAddress, AdvertiseAddress advertiseAddress,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager,
-      ScheduledExecutorService executorService) {
+      ScheduledExecutorService executorService) throws IOException {
     this.bindAddress = bindAddress;
     this.advertiseAddress = advertiseAddress;
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
-    this.executorService = (NioEventLoop) executorService;
+    this.executorService = executorService;
+    this.incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
+    this.incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
+    this.advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
+    this.pipeline = new ChannelPipelineImpl();
+    this.contexts = new ArrayList<ChannelHandlerContext>();
+    this.serverPipelineFactory =
+	        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); 
   }
 
   public void start() {
@@ -96,26 +107,10 @@ public class TcpRosServer implements Serializable {
       }
     });
     */
-	
-		//InetSocketAddress isock = new InetSocketAddress(0);
-	    //topicParticipantManager = new TopicParticipantManager();
-	    //serviceManager = new ServiceManager();
-	    //NioServerSocketChannelFactory channelFactory =
-	    //    new NioServerSocketChannelFactory(executorService, executorService);
-	    //ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
 	  try {
-		NioEventLoopGroup mainExec = new NioEventLoopGroup(1);
-	    bootstrap = new ServerBootstrap();
-	    bootstrap.group(mainExec,executorService).
-	    	channel(NioServerSocketChannel.class).
-	    	option(ChannelOption.SO_BACKLOG, 100).
-	    	option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
+		  /*
+	
 	    	localAddress(bindAddress.toInetSocketAddress()).
-	    	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
-	    	childOption(ChannelOption.SO_KEEPALIVE, true);
-	    incomingChannelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-	    TcpServerPipelineFactory serverPipelineFactory =
-	        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); /*{
 	          //@Override
 	          public ChannelPipeline pipeline() {
 	            ChannelPipeline pipeline = super.getPipeline();
@@ -126,47 +121,72 @@ public class TcpRosServer implements Serializable {
 	            pipeline.addLast( new ServerHandler());
 	            return pipeline;
 	          }
-	        };*/
-	       bootstrap.handler((ChannelHandler) new LoggingHandler(LogLevel.INFO)).
-	       childHandler(serverPipelineFactory);
-	       advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
-	       outgoingChannel = bootstrap.bind().sync().channel();
-	       if (DEBUG) {
-	    	      log.info("TcpRosServer starting and Bound to:" + bindAddress + " with advertise address:"+advertiseAddress);
-	       }
-	       outgoingChannel.closeFuture().await();
-      } catch (InterruptedException e) {
-      } finally {
-          executorService.shutdownGracefully();
-	       if (DEBUG) {
+	        };
+	       handler((ChannelHandler) new LoggingHandler(LogLevel.INFO)).
+	       childHandler(new ChannelInitializer<SocketChannel>() {
+               @Override
+               public void initChannel(SocketChannel ch) throws Exception {
+                   if( DEBUG )
+               		log.info("TcpServerPipelineFactory initChannel:"+ch);
+                   ChannelPipeline pipeline = ch.pipeline();
+                   pipeline.addLast(new ObjectEncoder());
+                   pipeline.addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
+                   pipeline.addLast(LENGTH_FIELD_PREPENDER, new LengthFieldPrepender(4));
+                   pipeline.addLast(LENGTH_FIELD_BASED_FRAME_DECODER, new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
+                   pipeline.addLast(HANDSHAKE_HANDLER, new TcpServerHandshakeHandler(topicParticipantManager,serviceManager));
+               }
+           });
+	       */
+	       //childHandler(serverPipelineFactory);
+	       //ChannelFuture f = bootstrap.bind().sync();
+	       //outgoingChannel = f.channel();
+          pipeline.addLast(HANDSHAKE_HANDLER, new TcpServerHandshakeHandler(topicParticipantManager,serviceManager));
+		  final AsynchronousServerSocketChannel listener = AsynchronousServerSocketChannel.open(incomingChannelGroup);
+		  listener.bind(bindAddress.toInetSocketAddress());
+	      if (DEBUG) {
+		 	     log.info("TcpRosServer starting and Bound to:" + bindAddress + " with advertise address:"+advertiseAddress);
+		  }
+		  while(true) {
+			  Future<AsynchronousSocketChannel> channel = listener.accept();
+			  if( DEBUG ) {
+				  log.debug("Accept "+channel);
+			  }
+			  contexts.add(new ChannelHandlerContextImpl(incomingChannelGroup, pipeline, channel.get(), executorService));
+		  }
+	       //outgoingChannel.closeFuture().sync();
+      } catch (IOException | InterruptedException | ExecutionException e) {
+    	  throw new RosRuntimeException(e);
+	  } finally {
+		try {
+			shutdown();
+		} catch (IOException e) {}
+	    if (DEBUG) {
 	    	      log.info("TcpRosServer shut down for:" + bindAddress + " with advertise address:"+advertiseAddress);
-	       }
+	    }
       }
-	  // old v.3:
-	    //bootstrap.setPipelineFactory(serverPipelineFactory);
-	    //Channel serverChannel = bootstrap.bind(new InetSocketAddress(0))
   }
 
   /**
    * Close all incoming connections and the server socket.
-   * 
+   * only external resources are
+   * the ExecutorService and control of that must remain with the overall
+   * application.
    * <p>
    * Calling this method more than once has no effect.
+   * @throws IOException 
    */
-  public void shutdown() {
+  public void shutdown() throws IOException {
     if (DEBUG) {
       log.info("TcpRosServer Shutting down address: " + getAddress());
     }
-    if (outgoingChannel != null) {
-      outgoingChannel.close().awaitUninterruptibly();
+    if (outgoingChannelGroup != null) {
+      outgoingChannelGroup.shutdown();
+      outgoingChannelGroup = null;
     }
-    incomingChannelGroup.close().awaitUninterruptibly();
-    // NOTE(damonkohler): We are purposely not calling
-    // channelFactory.releaseExternalResources() or
-    // bootstrap.releaseExternalResources() since only external resources are
-    // the ExecutorService and control of that must remain with the overall
-    // application.
-    outgoingChannel = null;
+    if( incomingChannelGroup != null) {
+    	incomingChannelGroup.shutdown();
+    	incomingChannelGroup = null;
+    }
   }
 
   /**
@@ -182,5 +202,12 @@ public class TcpRosServer implements Serializable {
    */
   public AdvertiseAddress getAdvertiseAddress() {
     return advertiseAddress;
+  }
+  /**
+   * 
+   * @return the array of contexts from the remote connections that have attached for subscription
+   */
+  public List<ChannelHandlerContext> getSubscribers() {
+	  return contexts;
   }
 }

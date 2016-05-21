@@ -19,14 +19,13 @@ package org.ros.internal.node.service;
 import org.ros.exception.DuplicateServiceException;
 import org.ros.internal.message.service.ServiceDescription;
 import org.ros.internal.node.server.SlaveServer;
-
 import org.ros.message.MessageFactory;
-
 import org.ros.namespace.GraphName;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseBuilder;
 import org.ros.node.service.ServiceServer;
 
+import java.io.IOException;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -115,9 +114,10 @@ public class ServiceFactory {
    * @param messageFactory
    *          a {@link MessageFactory} to be used for creating requests
    * @return a {@link DefaultServiceClient} instance
+ * @throws IOException 
    */
   @SuppressWarnings("unchecked")
-  public <T, S> DefaultServiceClient<T, S> newClient(ServiceDeclaration serviceDeclaration, MessageFactory messageFactory) {
+  public <T, S> DefaultServiceClient<T, S> newClient(ServiceDeclaration serviceDeclaration, MessageFactory messageFactory) throws Exception {
     assert(serviceDeclaration.getUri() != null);
     DefaultServiceClient<T, S> serviceClient;
     GraphName name = serviceDeclaration.getName();

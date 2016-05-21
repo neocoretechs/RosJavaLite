@@ -1,21 +1,4 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node;
-
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,8 +49,6 @@ import org.ros.node.topic.Subscriber;
 import org.ros.time.ClockTopicTimeProvider;
 import org.ros.time.TimeProvider;
 
-import io.netty.channel.nio.NioEventLoop;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -79,14 +60,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * The default implementation of a {@link Node}.
  * 
- * @author ethan.rublee@gmail.com (Ethan Rublee)
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
  */
 public class DefaultNode implements ConnectedNode {
   private static final boolean DEBUG = true;
-  private static final Log log = LogFactory.getLog(TcpRosServer.class);
-  // TODO(damonkohler): Move to NodeConfiguration.
+  private static final Log log = LogFactory.getLog(DefaultNode.class);
   /**
    * The maximum delay before shutdown will begin even if all
    * {@link NodeListener}s have not yet returned from their
@@ -97,7 +74,7 @@ public class DefaultNode implements ConnectedNode {
 
   private final NodeConfiguration nodeConfiguration;
   private final ListenerGroup<NodeListener> nodeListeners;
-  private final /*ScheduledExecutorService*/NioEventLoop scheduledExecutorService;
+  private final ScheduledExecutorService scheduledExecutorService;
   private final InetSocketAddress masterUri;
   private final MasterClient masterClient;
   private final TopicParticipantManager topicParticipantManager;
@@ -126,7 +103,7 @@ public class DefaultNode implements ConnectedNode {
    *          to this {@link Node} before it starts
    */
   public DefaultNode(NodeConfiguration nodeConfiguration, Collection<NodeListener> nodeListeners,
-      /*ScheduledExecutorService*/NioEventLoop scheduledExecutorService) {
+      ScheduledExecutorService scheduledExecutorService) {
     this.nodeConfiguration = NodeConfiguration.copyOf(nodeConfiguration);
     this.nodeListeners = new ListenerGroup<NodeListener>(scheduledExecutorService);
     this.nodeListeners.addAll(nodeListeners);
@@ -199,14 +176,18 @@ public class DefaultNode implements ConnectedNode {
     // During startup, we wait for 1) the RosoutLogger and 2) the TimeProvider.
     final CountDownLatch latch = new CountDownLatch(2);
 
-    rlog = new RosoutLogger(this);
-    rlog.getPublisher().addListener(new DefaultPublisherListener<rosgraph_msgs.Log>() {
-      @Override
-      public void onMasterRegistrationSuccess(Publisher<rosgraph_msgs.Log> registrant) {
-        latch.countDown();
-      }
-    });
-
+    try {
+		rlog = new RosoutLogger(this);
+	    rlog.getPublisher().addListener(new DefaultPublisherListener<rosgraph_msgs.Log>() {
+	        @Override
+	        public void onMasterRegistrationSuccess(Publisher<rosgraph_msgs.Log> registrant) {
+	          latch.countDown();
+	        }
+	    });
+	} catch (IOException e1) {
+		log.error("The Ros Logger has failed to start.",e1);
+		throw new RuntimeException(e1);
+	}
     boolean useSimTime = false;
     try {
       useSimTime =
@@ -256,7 +237,11 @@ public class DefaultNode implements ConnectedNode {
         nodeConfiguration.getTopicDescriptionFactory().newFromType(messageType);
     TopicDeclaration topicDeclaration =
         TopicDeclaration.newFromTopicName(resolvedTopicName, topicDescription);
-    return publisherFactory.newOrExisting(topicDeclaration);
+    Publisher<T> publisher = null;
+    try {
+     publisher = publisherFactory.newOrExisting(topicDeclaration, slaveServer.getSubscribers());
+    } catch(IOException e) { throw new RosRuntimeException(e); }
+    return publisher;
   }
 
   @Override
@@ -271,7 +256,10 @@ public class DefaultNode implements ConnectedNode {
         nodeConfiguration.getTopicDescriptionFactory().newFromType(messageType);
     TopicDeclaration topicDeclaration =
         TopicDeclaration.newFromTopicName(resolvedTopicName, topicDescription);
-    Subscriber<T> subscriber = subscriberFactory.newOrExisting(topicDeclaration);
+    Subscriber<T> subscriber = null;
+    try {
+    	subscriber = subscriberFactory.newOrExisting(topicDeclaration);
+    } catch(IOException e) { throw new RosRuntimeException(e); }
     return subscriber;
   }
 
@@ -328,8 +316,7 @@ public class DefaultNode implements ConnectedNode {
   }
 
   @Override
-  public <T, S> ServiceClient<T, S> newServiceClient(GraphName serviceName, String serviceType)
-      throws ServiceNotFoundException {
+  public <T, S> ServiceClient<T, S> newServiceClient(GraphName serviceName, String serviceType) throws Exception {
     GraphName resolvedServiceName = resolveName(serviceName);
     InetSocketAddress uri = lookupServiceUri(resolvedServiceName);
     if (uri == null) {
@@ -344,8 +331,7 @@ public class DefaultNode implements ConnectedNode {
   }
 
   @Override
-  public <T, S> ServiceClient<T, S> newServiceClient(String serviceName, String serviceType)
-      throws ServiceNotFoundException {
+  public <T, S> ServiceClient<T, S> newServiceClient(String serviceName, String serviceType) throws Exception {
     return newServiceClient(GraphName.of(serviceName), serviceType);
   }
 

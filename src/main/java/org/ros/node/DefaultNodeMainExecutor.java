@@ -22,8 +22,6 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.DefaultScheduledExecutorService;
 import org.ros.namespace.GraphName;
 
-import io.netty.channel.nio.NioEventLoopGroup;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -76,7 +74,7 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
    *         future
    */
   public static NodeMainExecutor newDefault() {
-    return newDefault(new NioEventLoopGroup().next()/*new DefaultScheduledExecutorService()*/);
+    return newDefault(new DefaultScheduledExecutorService());
   }
 
   /**

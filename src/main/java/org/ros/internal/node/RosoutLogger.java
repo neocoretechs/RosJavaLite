@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.Topics;
 import org.ros.node.topic.Publisher;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -36,7 +37,7 @@ class RosoutLogger implements Log {
   private final Publisher<rosgraph_msgs.Log> publisher;
   private final Log log;
 
-  public RosoutLogger(DefaultNode defaultNode) {
+  public RosoutLogger(DefaultNode defaultNode) throws IOException {
     this.defaultNode = defaultNode;
     publisher = defaultNode.newPublisher(Topics.ROSOUT, rosgraph_msgs.Log._TYPE);
     log = LogFactory.getLog(defaultNode.getName().toString());

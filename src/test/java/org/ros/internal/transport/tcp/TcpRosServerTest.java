@@ -27,8 +27,7 @@ import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.address.InetSocketAddressFactory;
 
-import io.netty.channel.nio.NioEventLoopGroup;
-
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
@@ -43,7 +42,7 @@ public class TcpRosServerTest {
 
   @Before
   public void setup() {
-    executorService = new NioEventLoopGroup().next();//Executors.newScheduledThreadPool(10);
+    executorService = Executors.newScheduledThreadPool(10);
   }
 
   @After
@@ -52,10 +51,9 @@ public class TcpRosServerTest {
   }
 
   @Test
-  public void testGetAddressFailsIfServerNotRunning() throws UnknownHostException {
+  public void testGetAddressFailsIfServerNotRunning() throws IOException {
     TcpRosServer tcpRosServer =
-        new TcpRosServer(BindAddress.newPublic(), AdvertiseAddress.newPublic(8090), null, null,
-            executorService);
+        new TcpRosServer(BindAddress.newPublic(), AdvertiseAddress.newPublic(8090), null, null, executorService);
 
     try {
       tcpRosServer.getAddress();
@@ -80,7 +78,7 @@ public class TcpRosServerTest {
   }
 
   @Test
-  public void testFailIfPortTaken() {
+  public void testFailIfPortTaken() throws IOException {
     TcpRosServer firstServer =
         new TcpRosServer(BindAddress.newPublic(), AdvertiseAddress.newPublic(8090), null, null,
             executorService);
@@ -98,7 +96,7 @@ public class TcpRosServerTest {
   }
 
   @Test
-  public void testFailIfStartedWhileRunning() {
+  public void testFailIfStartedWhileRunning() throws IOException {
     TcpRosServer tcpRosServer =
         new TcpRosServer(BindAddress.newPublic(), AdvertiseAddress.newPublic(8090), null, null,
             executorService);

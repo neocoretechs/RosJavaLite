@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.server;
 
 import org.ros.address.AdvertiseAddress;
@@ -28,14 +12,12 @@ import org.ros.internal.node.topic.SubscriberIdentifier;
 import org.ros.internal.node.topic.TopicDeclaration;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.system.Process;
+import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ProtocolDescription;
 import org.ros.internal.transport.ProtocolNames;
 import org.ros.internal.transport.tcp.TcpRosProtocolDescription;
 import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.namespace.GraphName;
-
-import io.netty.channel.EventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -45,7 +27,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class SlaveServer extends RpcServer {
 
@@ -71,15 +53,21 @@ public class SlaveServer extends RpcServer {
 	} catch (ClassNotFoundException e) {
 		throw new IOException(e);
 	}
-    EventLoop exec = new NioEventLoopGroup().next();
+   
     this.tcpRosServer =
-        new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager, serviceManager, exec/*utorService*/);
+        new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager, serviceManager, executorService);
   }
 
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
     return tcpRosServer.getAdvertiseAddress();
   }
-
+  /**
+   * Return the ChannelHandlerContext array of subscribers
+   * @return
+   */
+  public List<ChannelHandlerContext> getSubscribers() {
+	  return tcpRosServer.getSubscribers();
+  }
   /**
    * Start the RPC server. This start() routine requires that the
    * {@link TcpRosServer} is initialized first so that the slave server returns

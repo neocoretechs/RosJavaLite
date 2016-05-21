@@ -1,5 +1,12 @@
 package org.ros.internal.transport.queue;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.Channel;
+import java.nio.channels.CompletionHandler;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
@@ -14,17 +21,13 @@ import org.apache.commons.logging.LogFactory;
 
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.CircularBlockingDeque;
+import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.system.Utility;
+import org.ros.internal.transport.ChannelHandlerContext;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.ChannelGroupFuture;
-import io.netty.channel.group.ChannelGroupFutureListener;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoop;
+
 
 /**
  */
@@ -36,45 +39,55 @@ public class OutgoingMessageQueue<T> {
   private static final int DEQUE_CAPACITY = 16;
 
   private final CircularBlockingDeque<T> deque;
-  private final ChannelGroup channelGroup;
+  private final AsynchronousChannelGroup channelGroup;
   private final Writer writer;
   private final MessageBufferPool messageBufferPool;
-  private final ByteBuf latchedBuffer;
+  private final ByteBuffer latchedBuffer;
   private final Object mutex;
 
   private boolean latchMode;
   private T latchedMessage;
+  
+  private List<ChannelHandlerContext> channels;
 
   private final class Writer extends CancellableLoop {
     @Override
     public void loop() throws InterruptedException {
       T message = deque.takeFirst();
-      final ByteBuf buffer = messageBufferPool.acquire();
+      final ByteBuffer buffer = messageBufferPool.acquire();
       Utility.serialize(message, buffer);
-      if (DEBUG && channelGroup.size() > 0 ) {
-        log.info(String.format("Writing %d bytes to %d channels.", buffer.readableBytes(), channelGroup.size()));
+      if (DEBUG  ) {
+        log.info(String.format("Writing %d bytes to %d channels.", buffer.limit(), channelGroup));
       }
-      // Note that the buffer is automatically "duplicated" by Netty to avoid
-      // race conditions. However, the duplicated buffer and the original buffer
-      // share the same backing array. So, we have to wait until the write
+      // we have to wait until the write
       // operation is complete before returning the buffer to the pool.
-      channelGroup.writeAndFlush(buffer).addListener(new ChannelGroupFutureListener() {
+      Iterator<ChannelHandlerContext> it = channels.iterator();
+      while(it.hasNext()) {
+    	  ChannelHandlerContext ctx = it.next();
+    	  ctx.write(buffer, new CompletionHandler<Integer, Void>() {
         @Override
-        public void operationComplete(ChannelGroupFuture future) throws Exception {
+        public void completed(Integer a, Void b) {
           messageBufferPool.release(buffer);
         }
+		@Override
+		public void failed(Throwable arg0, Void arg1) {
+			log.error("Failed write");
+			throw new RosRuntimeException(arg0);
+		}
       });
+      }
     }
   }
 
-  public OutgoingMessageQueue(ExecutorService executorService) {
+  public OutgoingMessageQueue(ExecutorService executorService, List<ChannelHandlerContext> ctxs) throws IOException {
     deque = new CircularBlockingDeque<T>(DEQUE_CAPACITY);
-    channelGroup = new DefaultChannelGroup( (NioEventLoop) executorService);
+    channelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
     writer = new Writer();
     messageBufferPool = new MessageBufferPool();
     latchedBuffer = MessageBuffers.dynamicBuffer();
     mutex = new Object();
     latchMode = false;
+    channels = ctxs;
     executorService.execute(writer);
   }
 
@@ -106,31 +119,19 @@ public class OutgoingMessageQueue<T> {
    */
   public void shutdown() {
     writer.cancel();
-    channelGroup.close().awaitUninterruptibly();
+    channelGroup.shutdown();
   }
 
-  /**
-   * @param channel
-   *          added to this {@link OutgoingMessageQueue}'s {@link ChannelGroup}
-   */
-  public void addChannel(Channel channel) {
-    if (!writer.isRunning()) {
-      log.warn("Failed to add channel. Cannot add channels after shutdown.");
-      return;
-    }
-    if (latchMode && latchedMessage != null) {
-      writeLatchedMessage(channel);
-    }
-    channelGroup.add(channel);
-  }
 
-  // TODO(damonkohler): Avoid re-serializing the latched message if it hasn't
-  // changed.
-  private void writeLatchedMessage(Channel channel) {
+  private void writeLatchedMessage() {
     synchronized (mutex) {
       latchedBuffer.clear();
       Utility.serialize(latchedMessage, latchedBuffer);
-      channel.write(latchedBuffer);
+      Iterator<ChannelHandlerContext> it = channels.iterator();
+      while(it.hasNext()) {
+    	  ChannelHandlerContext ctx = it.next();
+    	  ctx.write(latchedBuffer);
+      }
     }
   }
 
@@ -138,10 +139,10 @@ public class OutgoingMessageQueue<T> {
    * @return the number of {@link Channel}s which have been added to this queue
    */
   public int getNumberOfChannels() {
-    return channelGroup.size();
+    return channels.size();
   }
 
-  public ChannelGroup getChannelGroup() {
+  public AsynchronousChannelGroup getChannelGroup() {
     return channelGroup;
   }
 }

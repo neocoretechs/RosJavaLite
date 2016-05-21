@@ -3,11 +3,9 @@ package org.ros.node;
 import org.ros.internal.node.DefaultNode;
 import org.ros.concurrent.SharedScheduledExecutorService;
 
-import io.netty.channel.nio.NioEventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
-
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
+
 
 /**
  * Constructs {@link DefaultNode}s.
@@ -24,7 +22,7 @@ public class DefaultNodeFactory implements NodeFactory {
 
   @Override
   public Node newNode(NodeConfiguration nodeConfiguration, Collection<NodeListener> listeners) {
-    return new DefaultNode(nodeConfiguration, listeners, (NioEventLoop) scheduledExecutorService);
+    return new DefaultNode(nodeConfiguration, listeners, scheduledExecutorService);
   }
 
   @Override

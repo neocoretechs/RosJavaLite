@@ -8,31 +8,23 @@ import org.apache.commons.logging.LogFactory;
 //import org.jboss.netty.channel.SimpleChannelHandler;
 //import org.jboss.netty.channel.group.ChannelGroup;
 import org.ros.exception.RosRuntimeException;
-
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.group.ChannelGroup;
+import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
 
 import java.io.IOException;
-import java.nio.channels.Channels;
+
 
 /**
- * Adds new {@link Channels} to the provided {@link ChannelGroup}.
+ * This handler is meant to sit at the top of the stack such that when exceptions are propagated
+ * to handlers this one receives notification last and can act upon it or not.
+ * @author jg
  * 
  */
-public class ConnectionTrackingHandler extends ChannelInboundHandlerAdapter {
+public class ConnectionTrackingHandler extends AbstractNamedChannelHandler {
 
   private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(ConnectionTrackingHandler.class);
 
-  /**
-   * The channel group the connection is to be part of.
-   */
-  private final ChannelGroup channelGroup;
-
-  public ConnectionTrackingHandler(ChannelGroup channelGroup) {
-	super();
-    this.channelGroup = channelGroup;
+  public ConnectionTrackingHandler() {
     if (DEBUG) {
         log.info("ConnectionTrackingHandler ctor");
       }
@@ -43,8 +35,6 @@ public class ConnectionTrackingHandler extends ChannelInboundHandlerAdapter {
     if (DEBUG) {
       log.info("ConnectionTrackingHandler added to channel(Channel open):" + ctx.channel());
     }
-    super.handlerAdded(ctx);
-    channelGroup.add(ctx.channel());
   }
 
   @Override
@@ -53,16 +43,13 @@ public class ConnectionTrackingHandler extends ChannelInboundHandlerAdapter {
     if (DEBUG) {
       log.info("ConnectionTrackingHandler removed(Channel closed):" + ctx.channel());
     }
-    super.handlerRemoved(ctx);
-    channelGroup.remove(ctx);
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {
     ctx.channel().close();
     if (e.getCause() instanceof IOException) {
-      // NOTE(damonkohler): We ignore exceptions here because they are common
-      // (e.g. network failure, connection reset by peer, shutting down, etc.)
+      // (network failure, connection reset by peer, shutting down, etc.)
       // and should not be fatal. However, in all cases the channel should be
       // closed.
       if (DEBUG) {
@@ -74,4 +61,38 @@ public class ConnectionTrackingHandler extends ChannelInboundHandlerAdapter {
       throw new RosRuntimeException(e.getCause());
     }
   }
+
+  @Override
+  public String getName() {
+	return "ConnectionTrackingHandler";
+  }
+
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		log.info("Channel active "+ctx);
+	}
+
+	@Override
+	public Object channelRead(ChannelHandlerContext ctx, Object buff) throws Exception {
+		log.info("Channel read "+ctx);
+		return buff;
+	}
+
+	@Override
+	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+		log.info("Channel read complete"+ctx);	
+	}
+
+
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		log.info("Channel inactive"+ ctx);
+	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object event)
+			throws Exception {
+		
+		log.info("User event triggered "+ctx+" "+event);	
+	}
 }

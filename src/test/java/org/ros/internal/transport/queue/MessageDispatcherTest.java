@@ -28,8 +28,6 @@ import org.ros.message.MessageFactory;
 import org.ros.message.MessageListener;
 
 import std_msgs.Int32;
-import io.netty.channel.EventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +48,7 @@ public class MessageDispatcherTest {
 
   @Before
   public void before() {
-    executorService = new NioEventLoopGroup().next();//Executors.newCachedThreadPool();
+    executorService = Executors.newCachedThreadPool();
     lazyMessages = new CircularBlockingDeque<LazyMessage<std_msgs.Int32>>(128);
     messageFactory = new DefaultMessageFactory(new MessageDefinitionReflectionProvider());
   }

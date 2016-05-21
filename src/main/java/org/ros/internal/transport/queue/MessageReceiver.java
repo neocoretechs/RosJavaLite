@@ -1,9 +1,6 @@
 package org.ros.internal.transport.queue;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-
-import io.netty.util.ReferenceCountUtil;
+import java.nio.ByteBuffer;
 
 import org.ros.concurrent.CircularBlockingDeque;
 import org.apache.commons.logging.Log;
@@ -13,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 //import org.jboss.netty.channel.ChannelHandlerContext;
 //import org.jboss.netty.channel.MessageEvent;
 
+import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
 
 
@@ -41,18 +39,13 @@ public class MessageReceiver<T> extends AbstractNamedChannelHandler {
   }
 
   @Override
-  public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    ByteBuf buffer = (ByteBuf) msg;
+  public Object channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    ByteBuffer buffer = (ByteBuffer) msg;
     if (DEBUG) {
-      log.info(String.format("Received %d byte message.", buffer.readableBytes()));
+      log.info(String.format("Received %d byte message.", buffer.limit()));
     }
-    try {
-    	// We have to make a defensive copy of the buffer here because Netty does
-    	// not guarantee that the returned ChannelBuffer will not be reused.
-    	lazyMessages.addLast(new LazyMessage<T>(buffer.copy()));
-    } finally {
-      ReferenceCountUtil.release(msg); //V4.x
-    }
+    lazyMessages.addLast(new LazyMessage<T>(buffer));
+    return msg;
   }
 
 
@@ -105,30 +98,7 @@ public void channelReadComplete(ChannelHandlerContext arg0) throws Exception {
 	
 }
 
-@Override
-public void channelRegistered(ChannelHandlerContext arg0) throws Exception {
-	   if( DEBUG ) {
-			  log.debug("MessageReceiver channel registered:"+arg0);
-		}
-	
-}
 
-@Override
-public void channelUnregistered(ChannelHandlerContext arg0) throws Exception {
-	   if( DEBUG ) {
-			  log.debug("MessageReceiver channel unregistered:"+arg0);
-		}
-	
-}
-
-@Override
-public void channelWritabilityChanged(ChannelHandlerContext arg0)
-		throws Exception {
-	   if( DEBUG ) {
-			  log.debug("MessageReceiver channel writeability changed:"+arg0);
-		}
-	
-}
 
 @Override
 public void userEventTriggered(ChannelHandlerContext arg0, Object arg1)

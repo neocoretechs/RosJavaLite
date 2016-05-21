@@ -1,13 +1,12 @@
-
 package org.ros.internal.node.service;
 
-import io.netty.buffer.ByteBuf;
+import java.nio.ByteBuffer;
 
 /**
 */
 class ServiceServerResponse {
   
-  private ByteBuf message;
+  private ByteBuffer message;
   private int errorCode;
   private int messageLength;
 
@@ -19,11 +18,11 @@ class ServiceServerResponse {
     return errorCode;
   }
 
-  public void setMessage(ByteBuf buffer) {
+  public void setMessage(ByteBuffer buffer) {
     message = buffer;
   }
 
-  public ByteBuf getMessage() {
+  public ByteBuffer getMessage() {
     return message;
   }
 

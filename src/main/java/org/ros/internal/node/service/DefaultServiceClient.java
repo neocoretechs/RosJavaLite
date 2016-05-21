@@ -2,7 +2,6 @@
 package org.ros.internal.node.service;
 
 
-//import org.jboss.netty.buffer.ChannelBuffer;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.system.Utility;
@@ -16,11 +15,9 @@ import org.ros.namespace.GraphName;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.util.concurrent.EventExecutor;
-
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
@@ -84,12 +81,12 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
   public static <S, T> DefaultServiceClient<S, T> newDefault(GraphName nodeName,
       ServiceDeclaration serviceDeclaration,
       MessageFactory messageFactory,
-      ScheduledExecutorService executorService) {
+      ScheduledExecutorService executorService) throws IOException {
     return new DefaultServiceClient<S, T>(nodeName, serviceDeclaration, messageFactory, executorService);
   }
 
   private DefaultServiceClient(GraphName nodeName, ServiceDeclaration serviceDeclaration,
-      MessageFactory messageFactory, ScheduledExecutorService executorService) {
+      MessageFactory messageFactory, ScheduledExecutorService executorService) throws IOException {
     this.serviceDeclaration = serviceDeclaration;
     this.messageFactory = messageFactory;
     messageBufferPool = new MessageBufferPool();
@@ -99,7 +96,7 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
     // TODO(damonkohler): Support non-persistent connections.
     connectionHeader.addField(ConnectionHeaderFields.PERSISTENT, "1");
     connectionHeader.merge(serviceDeclaration.toConnectionHeader());
-    tcpClientManager = new TcpClientManager((EventExecutor) executorService);
+    tcpClientManager = new TcpClientManager(executorService);
     ServiceClientHandshakeHandler<T, S> serviceClientHandshakeHandler =
         new ServiceClientHandshakeHandler<T, S>(connectionHeader, responseListeners, executorService);
     handshakeLatch = new HandshakeLatch();
@@ -108,12 +105,16 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
   }
 
   @Override
-  public void connect(InetSocketAddress inetSocketAddress) {
+  public void connect(InetSocketAddress inetSocketAddress) throws Exception {
     assert(inetSocketAddress != null) : "Address must be specified.";
     //assert(inetSocketAddress.getScheme().equals("rosrpc")) : "Invalid service URI.";
     assert(tcpClient == null) : "Already connected once.";
     handshakeLatch.reset();
-    tcpClient = tcpClientManager.connect(toString(), inetSocketAddress);
+    try {
+		tcpClient = tcpClientManager.connect(toString(), inetSocketAddress);
+	} catch (IOException e1) {
+		throw new RosRuntimeException("TcpClient failed to connect to remote "+toString()+" "+inetSocketAddress, e1);
+	}
     try {
       if (!handshakeLatch.await(1, TimeUnit.SECONDS)) {
         throw new RosRuntimeException(handshakeLatch.getErrorMessage());
@@ -131,11 +132,11 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
 
   @Override
   public void call(T request, ServiceResponseListener<S> listener) {
-    ByteBuf buffer = messageBufferPool.acquire();
+    ByteBuffer buffer = messageBufferPool.acquire();
     // serialize request to buffer
     Utility.serialize(request, buffer);
     responseListeners.add(listener);
-    tcpClient.write(buffer).awaitUninterruptibly();
+    tcpClient.write(buffer);
     messageBufferPool.release(buffer);
   }
 

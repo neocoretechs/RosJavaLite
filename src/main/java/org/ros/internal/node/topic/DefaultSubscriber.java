@@ -1,25 +1,10 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.topic;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
+import org.ros.exception.RosRuntimeException;
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.transport.ProtocolNames;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
@@ -30,8 +15,7 @@ import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.SubscriberListener;
 
-import io.netty.util.concurrent.EventExecutor;
-
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Default implementation of a {@link Subscriber}.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Subscriber<T> {
 
@@ -69,17 +53,17 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
   private final ListenerGroup<SubscriberListener<T>> subscriberListeners;
 
   public static <S> DefaultSubscriber<S> newDefault(NodeIdentifier nodeIdentifier,
-      TopicDeclaration description, ScheduledExecutorService executorService) {
+      TopicDeclaration description, ScheduledExecutorService executorService) throws IOException {
     return new DefaultSubscriber<S>(nodeIdentifier, description, executorService);
   }
 
-  private DefaultSubscriber(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration, ScheduledExecutorService executorService) {
+  private DefaultSubscriber(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration, ScheduledExecutorService executorService) throws IOException {
     super(topicDeclaration);
     this.nodeIdentifier = nodeIdentifier;
     this.executorService = executorService;
     incomingMessageQueue = new IncomingMessageQueue<T>(executorService);
     knownPublishers = new HashSet<PublisherIdentifier>();
-    tcpClientManager = new TcpClientManager((EventExecutor) executorService);
+    tcpClientManager = new TcpClientManager(executorService);
     mutex = new Object();
     SubscriberHandshakeHandler<T> subscriberHandshakeHandler =
         new SubscriberHandshakeHandler<T>(toDeclaration().toConnectionHeader(),
@@ -137,14 +121,20 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
   }
 
 
-  public void addPublisher(PublisherIdentifier publisherIdentifier, InetSocketAddress address) {
+  public void addPublisher(PublisherIdentifier publisherIdentifier, InetSocketAddress address) throws Exception {
     synchronized (mutex) {
       // TODO(damonkohler): If the connection is dropped, knownPublishers should
       // be updated.
       if (knownPublishers.contains(publisherIdentifier)) {
         return;
       }
-      tcpClientManager.connect(toString(), address);
+      try {
+    	
+		tcpClientManager.connect(toString(), address);
+      } catch (IOException e) {
+    	log.error("Failure attempting to add publisher "+toString()+" "+address);
+		throw new RosRuntimeException(e);
+      }
       // TODO(damonkohler): knownPublishers is duplicate information that is
       // already available to the TopicParticipantManager.
       knownPublishers.add(publisherIdentifier);

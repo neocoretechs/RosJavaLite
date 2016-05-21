@@ -6,6 +6,8 @@ import org.apache.commons.logging.LogFactory;
 //import org.jboss.netty.channel.ChannelPipeline;
 //import org.jboss.netty.channel.MessageEvent;
 import org.ros.internal.transport.BaseClientHandshakeHandler;
+import org.ros.internal.transport.ChannelHandlerContext;
+import org.ros.internal.transport.ChannelPipeline;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
@@ -13,11 +15,7 @@ import org.ros.internal.transport.tcp.NamedChannelHandler;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
-
+import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.concurrent.ExecutorService;
 
@@ -46,7 +44,7 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
 
   @Override
   protected void onSuccess(ConnectionHeader incomingConnectionHeader, ChannelHandlerContext ctx) {
-    ChannelPipeline pipeline = ctx.channel().pipeline();
+    ChannelPipeline pipeline = ctx.pipeline();
     pipeline.remove(SubscriberHandshakeHandler.this);
     NamedChannelHandler namedChannelHandler = incomingMessageQueue.getMessageReceiver();
     pipeline.addLast(namedChannelHandler.getName(), namedChannelHandler);
@@ -57,9 +55,9 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
   }
 
   @Override
-  protected void onFailure(String errorMessage, ChannelHandlerContext ctx) {
+  protected void onFailure(String errorMessage, ChannelHandlerContext ctx) throws IOException {
     log.error("Subscriber handshake failed: " + errorMessage);
-    ctx.channel().close();
+    ctx.close();
   }
 
   @Override
@@ -67,66 +65,33 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
     return "SubscriberHandshakeHandler";
   }
 
-@Override
-public void channelInactive(ChannelHandlerContext arg0) throws Exception {
-	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.channelInactive:"+arg0);
-	
-}
 
-
-@Override
-public void channelRegistered(ChannelHandlerContext arg0) throws Exception {
-	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.channelRegistered:"+arg0);
-	
-}
-
-@Override
-public void channelUnregistered(ChannelHandlerContext arg0) throws Exception {
-	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.channelUnregistered:"+arg0);
-	
-}
-
-@Override
-public void channelWritabilityChanged(ChannelHandlerContext arg0)
-		throws Exception {
-	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.channelWritabilityChanged:"+arg0);
-	
-}
-
-@Override
-public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1)
-		throws Exception {
+  public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1) throws Exception {
 	onFailure(arg1.getMessage(), arg0);
-	
-}
+	if( DEBUG )
+		log.debug("SubscriberHandshakeHandler.exception caught:"+arg0+" "+arg1);
+  }
 
-@Override
-public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
+  @Override
+  public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
 		log.debug("SubscriberHandshakeHandler.handlerAdded:"+arg0);
-	
-}
+  }
 
-@Override
-public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
+  @Override
+  public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
 		log.debug("SubscriberHandshakeHandler.handlerRemoved:"+arg0);
 	
-}
+  }
 
 @Override
-public void userEventTriggered(ChannelHandlerContext arg0, Object arg1)
+public void userEventTriggered(ChannelHandlerContext ctx, Object event)
 		throws Exception {
 	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.userEventTrigglyPuffed:"+arg0);
-	
+		log.debug("SubscriberHandshakeHandler.userEventTriggered:"+ctx+" "+event);
 	
 }
-
 
 
 }

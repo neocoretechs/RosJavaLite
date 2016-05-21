@@ -4,20 +4,17 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
-import io.netty.buffer.ByteBuf;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.message.Message;
 import org.ros.internal.message.field.DirectByteArrayOutputStream;
-import org.ros.internal.transport.tcp.TcpRosServer;
 
 public class Utility {
 	  private static final Log log = LogFactory.getLog(Utility.class);
-	 public static <T> void serialize(T value, ByteBuf buffer) {
+	 public static <T> void serialize(T value, ByteBuffer buffer) {
 		    //serializer.serialize((Message) value, buffer);
 			DirectByteArrayOutputStream dbaos = new DirectByteArrayOutputStream();
 			ObjectOutputStream oos;
@@ -25,7 +22,7 @@ public class Utility {
 				oos = new ObjectOutputStream(dbaos);
 				oos.writeObject(value);
 				oos.flush();
-				buffer.writeBytes(dbaos.getBuf());
+				buffer.put(dbaos.getBuf());
 				oos.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -33,7 +30,7 @@ public class Utility {
 	}
 
 	
-	 public static Object deserialize(ByteBuf buffer) {
+	 public static Object deserialize(ByteBuffer buffer) {
 		    //return deserializer.deserialize(buffer);
 			byte[] obuf = buffer.array();
 			Object Od = null;

@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
 import org.ros.internal.node.server.NodeIdentifier;
+import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
 import org.ros.internal.transport.queue.OutgoingMessageQueue;
@@ -30,11 +31,10 @@ import org.ros.node.topic.Publisher;
 import org.ros.node.topic.PublisherListener;
 import org.ros.node.topic.Subscriber;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.nio.NioEventLoop;
-import io.netty.channel.nio.NioEventLoopGroup;
-
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -63,13 +63,16 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
   private final ListenerGroup<PublisherListener<T>> listeners;
   private final NodeIdentifier nodeIdentifier;
   private final MessageFactory messageFactory;
+  // List of channelHandlerContexts that represent subscribers connected through publisher socket
+  private final List<ChannelHandlerContext> subscribers;
 
-  public DefaultPublisher(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration, MessageFactory messageFactory,
-      /*ScheduledExecutorService*/ NioEventLoop executorService) {
+  public DefaultPublisher(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration,
+		  MessageFactory messageFactory, ScheduledExecutorService executorService, List<ChannelHandlerContext> subscribers) throws IOException {
     super(topicDeclaration);
     this.nodeIdentifier = nodeIdentifier;
     this.messageFactory = messageFactory;
-    outgoingMessageQueue = new OutgoingMessageQueue<T>(executorService);
+    this.subscribers = subscribers;
+    outgoingMessageQueue = new OutgoingMessageQueue<T>(executorService, subscribers);
     listeners = new ListenerGroup<PublisherListener<T>>(executorService);
     listeners.add(new DefaultPublisherListener<T>() {
       @Override
@@ -140,9 +143,9 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
 
   @Override
   public void publish(T message) {
-    //if (DEBUG) {
-    //  log.info(String.format("Publishing message %s on topic %s.", message, getTopicName()));
-    //}
+    if (DEBUG) {
+      log.info(String.format("Publishing message %s on topic %s.", message, getTopicName()));
+    }
     outgoingMessageQueue.add(message);
   }
 
@@ -153,7 +156,7 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
    * 
    * @return encoded connection header from subscriber
    */
-  public ByteBuf finishHandshake(ConnectionHeader incomingHeader) {
+  public ByteBuffer finishHandshake(ConnectionHeader incomingHeader) {
     ConnectionHeader topicDefinitionHeader = getTopicDeclarationHeader();
     if (DEBUG) {
       //log.info("Subscriber handshake header: " + incomingHeader);
@@ -185,15 +188,16 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
    * 
    * @param subscriberIdentifer
    *          the {@link SubscriberIdentifier} of the new subscriber
-   * @param channel
+   * @param ctx
    *          the communication {@link Channel} to the {@link Subscriber}
    */
-  public void addSubscriber(SubscriberIdentifier subscriberIdentifer, Channel channel) {
+  public void addSubscriber(SubscriberIdentifier subscriberIdentifer, ChannelHandlerContext ctx) {
     if (DEBUG) {
       log.info(String.format("Adding subscriber %s channel %s to publisher %s.",
-          subscriberIdentifer, channel, this));
+          subscriberIdentifer, ctx, this));
     }
-    outgoingMessageQueue.addChannel(channel);
+    //outgoingMessageQueue.addChannel(ctx);
+    subscribers.add(ctx);
     signalOnNewSubscriber(subscriberIdentifer);
   }
 
