@@ -17,17 +17,16 @@ public class ConnectionTrackingChannelPipelineFactory extends ChannelInitializer
   private final ConnectionTrackingHandler connectionTrackingHandler;
   
   public ConnectionTrackingChannelPipelineFactory(AsynchronousChannelGroup channelGroup){
-	super();
     this.connectionTrackingHandler = new ConnectionTrackingHandler();
     if(DEBUG)
-    	log.debug("ConnectionTrackingChannelPipelineFactory ctor"+channelGroup);
+    	log.info("ConnectionTrackingChannelPipelineFactory ctor"+channelGroup);
   }
 
   @Override
   protected void initChannel(ChannelHandlerContext ch) throws Exception {
 	ch.pipeline().addLast(CONNECTION_TRACKING_HANDLER, connectionTrackingHandler);
 	if(DEBUG)
-	    	log.debug("ConnectionTrackingChannelPipelineFactory initchannel:"+ch);
+	    	log.info("ConnectionTrackingChannelPipelineFactory initchannel:"+ch);
   }
 
   

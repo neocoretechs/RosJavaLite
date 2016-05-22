@@ -13,10 +13,10 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
-import org.ros.internal.transport.ChannelHandlerContext;
-import org.ros.internal.transport.ChannelHandlerContextImpl;
-import org.ros.internal.transport.ChannelPipeline;
-import org.ros.internal.transport.ChannelPipelineImpl;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+
 
 /**
  * TcpClientManager manages TCP clients which are the subscriber and service clients that communicate with
@@ -25,18 +25,21 @@ import org.ros.internal.transport.ChannelPipelineImpl;
  * @author jg
  */
 public class TcpClientManager {
-
+  public static boolean DEBUG = true;
+  private static final Log log = LogFactory.getLog(TcpClientManager.class);
   private final AsynchronousChannelGroup channelGroup;
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
   private final Executor executor;
-  private ChannelPipeline pipeline;
+ 
 
   public TcpClientManager(ExecutorService executor) throws IOException {
     this.executor = executor;
     this.channelGroup = AsynchronousChannelGroup.withThreadPool(executor);
     this.tcpClients = new ArrayList<TcpClient>();
     this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();
+    if( DEBUG )
+    	log.info("TcpClientManager:"+executor+" "+channelGroup);
   }
 
   public void addNamedChannelHandler(NamedChannelHandler namedChannelHandler) {
@@ -60,7 +63,9 @@ public class TcpClientManager {
  * @throws IOException 
    */
   public TcpClient connect(String connectionName, SocketAddress socketAddress) throws Exception {
-    TcpClient tcpClient = new TcpClient(executor, pipeline, channelGroup);
+	if( DEBUG )
+	    	log.info("TcpClient connect:"+connectionName+" "+socketAddress);
+    TcpClient tcpClient = new TcpClient(executor, channelGroup);
     tcpClient.addAllNamedChannelHandlers(namedChannelHandlers);
     tcpClient.connect(connectionName, socketAddress);
     tcpClients.add(tcpClient);
@@ -72,6 +77,8 @@ public class TcpClientManager {
    * {@link Channel}s.
    */
   public void shutdown() {
+	if( DEBUG )
+	    	log.info("TcpClient shutdown:");
     channelGroup.shutdown();
     tcpClients.clear();
     // We don't call channelFactory.releaseExternalResources() or

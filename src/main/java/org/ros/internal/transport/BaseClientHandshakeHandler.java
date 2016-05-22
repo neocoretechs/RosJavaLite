@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
  * 
  */
 public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHandler {
-  private static boolean DEBUG = true;
+  protected static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(BaseClientHandshakeHandler.class);
   private final ClientHandshake clientHandshake;
   private final ListenerGroup<ClientHandshakeListener> clientHandshakeListeners;
@@ -41,7 +41,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
   
   @Override
   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-  	log.debug("Channel inactive"+ctx);
+  	log.info("Channel inactive"+ctx);
   }
 
   @Override
@@ -61,7 +61,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
   @Override
   public void channelReadComplete(ChannelHandlerContext arg0) throws Exception {
   	if( DEBUG )
-  		log.debug("SubscriberHandshakeHandler.channelReadComplete:"+arg0);
+  		log.info("SubscriberHandshakeHandler.channelReadComplete:"+arg0);
   	
   }
   /**

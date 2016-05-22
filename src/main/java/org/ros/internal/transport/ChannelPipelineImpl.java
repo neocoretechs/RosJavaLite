@@ -1,6 +1,5 @@
 package org.ros.internal.transport;
 
-import java.nio.channels.Channel;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,27 +9,24 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import org.ros.internal.transport.tcp.ChannelInitializer;
 /**
  * Implementation of the ChannelPipeline interface to process the requests via the pluggable ChannelHandlers
- * named in the queue
+ * named in the queue. The pipeline is per ChannelHandlerContext, per channel as it represents state in the form of the
+ * presence or absence of handlers such as the handshake handler, which disappears after initial handshake.
  * @author jg
  *
  */
 public class ChannelPipelineImpl implements ChannelPipeline {
+	
 	LinkedBlockingDeque<Entry<String, ChannelHandler>> queue = new LinkedBlockingDeque<Entry<String, ChannelHandler>>();
 	private ChannelHandlerContext ctx;
 	
 	public ChannelPipelineImpl(ChannelHandlerContext ctx) {
 		this.ctx = ctx;
 	}
-	public ChannelPipelineImpl() {}
+	//public ChannelPipelineImpl() {}
 	
 	public void setContext(ChannelHandlerContext ctx) { this.ctx = ctx; }
-	
-	public void inject(ChannelInitializer factory) throws Exception {
-		factory.channelRegistered(ctx);
-	}
 	
 
 	@Override
@@ -244,5 +240,9 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 		return this;
 	}
 
+	@Override
+	public String toString() {
+		return new String("[Channel pipeline:"+ctx.channel()+" with "+queue.size()+" handlers]");
+	}
 
 }

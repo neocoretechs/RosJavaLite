@@ -41,7 +41,7 @@ public final class BaseServer extends TCPServer {
 		startServer(WORKBOOTPORT, address);
 	}
 	/**
-	 * Load the methods of main Relatrix class as remotely invokable then we instantiate RelatrixServer
+	 * Start the server
 	 * @param args
 	 * @throws Exception
 	 */

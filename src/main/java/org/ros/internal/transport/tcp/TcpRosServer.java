@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -58,30 +59,20 @@ public class TcpRosServer implements Serializable {
   private transient AsynchronousChannelGroup outgoingChannelGroup; // publisher with connected subscribers
   private transient AsynchronousChannelGroup incomingChannelGroup; // subscriber connected to publishers
   private transient TcpServerPipelineFactory serverPipelineFactory;
-  private transient ChannelPipeline pipeline;
+  private transient ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   private transient List<ChannelHandlerContext> contexts;
-  
-  public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
-  public static final String LENGTH_FIELD_PREPENDER = "LengthFieldPrepender";
-  public static final String HANDSHAKE_HANDLER = "HandshakeHandler";
   
   public TcpRosServer() {}
 
   public TcpRosServer(BindAddress bindAddress, AdvertiseAddress advertiseAddress,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager,
-      ScheduledExecutorService executorService) throws IOException {
+      ScheduledExecutorService executorService) {
     this.bindAddress = bindAddress;
     this.advertiseAddress = advertiseAddress;
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     this.executorService = executorService;
-    this.incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
-    this.incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
-    this.advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
-    this.pipeline = new ChannelPipelineImpl();
     this.contexts = new ArrayList<ChannelHandlerContext>();
-    this.serverPipelineFactory =
-	        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); 
   }
 
   public void start() {
@@ -140,21 +131,20 @@ public class TcpRosServer implements Serializable {
 	       //childHandler(serverPipelineFactory);
 	       //ChannelFuture f = bootstrap.bind().sync();
 	       //outgoingChannel = f.channel();
-          pipeline.addLast(HANDSHAKE_HANDLER, new TcpServerHandshakeHandler(topicParticipantManager,serviceManager));
-		  final AsynchronousServerSocketChannel listener = AsynchronousServerSocketChannel.open(incomingChannelGroup);
-		  listener.bind(bindAddress.toInetSocketAddress());
+		  incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
+		  advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
+		  factoryStack = new ChannelInitializerFactoryStack();
+		  serverPipelineFactory =
+			        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); 
+		  factoryStack.addLast(serverPipelineFactory);
+		    
+		  AsynchBaseServer server = new AsynchBaseServer();
+		  server.startServer(incomingChannelGroup,(Executor) executorService, bindAddress.toInetSocketAddress());
 	      if (DEBUG) {
 		 	     log.info("TcpRosServer starting and Bound to:" + bindAddress + " with advertise address:"+advertiseAddress);
 		  }
-		  while(true) {
-			  Future<AsynchronousSocketChannel> channel = listener.accept();
-			  if( DEBUG ) {
-				  log.debug("Accept "+channel);
-			  }
-			  contexts.add(new ChannelHandlerContextImpl(incomingChannelGroup, pipeline, channel.get(), executorService));
-		  }
-	       //outgoingChannel.closeFuture().sync();
-      } catch (IOException | InterruptedException | ExecutionException e) {
+		  
+      } catch (Exception e) {
     	  throw new RosRuntimeException(e);
 	  } finally {
 		try {
@@ -210,4 +200,8 @@ public class TcpRosServer implements Serializable {
   public List<ChannelHandlerContext> getSubscribers() {
 	  return contexts;
   }
+  
+  public ChannelInitializerFactoryStack getFactoryStack() { return factoryStack; }
+
+
 }

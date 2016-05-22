@@ -170,7 +170,10 @@ public class TopicIntegrationTest extends RosTest {
           fail();
         } catch (RuntimeException e) {
           // Connecting to a disconnected publisher should fail.
-        }
+        } catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
       }
     }, nodeConfiguration);
   }

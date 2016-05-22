@@ -12,9 +12,15 @@ import java.util.concurrent.Future;
 
 /**
  * A handler context contains all the executor, the channel group, the channel, and the pipeline with the handlers.
- * There is one channel per context;
- * There is one pipeline per group of contexts
- * There is one executor per group of contexts
+ * There is one channel per context.
+ * There is one pipeline context.
+ * There is one executor per group of contexts.
+ * The pipeline is a stateful collection of handlers that represent the current channel state and means
+ * of executing functions in the process of connecting, disconnecting, reading, failing etc.
+ * The pipeline is configured by means of factories that create ChannelInitializers, inserting
+ * them in order in the pipeline deque.
+ * The functions of the system move data through the pipeline, triggering the handlers in the sequence they were
+ * added.
  * @author jg
  *
  */
@@ -23,15 +29,16 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	Executor executor;
 	AsynchronousSocketChannel channel;
 	ChannelPipeline pipeline;
+	
 	ByteBuffer buf;
 	int MAXBUF = 2000000;
 	
-	public ChannelHandlerContextImpl(AsynchronousChannelGroup grp, ChannelPipeline pipe, AsynchronousSocketChannel ch, Executor exc) {
+	public ChannelHandlerContextImpl(AsynchronousChannelGroup grp, AsynchronousSocketChannel ch, Executor exc) {
 		channelGroup = grp;
-		pipeline = pipe;
 		channel = ch;
 		executor = exc;
 		buf = ByteBuffer.allocate(MAXBUF);
+		pipeline = new ChannelPipelineImpl(this);
 	}
 	
 	public void setChannel(AsynchronousSocketChannel sock) {
@@ -125,6 +132,9 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 		return channel;
 	}
 
-
+	@Override
+	public String toString() {
+		return new String("ChannelHandlerContext:"+channel+" "+channelGroup+" "+executor+" "+pipeline);
+	}
 
 }

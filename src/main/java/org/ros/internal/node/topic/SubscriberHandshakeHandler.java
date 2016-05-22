@@ -39,7 +39,7 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
     super(new SubscriberHandshake(outgoingConnectionHeader), executorService);
     this.incomingMessageQueue = incomingMessageQueue;
     if( DEBUG )
-    	log.debug("subscriberhandshakeHandler ctor:"+this);
+    	log.info("subscriberhandshakeHandler ctor:"+this);
   }
 
   @Override
@@ -69,19 +69,19 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
   public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1) throws Exception {
 	onFailure(arg1.getMessage(), arg0);
 	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.exception caught:"+arg0+" "+arg1);
+		log.info("SubscriberHandshakeHandler.exception caught:"+arg0+" "+arg1);
   }
 
   @Override
   public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.handlerAdded:"+arg0);
+		log.info("SubscriberHandshakeHandler.handlerAdded:"+arg0);
   }
 
   @Override
   public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.handlerRemoved:"+arg0);
+		log.info("SubscriberHandshakeHandler.handlerRemoved:"+arg0);
 	
   }
 
@@ -89,7 +89,7 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
 public void userEventTriggered(ChannelHandlerContext ctx, Object event)
 		throws Exception {
 	if( DEBUG )
-		log.debug("SubscriberHandshakeHandler.userEventTriggered:"+ctx+" "+event);
+		log.info("SubscriberHandshakeHandler.userEventTriggered:"+ctx+" "+event);
 	
 }
 

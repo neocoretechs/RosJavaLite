@@ -57,12 +57,11 @@ public class TcpClient {
   private Executor executor;
   
   private AsynchronousSocketChannel channel;
-  private ChannelPipeline pipeline;
   private AsynchronousChannelGroup channelGroup;
-
-  public TcpClient( Executor executor, ChannelPipeline pipeline, AsynchronousChannelGroup channelGroup) {
+  private transient ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
+  
+  public TcpClient( Executor executor, AsynchronousChannelGroup channelGroup) {
 	  this.executor = executor;
-	  this.pipeline = pipeline;
 	  this.channelGroup = channelGroup;
     /*
     channelFactory = new NioClientSocketChannelFactory(executor, executor);
@@ -82,6 +81,7 @@ public class TcpClient {
       	option(ChannelOption.SO_KEEPALIVE, DEFAULT_KEEP_ALIVE);
       	*/
     namedChannelHandlers = new ArrayList<NamedChannelHandler>();
+	factoryStack = new ChannelInitializerFactoryStack();
   }
 
   public void setConnectionTimeout(long duration, TimeUnit unit) {
@@ -102,8 +102,8 @@ public class TcpClient {
   }
 
   public Channel connect(String connectionName, SocketAddress socketAddress) throws Exception {
-	ctx = new ChannelHandlerContextImpl(channelGroup, pipeline, null, executor);
-	channel = AsynchronousSocketChannel.open(ctx.getChannelGroup());
+	channel = AsynchronousSocketChannel.open(channelGroup);
+	ctx = new ChannelHandlerContextImpl(channelGroup, channel, executor);
     TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup()) {
       //@Override
       public void initChannel(ChannelHandlerContext ch) {
@@ -112,12 +112,15 @@ public class TcpClient {
         }
       }
     };
+    
+    factoryStack.addLast(tcpClientPipelineFactory);
     //bootstrap.handler(tcpClientPipelineFactory);
     //ChannelFuture future = bootstrap.connect(socketAddress).awaitUninterruptibly();
     //if (future.isSuccess()) {
     //  channel = future.channel();
     ctx.connect(socketAddress);
-    ((ChannelPipelineImpl)ctx.pipeline()).inject(tcpClientPipelineFactory);
+
+    
     if (DEBUG) {
         log.info("TcpClient Connected to socket: " + socketAddress);
     }

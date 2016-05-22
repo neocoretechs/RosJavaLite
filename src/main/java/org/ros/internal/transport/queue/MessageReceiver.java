@@ -61,7 +61,7 @@ public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1)
 @Override
 public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
     if( DEBUG ) {
-		  log.debug("MessageReceiver handler added:"+arg0);
+		  log.info("MessageReceiver handler added:"+arg0);
 	}
 	
 }
@@ -69,7 +69,7 @@ public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
 @Override
 public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
-			  log.debug("MessageReceiver handler removed:"+arg0);
+			  log.info("MessageReceiver handler removed:"+arg0);
 		}
 	
 }
@@ -77,7 +77,7 @@ public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
 @Override
 public void channelActive(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
-			  log.debug("MessageReceiver channel active:"+arg0);
+			  log.info("MessageReceiver channel active:"+arg0);
 		}
 	
 }
@@ -85,7 +85,7 @@ public void channelActive(ChannelHandlerContext arg0) throws Exception {
 @Override
 public void channelInactive(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
-			  log.debug("MessageReceiver channel inactive:"+arg0);
+			  log.info("MessageReceiver channel inactive:"+arg0);
 		}
 	
 }
@@ -93,7 +93,7 @@ public void channelInactive(ChannelHandlerContext arg0) throws Exception {
 @Override
 public void channelReadComplete(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
-			  log.debug("MessageReceiver read complete:"+arg0);
+			  log.info("MessageReceiver read complete:"+arg0);
 		}
 	
 }

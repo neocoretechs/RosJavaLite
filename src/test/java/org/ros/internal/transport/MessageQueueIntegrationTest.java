@@ -28,6 +28,7 @@ import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
 import org.ros.internal.transport.queue.OutgoingMessageQueue;
+import org.ros.internal.transport.tcp.ChannelInitializerFactoryStack;
 import org.ros.internal.transport.tcp.NamedChannelHandler;
 import org.ros.internal.transport.tcp.TcpClient;
 import org.ros.internal.transport.tcp.TcpClientManager;
@@ -36,9 +37,16 @@ import org.ros.message.MessageDefinitionProvider;
 import org.ros.message.MessageIdentifier;
 import org.ros.message.MessageListener;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteOrder;
+import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -61,19 +69,17 @@ public class MessageQueueIntegrationTest {
   private IncomingMessageQueue<std_msgs.String> firstIncomingMessageQueue;
   private IncomingMessageQueue<std_msgs.String> secondIncomingMessageQueue;
   private std_msgs.String expectedMessage;
+  private List<ChannelHandlerContext> channelHandlerContexts = new ArrayList<ChannelHandlerContext>();
   
   private InetSocketAddress isock = null;
 
-  private class ServerHandler implements ChannelHandler /*SimpleChannelHandler*/ {
+  private class ServerHandler implements ChannelHandler {
     @Override
     //public void channelConnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
       if (DEBUG) {
         log.info("Channel connected: " + ctx.channel().toString());
       }
-      //Channel channel = e.getChannel();
-      outgoingMessageQueue.addChannel(ctx.channel());
-     
     }
 
     @Override
@@ -118,6 +124,13 @@ public class MessageQueueIntegrationTest {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object event)
+			throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
   }
 
   @Before
@@ -129,7 +142,7 @@ public class MessageQueueIntegrationTest {
     expectedMessage = topicMessageFactory.newFromType(std_msgs.String._TYPE);
     expectedMessage.setData("Would you like to play a game?");
     outgoingMessageQueue =
-        new OutgoingMessageQueue<Message>( executorService);
+        new OutgoingMessageQueue<Message>( executorService, channelHandlerContexts);
     firstIncomingMessageQueue =
         new IncomingMessageQueue<std_msgs.String>(executorService);
     secondIncomingMessageQueue =
@@ -158,50 +171,57 @@ public class MessageQueueIntegrationTest {
     });
   }
 
-  private ServerBootstrap buildServerChannel() {
-	  isock = new InetSocketAddress(0);
+  private ChannelHandlerContext buildServerChannel() {
+	isock = new InetSocketAddress(0);
     TopicParticipantManager topicParticipantManager = new TopicParticipantManager();
     ServiceManager serviceManager = new ServiceManager();
-    //NioServerSocketChannelFactory channelFactory =
-    //    new NioServerSocketChannelFactory(executorService, executorService);
-    //ServerBootstrap bootstrap = new ServerBootstrap(channelFactory);
-    ServerBootstrap bootstrap = new ServerBootstrap();
-    bootstrap.group(executorService).
-    	channel(NioServerSocketChannel.class).
-    	option(ChannelOption.SO_BACKLOG, 100).
-    	option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
-    	localAddress(isock).
-    	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
-    	childOption(ChannelOption.SO_KEEPALIVE, true);
-    ChannelGroup serverChannelGroup = new DefaultChannelGroup(executorService.next());
+	AsynchronousChannelGroup incomingChannelGroup = null;
+	try {
+		incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	ChannelInitializerFactoryStack  factoryStack = new ChannelInitializerFactoryStack();
+  
     TcpServerPipelineFactory serverPipelineFactory =
-        new TcpServerPipelineFactory(serverChannelGroup, topicParticipantManager, serviceManager) {
+        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager) {
             @Override
-            protected void initChannel(Channel ch) {
+            protected void initChannel(ChannelHandlerContext ch) {
                 ch.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
-                ch.pipeline().addLast( new ServerHandler());
-            
+                ch.pipeline().addLast(ServerHandler.class.getSimpleName(), new ServerHandler());
             }
-            /*
-          //@Override
-          public ChannelPipeline pipeline() {
-            ChannelPipeline pipeline = super.getPipeline();
-            // We're not interested firstIncomingMessageQueue testing the
-            // handshake here. Removing it means connections are established
-            // immediately.
-            pipeline.remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
-            pipeline.addLast( new ServerHandler());
-            return pipeline;
-          }*/
         };
-       bootstrap.childHandler(serverPipelineFactory);
-    //bootstrap.setPipelineFactory(serverPipelineFactory);
-    //Channel serverChannel = bootstrap.bind(new InetSocketAddress(0));
-    
-    return bootstrap;
+     factoryStack.addLast(serverPipelineFactory);
+	  AsynchronousServerSocketChannel listener = null;
+	try {
+		listener = AsynchronousServerSocketChannel.open(incomingChannelGroup);
+	} catch (IOException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	}
+	  try {
+		listener.bind(isock);
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+
+     Future<AsynchronousSocketChannel> channel = listener.accept();
+	  if( DEBUG ) {
+		  log.debug("Accept "+channel);
+	  }
+     ChannelHandlerContextImpl ctx = null;
+	try {
+		ctx = new ChannelHandlerContextImpl(incomingChannelGroup,channel.get() , executorService);
+	} catch (InterruptedException | ExecutionException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+     return ctx;
   }
 
-  private TcpClient connect(TcpClientManager TcpClientManager, ServerBootstrap serverChannel) {
+  private TcpClient connect(TcpClientManager TcpClientManager) throws Exception {
     return TcpClientManager.connect("Foo", isock);
   }
 
@@ -228,15 +248,16 @@ public class MessageQueueIntegrationTest {
   @Test
   public void testSendAndReceiveMessage() throws InterruptedException {
     startRepeatingPublisher();
-    ServerBootstrap serverChannel = buildServerChannel();
+    channelHandlerContexts.add(buildServerChannel());
     try {
-    connect(firstTcpClientManager, serverChannel);
-    connect(secondTcpClientManager, serverChannel);
+    connect(firstTcpClientManager);
+    connect(secondTcpClientManager);
     expectMessages();
-    Future<Void> f = serverChannel.bind().sync();
-    // Wait until the server socket is closed.
-    f.channel().closeFuture().sync();
-    } finally {
+ 
+    } catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} finally {
         // Shut down all event loops to terminate all threads.
         executorService.shutdown();
         // Wait until all threads are terminated.
@@ -250,12 +271,12 @@ public class MessageQueueIntegrationTest {
     // IncomingMessageQueues that connect in the future to receive the message.
     outgoingMessageQueue.setLatchMode(true);
     outgoingMessageQueue.add(expectedMessage);
-    ServerBootstrap serverChannel = buildServerChannel();
+    channelHandlerContexts.add(buildServerChannel());
     try {
     firstIncomingMessageQueue.setLatchMode(true);
     secondIncomingMessageQueue.setLatchMode(true);
-    connect(firstTcpClientManager, serverChannel);
-    connect(secondTcpClientManager, serverChannel);
+    connect(firstTcpClientManager);
+    connect(secondTcpClientManager);
     // The first set of incoming messages could either be from the
     // OutgoingMessageQueue latching or the Subscriber latching. This is
     // equivalent to waiting for the message to arrive and ensures that we've
@@ -264,14 +285,15 @@ public class MessageQueueIntegrationTest {
     // The second set of incoming messages can only be from the
     // IncomingMessageQueue latching since we only sent one message.
     expectMessages();
-    ChannelFuture f = serverChannel.bind().sync();
-    // Wait until the server socket is closed.
-    f.channel().closeFuture().sync();
-    } finally {
+  
+    } catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} finally {
         // Shut down all event loops to terminate all threads.
-        executorService.shutdownGracefully();
+        executorService.shutdown();
         // Wait until all threads are terminated.
-        executorService.terminationFuture().sync();
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
        
     }
   }
@@ -279,15 +301,18 @@ public class MessageQueueIntegrationTest {
   @Test
   public void testSendAfterIncomingQueueShutdown() throws InterruptedException {
     startRepeatingPublisher();
-    ServerBootstrap serverChannel = buildServerChannel();
+    channelHandlerContexts.add(buildServerChannel());
     try {
-    connect(firstTcpClientManager, serverChannel);
+    connect(firstTcpClientManager);
     firstTcpClientManager.shutdown();
     outgoingMessageQueue.add(expectedMessage);
-    Future<Void> f = serverChannel.bind().sync();
+  
     // Wait until the server socket is closed.
     //f.channel().closeFuture().sync();
-    } finally {
+    } catch (Exception e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} finally {
         // Shut down all event loops to terminate all threads.
         executorService.shutdown();     
         // Wait until all threads are terminated.
@@ -297,13 +322,12 @@ public class MessageQueueIntegrationTest {
   }
 
   @Test
-  public void testSendAfterServerChannelClosed() throws InterruptedException {
+  public void testSendAfterServerChannelClosed() throws Exception {
     startRepeatingPublisher();
-    ServerBootstrap serverChannel = buildServerChannel();
-    connect(firstTcpClientManager, serverChannel);
+    channelHandlerContexts.add(buildServerChannel());
+    connect(firstTcpClientManager);
     //assertTrue(serverChannel.close().await(1, TimeUnit.SECONDS));
     // Start the server.
-    Future<Void> f = serverChannel.bind().sync();
     // Shut down all event loops to terminate all threads.
     executorService.shutdown();
     // Wait until all threads are terminated.
@@ -315,14 +339,13 @@ public class MessageQueueIntegrationTest {
   }
 
   @Test
-  public void testSendAfterOutgoingQueueShutdown() throws InterruptedException {
+  public void testSendAfterOutgoingQueueShutdown() throws Exception {
     startRepeatingPublisher();
     try {
-    ServerBootstrap serverChannel = buildServerChannel();
-    connect(firstTcpClientManager, serverChannel);
+    channelHandlerContexts.add(buildServerChannel());
+    connect(firstTcpClientManager);
     outgoingMessageQueue.shutdown();
     outgoingMessageQueue.add(expectedMessage);
-    Future f = serverChannel.bind().sync();
     // Wait until the server socket is closed.
     //f.channel().closeFuture().sync();
     } finally {

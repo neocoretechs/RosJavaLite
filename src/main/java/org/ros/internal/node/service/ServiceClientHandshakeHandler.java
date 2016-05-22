@@ -45,8 +45,8 @@ class ServiceClientHandshakeHandler<T, S> extends BaseClientHandshakeHandler {
   @Override
   protected void onSuccess(ConnectionHeader incommingConnectionHeader, ChannelHandlerContext ctx) {
     ChannelPipeline pipeline = ctx.pipeline();
-    pipeline.remove(TcpClientPipelineFactory.LENGTH_FIELD_BASED_FRAME_DECODER);
-    pipeline.remove(ServiceClientHandshakeHandler.this);
+    //pipeline.remove(TcpClientPipelineFactory.LENGTH_FIELD_BASED_FRAME_DECODER);
+    pipeline.remove(ServiceClientHandshakeHandler.this); // remove this instance of ChannelHandler
     //pipeline.addLast("ResponseDecoder", new ServiceResponseDecoder<S>());
     pipeline.addLast("ResponseHandler", new ServiceResponseHandler<S>(responseListeners, executorService));
   }
@@ -65,33 +65,37 @@ class ServiceClientHandshakeHandler<T, S> extends BaseClientHandshakeHandler {
 
 @Override
 public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
-	// TODO Auto-generated method stub
+	if( DEBUG )
+		log.debug("Handler added "+arg0);
 	
 }
 
 @Override
 public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
-	// TODO Auto-generated method stub
-	
+	if( DEBUG )
+		log.debug("Handler removed "+arg0);
 }
 
 @Override
 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-	// TODO Auto-generated method stub
+	if( DEBUG )
+		log.debug("Channel Inactive "+ctx);
 	
 }
 
 @Override
 public void exceptionCaught(ChannelHandlerContext ctx, Throwable th)
 		throws Exception {
-	// TODO Auto-generated method stub
+	if( DEBUG )
+		log.debug("Exception caught "+ctx+" "+th);
 	
 }
 
 @Override
 public void userEventTriggered(ChannelHandlerContext ctx, Object event)
 		throws Exception {
-	// TODO Auto-generated method stub
+	if( DEBUG )
+		log.debug("Event triggly "+ctx+ " "+event);
 	
 }
 

@@ -100,6 +100,9 @@ public class ServiceIntegrationTest extends RosTest {
         } catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
         test_ros.AddTwoIntsRequest request = serviceClient.newMessage();
         request.setA(2);
@@ -184,6 +187,9 @@ public class ServiceIntegrationTest extends RosTest {
         } catch (ServiceNotFoundException e) {
           throw new RosRuntimeException(e);
         } catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}

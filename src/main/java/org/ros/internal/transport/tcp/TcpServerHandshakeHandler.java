@@ -48,19 +48,19 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     if( DEBUG ) {
-		  log.debug("TcpServerHandshakeHandler ctor:"+topicParticipantManager+" "+serviceManager);
+		  log.info("TcpServerHandshakeHandler ctor:"+topicParticipantManager+" "+serviceManager);
 	}
   }
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
-	  log.debug("Channel active");
+	  log.info("Channel active");
   }
   
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object e) throws Exception {
 	if( DEBUG ) {
-			  log.debug("TcpServerHandshakeHandler channelRead:"+e);
+			  log.info("TcpServerHandshakeHandler channelRead:"+e);
 	}
     ByteBuffer incomingBuffer =  ByteBuffer.wrap((byte[])e);
     ChannelPipeline pipeline = ctx.pipeline();
@@ -75,7 +75,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 
   private void handleServiceHandshake(ChannelHandlerContext ctx, Object e, ChannelPipeline pipeline, ConnectionHeader incomingHeader) throws IOException {
 	if( DEBUG ) {
-		  log.debug("service handshake:"+e);
+		  log.info("service handshake:"+e);
 	}
     GraphName serviceName = GraphName.of(incomingHeader.getField(ConnectionHeaderFields.SERVICE));
     assert(serviceManager.hasServer(serviceName));
@@ -95,7 +95,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
   private void handleSubscriberHandshake(ChannelHandlerContext ctx, Object e, ConnectionHeader incomingConnectionHeader)
       throws InterruptedException, Exception {
 	  if( DEBUG ) {
-		  log.debug("subscriber handshake:"+e);
+		  log.info("subscriber handshake:"+e);
 	  }
     assert(incomingConnectionHeader.hasField(ConnectionHeaderFields.TOPIC)) :
         "Handshake header missing field: " + ConnectionHeaderFields.TOPIC;
@@ -118,32 +118,32 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     // drop everything.
     ctx.pipeline().remove(this);
 	if( DEBUG ) {
-		  log.debug("subscriber complete:"+e);
+		  log.info("subscriber complete:"+e);
 	}
   }
 
 @Override
 public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-	log.debug("Handler added "+ctx);
+	log.info("Handler added "+ctx);
 	
 }
 
 @Override
 public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-	log.debug("Handler removed "+ctx);
+	log.info("Handler removed "+ctx);
 	
 }
 
 @Override
 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-	log.debug("Channel inactive "+ctx);
+	log.info("Channel inactive "+ctx);
 	
 }
 
 
 @Override
 public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-	log.debug("channel read complete "+ctx);
+	log.info("channel read complete "+ctx);
 	
 }
 
@@ -156,7 +156,7 @@ public void exceptionCaught(ChannelHandlerContext ctx, Throwable msg)throws Exce
 @Override
 public void userEventTriggered(ChannelHandlerContext ctx, Object event)
 		throws Exception {
-	log.debug("User event triggered "+ctx+" "+event);
+	log.info("User event triggered "+ctx+" "+event);
 	
 }
 

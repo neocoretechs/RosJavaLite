@@ -11,7 +11,11 @@ import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ChannelPipeline;
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * Factory to be injected into the pipeline manager to initialize the handlers for a particular function.
+ * One of a family of such pipeline manager injectors. This is roughly modeled after netty v3.x where
+ * the pipeline provides the initChannel method with passed context and initialized channel for post initialization
+ * user level initializing action.
+ * @author jg
  */
 public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineFactory {
   public static boolean DEBUG = true;
@@ -27,7 +31,7 @@ public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineF
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
     super(channelGroup);
     if( DEBUG )
-    	log.debug("TcpServerPipeLineFactory ctor:"+channelGroup+" "+topicParticipantManager+" "+serviceManager);
+    	log.info("TcpServerPipeLineFactory ctor:"+channelGroup+" "+topicParticipantManager+" "+serviceManager);
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
   }

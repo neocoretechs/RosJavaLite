@@ -12,7 +12,6 @@ import java.util.concurrent.ThreadFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.transport.tcp.TcpRosServer;
 
 
 /**

@@ -57,7 +57,7 @@ public class OutgoingMessageQueue<T> {
       final ByteBuffer buffer = messageBufferPool.acquire();
       Utility.serialize(message, buffer);
       if (DEBUG  ) {
-        log.info(String.format("Writing %d bytes to %d channels.", buffer.limit(), channelGroup));
+        log.info(String.format("Writing %d bytes.", buffer.limit()));
       }
       // we have to wait until the write
       // operation is complete before returning the buffer to the pool.
