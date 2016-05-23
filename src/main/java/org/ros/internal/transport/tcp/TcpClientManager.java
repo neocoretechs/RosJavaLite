@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.internal.transport.ChannelHandlerContext;
 
 
 
@@ -22,6 +23,8 @@ import org.apache.commons.logging.LogFactory;
  * TcpClientManager manages TCP clients which are the subscriber and service clients that communicate with
  * remote peers outside master domain. 
  * It requires the context with the channel group, and executor service constructed.
+ * For each TcpClient constructed there will be an associated ChannelHandlerContext.
+ * We maintain a list of the ChannelHandlerContexts here (as TcpClients) such that we may perform the necessary ops on them.
  * @author jg
  */
 public class TcpClientManager {
@@ -31,13 +34,13 @@ public class TcpClientManager {
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
   private final Executor executor;
- 
 
   public TcpClientManager(ExecutorService executor) throws IOException {
     this.executor = executor;
     this.channelGroup = AsynchronousChannelGroup.withThreadPool(executor);
     this.tcpClients = new ArrayList<TcpClient>();
     this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();
+
     if( DEBUG )
     	log.info("TcpClientManager:"+executor+" "+channelGroup);
   }
@@ -65,8 +68,7 @@ public class TcpClientManager {
   public TcpClient connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	if( DEBUG )
 	    	log.info("TcpClient connect:"+connectionName+" "+socketAddress);
-    TcpClient tcpClient = new TcpClient(executor, channelGroup);
-    tcpClient.addAllNamedChannelHandlers(namedChannelHandlers);
+    TcpClient tcpClient = new TcpClient(executor, channelGroup, namedChannelHandlers);
     tcpClient.connect(connectionName, socketAddress);
     tcpClients.add(tcpClient);
     return tcpClient;

@@ -2,9 +2,6 @@ package org.ros.internal.node.topic;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.jboss.netty.channel.ChannelHandlerContext;
-//import org.jboss.netty.channel.ChannelPipeline;
-//import org.jboss.netty.channel.MessageEvent;
 import org.ros.internal.transport.BaseClientHandshakeHandler;
 import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ChannelPipeline;
@@ -16,12 +13,14 @@ import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.util.concurrent.ExecutorService;
 
 /**
  * Performs a handshake with the connected {@link Publisher} and connects the
  * {@link Publisher} to the {@link IncomingMessageQueue} on success.
+ * 
+ * In the AsynchTcpWorker thread that handles the read for each channel, it strobes the pipeline
+ * with the read notification and the handler here takes care of the processing.
  * 
  * @author jg
  * 
@@ -44,6 +43,8 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
 
   @Override
   protected void onSuccess(ConnectionHeader incomingConnectionHeader, ChannelHandlerContext ctx) {
+	if( DEBUG )
+		log.info("SubscriberHandshakeHandler.onSuccess:"+ctx+" "+incomingConnectionHeader);
     ChannelPipeline pipeline = ctx.pipeline();
     pipeline.remove(SubscriberHandshakeHandler.this);
     NamedChannelHandler namedChannelHandler = incomingMessageQueue.getMessageReceiver();

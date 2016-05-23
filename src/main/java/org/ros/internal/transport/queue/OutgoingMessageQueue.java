@@ -2,7 +2,6 @@ package org.ros.internal.transport.queue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
 import java.util.Iterator;
@@ -11,35 +10,29 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-//import org.jboss.netty.buffer.ChannelBuffer;
-//import org.jboss.netty.channel.Channel;
-//import org.jboss.netty.channel.group.ChannelGroup;
-//import org.jboss.netty.channel.group.ChannelGroupFuture;
-//import org.jboss.netty.channel.group.ChannelGroupFutureListener;
-//import org.jboss.netty.channel.group.DefaultChannelGroup;
-
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.CircularBlockingDeque;
-import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandlerContext;
 
-
-
 /**
+ * The outgoing message queue of a publisher processing type T messages.
+ * A writer will be spun up in the executor that processes a deque with message entries,
+ * serializing them to a bytebuffer for outbound asynch channel transport.
+ * Each publisher created generates this writer which addresses all channels in the context array
+ * it was created with.
+ * @author jg
  */
 public class OutgoingMessageQueue<T> {
 
   private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(OutgoingMessageQueue.class);
 
-  private static final int DEQUE_CAPACITY = 16;
+  private static final int DEQUE_CAPACITY = 16384;
 
   private final CircularBlockingDeque<T> deque;
-  private final AsynchronousChannelGroup channelGroup;
   private final Writer writer;
   private final MessageBufferPool messageBufferPool;
   private final ByteBuffer latchedBuffer;
@@ -49,39 +42,43 @@ public class OutgoingMessageQueue<T> {
   private T latchedMessage;
   
   private List<ChannelHandlerContext> channels;
-
+  /**
+   * This class is submitted to the executor to process the deque entries
+   * and serialize them to the latched buffer for outbound publisher channel
+   * @author jg
+   *
+   */
   private final class Writer extends CancellableLoop {
     @Override
     public void loop() throws InterruptedException {
       T message = deque.takeFirst();
       final ByteBuffer buffer = messageBufferPool.acquire();
+      //messageBufferPool.release(buffer);
+      latchedBuffer.clear();
       Utility.serialize(message, buffer);
       if (DEBUG  ) {
-        log.info(String.format("Writing %d bytes.", buffer.limit()));
+        log.info(String.format("Writing %d bytes.", buffer.position()));
       }
-      // we have to wait until the write
-      // operation is complete before returning the buffer to the pool.
       Iterator<ChannelHandlerContext> it = channels.iterator();
       while(it.hasNext()) {
     	  ChannelHandlerContext ctx = it.next();
     	  ctx.write(buffer, new CompletionHandler<Integer, Void>() {
-        @Override
-        public void completed(Integer a, Void b) {
-          messageBufferPool.release(buffer);
-        }
-		@Override
-		public void failed(Throwable arg0, Void arg1) {
-			log.error("Failed write");
-			throw new RosRuntimeException(arg0);
-		}
-      });
+			@Override
+			public void completed(Integer arg0, Void arg1) {
+				messageBufferPool.release(buffer);
+			}
+
+			@Override
+			public void failed(Throwable arg0, Void arg1) {
+				throw new RuntimeException(arg0);
+			}  
+    	  });
       }
     }
   }
 
   public OutgoingMessageQueue(ExecutorService executorService, List<ChannelHandlerContext> ctxs) throws IOException {
     deque = new CircularBlockingDeque<T>(DEQUE_CAPACITY);
-    channelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
     writer = new Writer();
     messageBufferPool = new MessageBufferPool();
     latchedBuffer = MessageBuffers.dynamicBuffer();
@@ -105,7 +102,7 @@ public class OutgoingMessageQueue<T> {
    */
   public void add(T message) {
     deque.addLast(message);
-    setLatchedMessage(message);
+    //setLatchedMessage(message);
   }
 
   private void setLatchedMessage(T message) {
@@ -119,7 +116,6 @@ public class OutgoingMessageQueue<T> {
    */
   public void shutdown() {
     writer.cancel();
-    channelGroup.shutdown();
   }
 
 
@@ -142,7 +138,4 @@ public class OutgoingMessageQueue<T> {
     return channels.size();
   }
 
-  public AsynchronousChannelGroup getChannelGroup() {
-    return channelGroup;
-  }
 }

@@ -30,14 +30,11 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	AsynchronousSocketChannel channel;
 	ChannelPipeline pipeline;
 	
-	ByteBuffer buf;
-	int MAXBUF = 2000000;
 	
 	public ChannelHandlerContextImpl(AsynchronousChannelGroup grp, AsynchronousSocketChannel ch, Executor exc) {
 		channelGroup = grp;
 		channel = ch;
 		executor = exc;
-		buf = ByteBuffer.allocate(MAXBUF);
 		pipeline = new ChannelPipelineImpl(this);
 	}
 	
@@ -86,7 +83,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 
 	@Override
-	public Future<Integer> read() {
+	public Future<Integer> read(ByteBuffer buf) {
 		return channel.read(buf);	
 	}
 
@@ -137,4 +134,5 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 		return new String("ChannelHandlerContext:"+channel+" "+channelGroup+" "+executor+" "+pipeline);
 	}
 
+	
 }

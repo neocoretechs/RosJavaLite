@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import org.ros.exception.RosRuntimeException;
+
 /**
  * Implementation of the ChannelPipeline interface to process the requests via the pluggable ChannelHandlers
  * named in the queue. The pipeline is per ChannelHandlerContext, per channel as it represents state in the form of the
@@ -37,6 +39,11 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 	@Override
 	public ChannelPipeline addFirst(String name, ChannelHandler handler) {
 		queue.addFirst(new AbstractMap.SimpleEntry<String, ChannelHandler>(name, handler));
+		try {
+			queue.peekFirst().getValue().handlerAdded(ctx);
+		} catch (Exception e) {
+			throw new RosRuntimeException(e);
+		}
 		return this;
 	}
 
@@ -44,19 +51,36 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 	@Override
 	public ChannelPipeline addLast(String name, ChannelHandler handler) {
 		queue.addLast(new AbstractMap.SimpleEntry<String, ChannelHandler>(name, handler));
+		try {
+			queue.peekLast().getValue().handlerAdded(ctx);
+		} catch (Exception e) {
+			throw new RosRuntimeException(e);
+		}
 		return this;
 	}
 
 
-
+	/**
+	 * Remove and fire event handlerRemoved to handler after removed one
+	 */
 	@Override
 	public ChannelPipeline remove(ChannelHandler handler) {
 		Iterator<Map.Entry<String,ChannelHandler>> it = iterator();
+		boolean found = false;
 		while(it.hasNext()) {
 			Map.Entry<String,ChannelHandler> me = it.next();
-			if( me.getValue().equals(handler) ) {
+			if( !found && me.getValue().equals(handler) ) {
 				it.remove();
-				break;
+				found = true;
+				continue;
+			}
+			if( found ) {
+				try {
+						me.getValue().handlerRemoved(ctx);
+						break;
+				} catch (Exception e) {
+					throw new RosRuntimeException(e);
+				}
 			}
 		}
 		return this;
@@ -65,17 +89,26 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 	@Override
 	public ChannelHandler remove(String name) {
 		Iterator<Map.Entry<String,ChannelHandler>> it = iterator();
-		Map.Entry<String,ChannelHandler> me = null;
+		ChannelHandler val = null;
+		boolean found = false;
 		while(it.hasNext()) {
-			me = it.next();
-			if( me.getKey().equals(name) ) {
+			Map.Entry<String,ChannelHandler> me = it.next();
+			if( !found && me.getKey().equals(name) ) {
+				val = me.getValue();
 				it.remove();
-				break;
+				found = true;
+				continue;
+			}
+			if( found ) {
+				try {
+						me.getValue().handlerRemoved(ctx);
+						break;
+				} catch (Exception e) {
+					throw new RosRuntimeException(e);
+				}
 			}
 		}
-		if( me == null)
-			return null;
-		return me.getValue();
+		return val;
 	}
 
 
@@ -83,6 +116,13 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 	public ChannelHandler removeFirst() {
 		Map.Entry<String,ChannelHandler> me = queue.removeFirst();
 		if( me == null )  return null;
+		if( queue.isEmpty())
+			return me.getValue();
+		try {
+			queue.peekFirst().getValue().handlerRemoved(ctx);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 		return me.getValue();
 	}
 

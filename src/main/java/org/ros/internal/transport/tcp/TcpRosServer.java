@@ -145,15 +145,13 @@ public class TcpRosServer implements Serializable {
 		  }
 		  
       } catch (Exception e) {
-    	  throw new RosRuntimeException(e);
-	  } finally {
-		try {
-			shutdown();
-		} catch (IOException e) {}
-	    if (DEBUG) {
-	    	      log.info("TcpRosServer shut down for:" + bindAddress + " with advertise address:"+advertiseAddress);
-	    }
-      }
+    		try {
+    			shutdown();
+    		} catch (IOException e1) {}
+    	  	  throw new RosRuntimeException(e);
+	  } 
+	
+      
   }
 
   /**
@@ -177,6 +175,9 @@ public class TcpRosServer implements Serializable {
     	incomingChannelGroup.shutdown();
     	incomingChannelGroup = null;
     }
+	if (DEBUG) {
+  	      log.info("TcpRosServer shut down for:" + bindAddress + " with advertise address:"+advertiseAddress);
+	}
   }
 
   /**

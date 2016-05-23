@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.transport.queue;
 
 import org.ros.concurrent.CircularBlockingDeque;
@@ -24,7 +8,8 @@ import org.ros.message.MessageListener;
 import java.util.concurrent.ExecutorService;
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * Created in default subscriber to handle the incoming messages
+ * @author jg
  */
 public class IncomingMessageQueue<T> {
 
@@ -37,7 +22,7 @@ public class IncomingMessageQueue<T> {
    * {@link IncomingMessageQueue#addListener(MessageListener, int)} which are
    * consumed by user provided {@link MessageListener}s.
    */
-  private static final int DEQUE_CAPACITY = 16;
+  private static final int DEQUE_CAPACITY = 16384;
 
   private final MessageReceiver<T> messageReceiver;
   private final MessageDispatcher<T> messageDispatcher;

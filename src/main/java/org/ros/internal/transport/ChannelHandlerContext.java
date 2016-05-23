@@ -108,7 +108,7 @@ public interface ChannelHandlerContext {
      * method called of the next {@link ChannelOutboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
-    Future<Integer> read();
+    Future<Integer> read(ByteBuffer buf);
 
     /**
      * Request to write a message via this {@link ChannelHandlerContext} through the {@link ChannelPipeline}.
@@ -149,7 +149,8 @@ public interface ChannelHandlerContext {
      * 
      */
     AsynchronousChannelGroup getChannelGroup();
-    
+
+
 
 
 }

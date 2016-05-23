@@ -67,7 +67,7 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 				// inject the handlers, start handshake
 				tcpserver.getFactoryStack().inject(ctx);
 				ctx.pipeline().fireChannelRegistered(); 
-                AsynchTCPWorker uworker = new AsynchTCPWorker(channel.get(), tcpserver);
+                AsynchTCPWorker uworker = new AsynchTCPWorker(ctx, channel.get());
                 exc.execute(uworker);  
                 if( DEBUG ) {
                     	log.info("ROS Asynch transport server worker starting");

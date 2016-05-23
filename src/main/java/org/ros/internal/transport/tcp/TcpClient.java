@@ -2,38 +2,18 @@ package org.ros.internal.transport.tcp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.jboss.netty.bootstrap.ClientBootstrap;
-//import org.jboss.netty.buffer.ChannelBuffer;
-//import org.jboss.netty.buffer.ChannelBufferFactory;
-//import org.jboss.netty.buffer.HeapChannelBufferFactory;
-//import org.jboss.netty.channel.Channel;
-//import org.jboss.netty.channel.ChannelFactory;
-//import org.jboss.netty.channel.ChannelFuture;
-//import org.jboss.netty.channel.ChannelPipeline;
-//import org.jboss.netty.channel.group.ChannelGroup;
-//import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
-
-import org.ros.exception.RosRuntimeException;
-import org.ros.internal.node.service.ServiceManager;
-import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ChannelHandlerContextImpl;
-import org.ros.internal.transport.ChannelPipeline;
-import org.ros.internal.transport.ChannelPipelineImpl;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.SocketOption;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -58,30 +38,14 @@ public class TcpClient {
   
   private AsynchronousSocketChannel channel;
   private AsynchronousChannelGroup channelGroup;
-  private transient ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   
-  public TcpClient( Executor executor, AsynchronousChannelGroup channelGroup) {
-	  this.executor = executor;
-	  this.channelGroup = channelGroup;
-    /*
-    channelFactory = new NioClientSocketChannelFactory(executor, executor);
-    channelBufferFactory = new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN);
-    bootstrap = new ClientBootstrap(channelFactory);
-    bootstrap.setOption("bufferFactory", channelBufferFactory);
-    setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT_DURATION, DEFAULT_CONNECTION_TIMEOUT_UNIT);
-    setKeepAlive(DEFAULT_KEEP_ALIVE);
-    
-      bootstrap = new Bootstrap();
-      bootstrap.group(executor).
-      	channel(NioServerSocketChannel.class).
-      	option(ChannelOption.SO_BACKLOG, 100).
-      	option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
-      	option(ChannelOption.SO_TIMEOUT,DEFAULT_CONNECTION_TIMEOUT_DURATION).
-      	//childOption("child.bufferFactory",new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN).
-      	option(ChannelOption.SO_KEEPALIVE, DEFAULT_KEEP_ALIVE);
-      	*/
-    namedChannelHandlers = new ArrayList<NamedChannelHandler>();
-	factoryStack = new ChannelInitializerFactoryStack();
+  private ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
+  
+  public TcpClient( Executor executor, AsynchronousChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
+	this.executor = executor;
+	this.channelGroup = channelGroup;
+	this.namedChannelHandlers = namedChannelHandlers;
+	this.factoryStack = new ChannelInitializerFactoryStack();
   }
 
   public void setConnectionTimeout(long duration, TimeUnit unit) {
@@ -101,28 +65,29 @@ public class TcpClient {
     this.namedChannelHandlers.addAll(namedChannelHandlers);
   }
 
+  public ChannelHandlerContext getContext() { return ctx; }
+  
   public Channel connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	channel = AsynchronousSocketChannel.open(channelGroup);
 	ctx = new ChannelHandlerContextImpl(channelGroup, channel, executor);
-    TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup()) {
-      //@Override
-      public void initChannel(ChannelHandlerContext ch) {
-        for (NamedChannelHandler namedChannelHandler : namedChannelHandlers) {
-          ch.pipeline().addLast(namedChannelHandler.getName(), namedChannelHandler);
-        }
-      }
-    };
-    
+    TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup(), namedChannelHandlers);
+    // add handler pipeline factory to stack
     factoryStack.addLast(tcpClientPipelineFactory);
-    //bootstrap.handler(tcpClientPipelineFactory);
-    //ChannelFuture future = bootstrap.connect(socketAddress).awaitUninterruptibly();
-    //if (future.isSuccess()) {
-    //  channel = future.channel();
+    // load the handlers from the pipeline factories
+    factoryStack.inject(ctx);
+    // notify new handlers all loaded
+    ctx.pipeline().fireChannelRegistered(); 
+    // connect outbound to pub
     ctx.connect(socketAddress);
+    // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
+    ctx.pipeline().fireChannelActive();
+	// recall we keep the list of contexts in TcpClientManager
 
+    AsynchTCPWorker uworker = new AsynchTCPWorker(ctx, (AsynchronousSocketChannel) ctx.channel());
+    executor.execute(uworker); 
     
     if (DEBUG) {
-        log.info("TcpClient Connected to socket: " + socketAddress);
+        log.info("TcpClient Connected to socket: " + socketAddress+" with worker "+uworker);
     }
     //} else {
       // We expect the first connection to succeed. If not, fail fast.

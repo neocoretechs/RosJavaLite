@@ -1,10 +1,6 @@
 package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -12,9 +8,11 @@ import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
  * This AsynchTCPWorker is spawned for servicing traffic from connected nodes.
+ * It functions as a worker for the {@link TcpRosServer} as well as the {@link TcpClient} to handle read traffic.
  * @author jg
  * Copyright (C) NeoCoreTechs 2016
  *
@@ -23,16 +21,18 @@ public class AsynchTCPWorker implements Runnable {
 	private static final boolean DEBUG = true;
 	private static final Log log = LogFactory.getLog(AsynchTCPWorker.class);
 	public boolean shouldRun = true;
+	private ChannelHandlerContext ctx;
 	private AsynchronousSocketChannel dataSocket;
 	private Object waitHalt = new Object(); 
-	private TcpRosServer server; // the server we are servicing
+	//private TcpRosServer server; // the server we are servicing
 	private ByteBuffer buf = ByteBuffer.allocate(2000000);
 	
-    public AsynchTCPWorker(AsynchronousSocketChannel datasocket, TcpRosServer server) throws IOException {
+    public AsynchTCPWorker(ChannelHandlerContext ctx, AsynchronousSocketChannel datasocket) throws IOException {
+    	this.ctx = ctx;
     	this.dataSocket = datasocket;
-    	this.server = server;
+    	
     	if( DEBUG )
-    		log.info("AsynchTCPWorker constructed with socket channel:"+dataSocket+" for server "+server);
+    		log.info("AsynchTCPWorker constructed with Asynch socket channel:"+dataSocket+" context:"+ctx);
 	}
 	
 	/**
@@ -68,7 +68,9 @@ public class AsynchTCPWorker implements Runnable {
 				while(shouldRun) {
 					Future<Integer> read = dataSocket.read(buf);
 					if( DEBUG )
-						log.debug("ROS AsynchTCPWorker for "+server+" at address "+dataSocket+" command received:"+read.get());
+						log.debug("ROS AsynchTCPWorker for at address "+dataSocket+" command received:"+read.get());
+					ctx.pipeline().fireChannelRead(buf.flip());
+					
 				}
 				dataSocket.close();
 			} catch(Exception se) {
