@@ -1,9 +1,5 @@
 package org.ros.internal.transport;
 
-//import org.jboss.netty.channel.ChannelHandlerContext;
-//import org.jboss.netty.channel.ChannelStateEvent;
-//import org.jboss.netty.channel.MessageEvent;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.ListenerGroup;
@@ -29,7 +25,10 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
     this.clientHandshake = clientHandshake;
     clientHandshakeListeners = new ListenerGroup<ClientHandshakeListener>(executorService);
   }
-
+  /**
+   * Primarily services?
+   * @param clientHandshakeListener
+   */
   public void addListener(ClientHandshakeListener clientHandshakeListener) {
     clientHandshakeListeners.add(clientHandshakeListener);
   }

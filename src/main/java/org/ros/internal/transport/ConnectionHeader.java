@@ -3,10 +3,11 @@ package org.ros.internal.transport;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.jboss.netty.buffer.ChannelBuffer;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.MessageBuffers;
+import org.ros.internal.system.Utility;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -18,12 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author jg
  */
-public class ConnectionHeader {
-
-  private static final boolean DEBUG = false;
+public class ConnectionHeader implements Serializable {
+  private static final long serialVersionUID = -7508346673596180951L;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(ConnectionHeader.class);
 
-  private final Map<String, String> fields;
+  private Map<String, String> fields = new ConcurrentHashMap<String, String>();
 
   /**
    * Decodes a header that came over the wire into a {@link Map} of fields and
@@ -34,6 +35,7 @@ public class ConnectionHeader {
    * @return a {@link Map} of header fields and values
    */
   public static ConnectionHeader decode(ByteBuffer buffer) {
+	  /*
     Map<String, String> fields = new HashMap<String, String>();
     int position = 0;
     int readableBytes = buffer.limit();
@@ -61,6 +63,12 @@ public class ConnectionHeader {
     }
     ConnectionHeader connectionHeader = new ConnectionHeader();
     connectionHeader.mergeFields(fields);
+    */
+	  for(int i =0; i < buffer.position(); i++) { if( buffer.get(i) != 0 ){ log.info("decode Ok not 0"); break;}}
+	  buffer.position(0);
+    ConnectionHeader connectionHeader = (ConnectionHeader) Utility.deserialize(buffer);
+	if( DEBUG )
+		 log.info("ConnectionHeader decode:"+connectionHeader+" from buffer:"+buffer);
     return connectionHeader;
   }
 
@@ -70,7 +78,6 @@ public class ConnectionHeader {
   }
 
   public ConnectionHeader() {
-    this.fields = new ConcurrentHashMap<String, String>();
   }
 
   /**
@@ -80,13 +87,22 @@ public class ConnectionHeader {
    *         transmission
    */
   public ByteBuffer encode() {
+	  /*
     ByteBuffer buffer = MessageBuffers.dynamicBuffer();
+    buffer.clear();
     for (Entry<String, String> entry : fields.entrySet()) {
       String field = entry.getKey() + "=" + entry.getValue();
       buffer.putInt(field.length());
       buffer.put(field.getBytes(Charset.forName("US-ASCII")));
     }
-    return buffer;
+    return (ByteBuffer) buffer.flip();
+    */
+	  ByteBuffer buffer = MessageBuffers.dynamicBuffer();
+	  buffer.clear();
+	  Utility.serialize(this, buffer);
+	  if( DEBUG )
+		  log.info("Encode:"+buffer);
+	  return buffer;
   }
 
   public void merge(ConnectionHeader other) {

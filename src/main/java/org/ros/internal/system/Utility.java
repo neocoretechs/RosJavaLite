@@ -13,7 +13,8 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.internal.message.field.DirectByteArrayOutputStream;
 
 public class Utility {
-	  private static final Log log = LogFactory.getLog(Utility.class);
+	 private static boolean DEBUG = true;
+	 private static final Log log = LogFactory.getLog(Utility.class);
 	 public static <T> void serialize(T value, ByteBuffer buffer) {
 		    //serializer.serialize((Message) value, buffer);
 			DirectByteArrayOutputStream dbaos = new DirectByteArrayOutputStream();
@@ -22,8 +23,10 @@ public class Utility {
 				oos = new ObjectOutputStream(dbaos);
 				oos.writeObject(value);
 				oos.flush();
+				buffer.clear();
 				buffer.put(dbaos.getBuf());
 				oos.close();
+				buffer.flip();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -33,20 +36,24 @@ public class Utility {
 	 public static Object deserialize(ByteBuffer buffer) {
 		    //return deserializer.deserialize(buffer);
 			byte[] obuf = buffer.array();
+			if( DEBUG )
+				log.info("Deserialize:"+obuf.length);
 			Object Od = null;
 			try {
 						ObjectInputStream s;
 						ByteArrayInputStream bais = new ByteArrayInputStream(obuf);
-						ReadableByteChannel rbc = Channels.newChannel(bais);
-						s = new ObjectInputStream(Channels.newInputStream(rbc));
+						//ReadableByteChannel rbc = Channels.newChannel(bais);
+						s = new ObjectInputStream(bais/*Channels.newInputStream(rbc)*/);
 						Od = s.readObject();
 						s.close();
 						bais.close();
-						rbc.close();
+						//rbc.close();
 			} catch (IOException ioe) {
 			} catch (ClassNotFoundException cnf) {
 					log.error("Class cannot be deserialized, may have been modified beyond version compatibility");
 			}
+			if( DEBUG )
+				log.info("Deserialize return:"+Od);
 			return  Od;
 				
 	}

@@ -35,7 +35,7 @@ public interface ChannelHandlerContext {
      * <p>
      * This will result in having the
      * {@link ChannelOutboundHandler#bind(ChannelHandlerContext, SocketAddress, CompletionHandler)} method
-     * called of the next {@link ChannelOutboundHandler} contained in the  {@link ChannelPipeline} of the
+     * called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
     AsynchronousSocketChannel bind(SocketAddress localAddress) throws IOException;
@@ -50,7 +50,7 @@ public interface ChannelHandlerContext {
      * <p>
      * This will result in having the
      * {@link ChannelOutboundHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, CompletionHandler)}
-     * method called of the next {@link ChannelOutboundHandler} contained in the  {@link ChannelPipeline} of the
+     * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
     void connect(SocketAddress remoteAddress);
@@ -61,7 +61,7 @@ public interface ChannelHandlerContext {
      * an error.
      * <p>
      * This will result in having the
-     * {@link ChannelOutboundHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, CompletionHandler)}
+     * {@link ChannelHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, CompletionHandler)}
      * method called of the next {@link ChannelOutboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      * @throws IOException 
@@ -75,11 +75,12 @@ public interface ChannelHandlerContext {
      * either because the operation was successful or because of an error.
      * <p>
      * This will result in having the
-     * {@link ChannelOutboundHandler#disconnect(ChannelHandlerContext, CompletionHandler)}
-     * method called of the next {@link ChannelOutboundHandler} contained in the  {@link ChannelPipeline} of the
+     * {@link ChannelHandler#disconnect(ChannelHandlerContext, CompletionHandler)}
+     * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
+     * @throws IOException 
      */
-    Future<Void> disconnect();
+    void disconnect() throws IOException;
 
     /**
      * Request to close the {@link Channel} and notify the {@link Future} once the operation completes,
@@ -89,8 +90,8 @@ public interface ChannelHandlerContext {
      * After it is closed it is not possible to reuse it again.
      * <p>
      * This will result in having the
-     * {@link ChannelOutboundHandler#close(ChannelHandlerContext, CompletionHandler)}
-     * method called of the next {@link ChannelOutboundHandler} contained in the  {@link ChannelPipeline} of the
+     * {@link ChannelHandler#close(ChannelHandlerContext, CompletionHandler)}
+     * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      * @throws IOException 
      */
@@ -104,11 +105,24 @@ public interface ChannelHandlerContext {
      * handler can decide to continue reading.  If there's a pending read operation already, this method does nothing.
      * <p>
      * This will result in having the
-     * {@link ChannelOutboundHandler#read(ChannelHandlerContext)}
-     * method called of the next {@link ChannelOutboundHandler} contained in the  {@link ChannelPipeline} of the
+     * {@link ChannelHandler#read(ChannelHandlerContext)}
+     * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
     Future<Integer> read(ByteBuffer buf);
+    /**
+     * Request to Read data from the {@link Channel} into the first inbound buffer, triggers an
+     * {@link ChannelHandler#channelRead(ChannelHandlerContext, Object)} event if data was
+     * read, and triggers a
+     * {@link ChannelHandler#channelReadComplete(ChannelHandlerContext) channelReadComplete} event so the
+     * handler can decide to continue reading.  If there's a pending read operation already, this method does nothing.
+     * <p>
+     * This will result in having the
+     * {@link ChannelHandler#read(ChannelHandlerContext)}
+     * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
+     * {@link Channel}.
+     */
+	void read(ByteBuffer buf,CompletionHandler<Integer, Void> completionHandler);
 
     /**
      * Request to write a message via this {@link ChannelHandlerContext} through the {@link ChannelPipeline}.
@@ -122,22 +136,8 @@ public interface ChannelHandlerContext {
      * This method will not request to actual flush, so be sure to call {@link #flush()}
      * once you want to request to flush all pending data to the actual transport.
      */
-    Future<Void> write(Object msg, CompletionHandler<Integer,Void> handler);
+    void write(Object msg, CompletionHandler<Integer,Void> handler);
 
-    /**
-     * Request to flush all pending messages via this ChannelOutboundInvoker.
-     */
-    ChannelHandlerContext flush();
-
-    /**
-     * Shortcut for call {@link #write(Object, CompletionHandler)} and {@link #flush()}.
-     */
-    Future<Void> writeAndFlush(Object msg, CompletionHandler<Integer,Void> handler);
-
-    /**
-     * Shortcut for call {@link #write(Object)} and {@link #flush()}.
-     */
-    Future<Integer> writeAndFlush(Object msg);
 
     /**
      * Return the assigned {@link ChannelPipeline}
@@ -150,7 +150,15 @@ public interface ChannelHandlerContext {
      */
     AsynchronousChannelGroup getChannelGroup();
 
+    /**
+     * Determine if this channel is ready for processing, it is configured, has a socket
+     * and the communication is sound. If the socket breaks this goes false and no writes are
+     * performed to this channel
+     */
+    boolean isReady();
+    
+    void setReady(boolean ready);
 
-
+    Object getChannelCompletionMutex();
 
 }

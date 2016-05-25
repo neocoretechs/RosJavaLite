@@ -1,16 +1,8 @@
 package org.ros.internal.transport.tcp;
 
-//import org.jboss.netty.buffer.ChannelBuffer;
-//import org.jboss.netty.channel.Channel;
-//import org.jboss.netty.channel.ChannelFuture;
-//import org.jboss.netty.channel.ChannelHandler;
-//import org.jboss.netty.channel.ChannelHandlerContext;
-//import org.jboss.netty.channel.ChannelPipeline;
-//import org.jboss.netty.channel.MessageEvent;
-//import org.jboss.netty.channel.SimpleChannelHandler;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CompletionHandler;
 import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
@@ -62,20 +54,19 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 	if( DEBUG ) {
 			  log.info("TcpServerHandshakeHandler channelRead:"+e);
 	}
-    ByteBuffer incomingBuffer =  ByteBuffer.wrap((byte[])e);
-    ChannelPipeline pipeline = ctx.pipeline();
+    ByteBuffer incomingBuffer =  (ByteBuffer)e;
     ConnectionHeader incomingHeader = ConnectionHeader.decode(incomingBuffer);
     if (incomingHeader.hasField(ConnectionHeaderFields.SERVICE)) {
-      handleServiceHandshake(ctx, e, pipeline, incomingHeader);
+      handleServiceHandshake(ctx, incomingHeader);
     } else {
-      handleSubscriberHandshake(ctx, e, incomingHeader);
+      handleSubscriberHandshake(ctx, incomingHeader);
     }
     return incomingBuffer;
   }
 
-  private void handleServiceHandshake(ChannelHandlerContext ctx, Object e, ChannelPipeline pipeline, ConnectionHeader incomingHeader) throws IOException {
+  private void handleServiceHandshake(ChannelHandlerContext ctx, ConnectionHeader incomingHeader) throws IOException {
 	if( DEBUG ) {
-		  log.info("service handshake:"+e);
+		  log.info("service handshake:"+ctx+" header:"+incomingHeader);
 	}
     GraphName serviceName = GraphName.of(incomingHeader.getField(ConnectionHeaderFields.SERVICE));
     assert(serviceManager.hasServer(serviceName));
@@ -85,41 +76,51 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     if (probe != null && probe.equals("1")) {
       ctx.close();
     } else {
-      pipeline.remove(TcpServerPipelineFactory.LENGTH_FIELD_PREPENDER);
-      pipeline.remove(this);
+      //ctx.pipeline().remove(TcpServerPipelineFactory.LENGTH_FIELD_PREPENDER);
+      ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
       //pipeline.addLast("ServiceResponseEncoder", new ServiceResponseEncoder());
-      pipeline.addLast("ServiceRequestHandler", serviceServer.newRequestHandler());
+      ctx.pipeline().addLast("ServiceRequestHandler", serviceServer.newRequestHandler());
     }
   }
 
-  private void handleSubscriberHandshake(ChannelHandlerContext ctx, Object e, ConnectionHeader incomingConnectionHeader)
+  private void handleSubscriberHandshake(final ChannelHandlerContext ctx, final ConnectionHeader incomingConnectionHeader)
       throws InterruptedException, Exception {
 	  if( DEBUG ) {
-		  log.info("subscriber handshake:"+e);
+		  log.info("subscriber handshake:"+ctx+" header:"+incomingConnectionHeader);
 	  }
     assert(incomingConnectionHeader.hasField(ConnectionHeaderFields.TOPIC)) :
         "Handshake header missing field: " + ConnectionHeaderFields.TOPIC;
-    GraphName topicName =
+    final GraphName topicName =
         GraphName.of(incomingConnectionHeader.getField(ConnectionHeaderFields.TOPIC));
     assert(topicParticipantManager.hasPublisher(topicName)) :
         "No publisher for topic: " + topicName;
-    DefaultPublisher<?> publisher = topicParticipantManager.getPublisher(topicName);
-    ByteBuffer outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
-    //Channel channel = ctx.channel();
-    ctx.write(outgoingBuffer);
-    //if (!future.isSuccess()) {
-    // throw new RosRuntimeException(future.cause());
-    //}
-    String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
-    publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
+    final DefaultPublisher<?> publisher = topicParticipantManager.getPublisher(topicName);
+    final ByteBuffer outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
+    // Write the handshake data back to client and upon completion set this channel
+    // ready for write queue
+    ctx.write(outgoingBuffer, new CompletionHandler<Integer, Void>() {
+		@Override
+		public void completed(Integer arg0, Void arg1) {
+			   String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
+			   publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
+			    // Once the handshake is complete, there will be nothing incoming on the
+			    // channel as we are only queueing outbound traffic to the subscriber, which is done by the OutgoingMessgequeue.
+			    // So, we replace the handshake handler with a handler which will
+			    // drop everything.
+			    ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
+				// set as ready for channel write loop in OutogingMessageQueue
+				ctx.setReady(true);
+				if( DEBUG ) {
+					  log.info("subscriber complete:"+outgoingBuffer);
+				}
+		}
+		@Override
+		public void failed(Throwable arg0, Void arg1) {
+			log.info("Failed to perform handshake for:"+ctx);
+		} 
+    });
 
-    // Once the handshake is complete, there will be nothing incoming on the
-    // channel. So, we replace the handshake handler with a handler which will
-    // drop everything.
-    ctx.pipeline().remove(this);
-	if( DEBUG ) {
-		  log.info("subscriber complete:"+e);
-	}
+ 
   }
 
 @Override

@@ -25,18 +25,12 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 	private TcpRosServer tcpserver = null;
 	
 	
-	public AsynchBaseServer(TcpRosServer server) throws IOException {
+	public AsynchBaseServer(TcpRosServer tcpserver) throws IOException {
 		super();
-		this.address = server.getAddress();
-		this.tcpserver = server;
-	}
-	/**
-	 * Construct the Server, fill in port and address later.
-	 * @throws IOException
-	 * @throws ClassNotFoundException
-	 */
-	public AsynchBaseServer() throws IOException, ClassNotFoundException {
-		super();
+		this.address = tcpserver.getAddress();
+		this.tcpserver = tcpserver;
+		this.exc = tcpserver.getExecutor();
+		this.channelGroup = tcpserver.getChannelGroup();
 	}
 
 	public void startServer() throws IOException {
@@ -44,33 +38,30 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 			throw new IOException("Server address not defined, can not start Base Server");
 		startServer(channelGroup, exc, address);
 	}
-	/**
-	 * Start the server
-	 * @param args
-	 * @throws Exception
-	 */
-	public static void main(String args[]) throws Exception {
-		AsynchBaseServer bs = new AsynchBaseServer();
-		log.info("ROSLite Asynch transport Server started on "+InetAddress.getLocalHost().getHostName()+" port "+bs.WORKBOOTPORT);
-	}
+
 	
 	public void run() {
 		while(!shouldStop) {
 			try {
 				Future<AsynchronousSocketChannel> channel = server.accept();
 				if( DEBUG ) {
-					log.info("Accept "+channel);
+					log.info("Accept "+channel.get());
 				}
 				ChannelHandlerContext ctx = new ChannelHandlerContextImpl(channelGroup, channel.get(), exc);
 				tcpserver.getSubscribers().add(ctx);
 				ctx.pipeline().fireChannelActive();
 				// inject the handlers, start handshake
 				tcpserver.getFactoryStack().inject(ctx);
+				// We have to set context as ready AFTER we do the handshake to keep traffic from
+				// interfering with handshake
+				// notify channel up and ready
 				ctx.pipeline().fireChannelRegistered(); 
-                AsynchTCPWorker uworker = new AsynchTCPWorker(ctx, channel.get());
+				// spin worker to handle traffic from asynch socket
+                AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
+                // and send it all to executor for running
                 exc.execute(uworker);  
                 if( DEBUG ) {
-                    	log.info("ROS Asynch transport server worker starting");
+                    	log.info("ROS Asynch transport server worker starting for context:"+ctx);
                 }   
 			} catch(Exception e) {
                     log.error("Asynch Server socket accept exception "+e,e);

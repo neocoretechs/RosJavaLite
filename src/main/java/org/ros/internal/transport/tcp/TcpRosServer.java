@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -76,61 +77,8 @@ public class TcpRosServer implements Serializable {
   }
 
   public void start() {
-	  /*
-    assert(outgoingChannel == null);
-    channelFactory = new NioServerSocketChannelFactory(executorService, executorService);
-    bootstrap = new ServerBootstrap(channelFactory);
-    bootstrap.setOption("child.bufferFactory",
-        new HeapChannelBufferFactory(ByteOrder.LITTLE_ENDIAN));
-    bootstrap.setOption("child.keepAlive", true);
-    incomingChannelGroup = new DefaultChannelGroup();
-    bootstrap.setPipelineFactory(new TcpServerPipelineFactory(incomingChannelGroup,
-        topicParticipantManager, serviceManager));
-
-    outgoingChannel = bootstrap.bind(bindAddress.toInetSocketAddress());
-    advertiseAddress.setPort(((InetSocketAddress)(outgoingChannel.getLocalAddress())).getPort());
-    */
-    /*
-    advertiseAddress.setPortCallable(new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return ((InetSocketAddress) outgoingChannel.getLocalAddress()).getPort();
-      }
-    });
-    */
+    //assert(outgoingChannel == null);
 	  try {
-		  /*
-	
-	    	localAddress(bindAddress.toInetSocketAddress()).
-	          //@Override
-	          public ChannelPipeline pipeline() {
-	            ChannelPipeline pipeline = super.getPipeline();
-	            // We're not interested firstIncomingMessageQueue testing the
-	            // handshake here. Removing it means connections are established
-	            // immediately.
-	            pipeline.remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
-	            pipeline.addLast( new ServerHandler());
-	            return pipeline;
-	          }
-	        };
-	       handler((ChannelHandler) new LoggingHandler(LogLevel.INFO)).
-	       childHandler(new ChannelInitializer<SocketChannel>() {
-               @Override
-               public void initChannel(SocketChannel ch) throws Exception {
-                   if( DEBUG )
-               		log.info("TcpServerPipelineFactory initChannel:"+ch);
-                   ChannelPipeline pipeline = ch.pipeline();
-                   pipeline.addLast(new ObjectEncoder());
-                   pipeline.addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
-                   pipeline.addLast(LENGTH_FIELD_PREPENDER, new LengthFieldPrepender(4));
-                   pipeline.addLast(LENGTH_FIELD_BASED_FRAME_DECODER, new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
-                   pipeline.addLast(HANDSHAKE_HANDLER, new TcpServerHandshakeHandler(topicParticipantManager,serviceManager));
-               }
-           });
-	       */
-	       //childHandler(serverPipelineFactory);
-	       //ChannelFuture f = bootstrap.bind().sync();
-	       //outgoingChannel = f.channel();
 		  incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
 		  advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
 		  factoryStack = new ChannelInitializerFactoryStack();
@@ -138,7 +86,7 @@ public class TcpRosServer implements Serializable {
 			        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); 
 		  factoryStack.addLast(serverPipelineFactory);
 		    
-		  AsynchBaseServer server = new AsynchBaseServer();
+		  AsynchBaseServer server = new AsynchBaseServer(this);
 		  server.startServer(incomingChannelGroup,(Executor) executorService, bindAddress.toInetSocketAddress());
 	      if (DEBUG) {
 		 	     log.info("TcpRosServer starting and Bound to:" + bindAddress + " with advertise address:"+advertiseAddress);
@@ -203,6 +151,10 @@ public class TcpRosServer implements Serializable {
   }
   
   public ChannelInitializerFactoryStack getFactoryStack() { return factoryStack; }
+  
+  public ExecutorService getExecutor() { return executorService; }
+  
+  public AsynchronousChannelGroup getChannelGroup() { return incomingChannelGroup; }
 
 
 }

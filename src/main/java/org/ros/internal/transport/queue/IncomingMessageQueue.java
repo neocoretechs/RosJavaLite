@@ -8,7 +8,8 @@ import org.ros.message.MessageListener;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Created in default subscriber to handle the incoming messages
+ * Created in default subscriber to handle the incoming messages.
+ * Creates a MessageReceiver and a MessageDispatcher.
  * @author jg
  */
 public class IncomingMessageQueue<T> {

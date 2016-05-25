@@ -29,6 +29,8 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	Executor executor;
 	AsynchronousSocketChannel channel;
 	ChannelPipeline pipeline;
+	boolean ready = false;
+	Object mutex = new Object();
 	
 	
 	public ChannelHandlerContextImpl(AsynchronousChannelGroup grp, AsynchronousSocketChannel ch, Executor exc) {
@@ -72,8 +74,8 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 
 	@Override
-	public Future<Void> disconnect() {
-		throw new RuntimeException("nope..");
+	public void disconnect() throws IOException {
+		channel.close();
 	}
 
 	@Override
@@ -93,26 +95,15 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	}
 
 	@Override
-	public Future<Void> write(Object msg,
-			CompletionHandler<Integer, Void> handler) {
-		throw new RuntimeException("nope..");
+	public void write(Object msg, CompletionHandler<Integer, Void> handler) {
+		channel.write((ByteBuffer)msg, null, handler);
 	}
 
 	@Override
-	public ChannelHandlerContext flush() {
-		throw new RuntimeException("nope..");
+	public void read(ByteBuffer buf, CompletionHandler<Integer, Void> handler) {
+		channel.read(buf, null, handler);
 	}
 
-	@Override
-	public Future<Void> writeAndFlush(Object msg,
-			CompletionHandler<Integer, Void> handler) {
-		throw new RuntimeException("nope..");
-	}
-
-	@Override
-	public Future<Integer> writeAndFlush(Object msg) {
-		return channel.write((ByteBuffer) msg);
-	}
 
 	@Override
 	public ChannelPipeline pipeline() {
@@ -131,8 +122,19 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public String toString() {
-		return new String("ChannelHandlerContext:"+channel+" "+channelGroup+" "+executor+" "+pipeline);
+		return new String("ChannelHandlerContext:"+channel+" "+channelGroup+" "+executor+" "+pipeline+" ready:"+ready);
 	}
 
+	@Override
+	public boolean isReady() {
+		return ready;
+	}
 	
+	public void setReady(boolean ready) { this.ready = ready;}
+
+	/**
+	 * Object to synchronize read and write completion for the channel in this context, since we will have
+	 * multiple outbound writers accessing the same channel
+	 */
+	public Object getChannelCompletionMutex() { return mutex; }
 }

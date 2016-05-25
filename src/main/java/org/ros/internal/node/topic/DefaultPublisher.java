@@ -143,9 +143,9 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
 
   @Override
   public void publish(T message) {
-    if (DEBUG) {
-      log.info(String.format("Publishing message %s on topic %s.", message, getTopicName()));
-    }
+    //if (DEBUG) {
+    //  log.info(String.format("Publishing message %s on topic %s.", message, getTopicName()));
+    //}
     outgoingMessageQueue.add(message);
   }
 
@@ -180,7 +180,7 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
     // TODO(damonkohler): Force latch mode to be consistent throughout the life
     // of the publisher.
     outgoingConnectionHeader.addField(ConnectionHeaderFields.LATCHING, getLatchMode() ? "1" : "0");
-    return outgoingConnectionHeader.encode();
+    return (ByteBuffer) outgoingConnectionHeader.encode();
   }
 
   /**

@@ -66,6 +66,7 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
     } catch (Exception e) {
       // TODO(damonkohler): Retry logic is needed at the RPC layer.
       log.error(e);
+      e.printStackTrace();
     }
   }
 }

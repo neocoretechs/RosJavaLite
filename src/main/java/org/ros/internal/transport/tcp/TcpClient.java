@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Add the named channel handlers beforehand using the supplied methods and they will
- * be injected into the pipeline of the handlercontext when the channel is initialized
+ * be injected into the pipeline of the ChannelHandlerContext when the channel is initialized
  * @author jg
  */
 public class TcpClient {
@@ -79,12 +79,12 @@ public class TcpClient {
     ctx.pipeline().fireChannelRegistered(); 
     // connect outbound to pub
     ctx.connect(socketAddress);
+  
+    AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
+    executor.execute(uworker); 
     // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
     ctx.pipeline().fireChannelActive();
 	// recall we keep the list of contexts in TcpClientManager
-
-    AsynchTCPWorker uworker = new AsynchTCPWorker(ctx, (AsynchronousSocketChannel) ctx.channel());
-    executor.execute(uworker); 
     
     if (DEBUG) {
         log.info("TcpClient Connected to socket: " + socketAddress+" with worker "+uworker);

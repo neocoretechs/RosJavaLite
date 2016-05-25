@@ -53,11 +53,12 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
     if (latching != null && latching.equals("1")) {
       incomingMessageQueue.setLatchMode(true);
     }
+    ctx.setReady(true);
   }
 
   @Override
   protected void onFailure(String errorMessage, ChannelHandlerContext ctx) throws IOException {
-    log.error("Subscriber handshake failed: " + errorMessage);
+    log.info("Subscriber handshake failed: " + errorMessage);
     ctx.close();
   }
 

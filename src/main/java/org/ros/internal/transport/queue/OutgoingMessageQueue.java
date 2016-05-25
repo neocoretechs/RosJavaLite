@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.WritePendingException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -49,32 +50,47 @@ public class OutgoingMessageQueue<T> {
    *
    */
   private final class Writer extends CancellableLoop {
+	//final Object waitFinish = new Object();
     @Override
     public void loop() throws InterruptedException {
       T message = deque.takeFirst();
-      final ByteBuffer buffer = messageBufferPool.acquire();
+      final ByteBuffer buffer = (ByteBuffer) latchedBuffer.clear();//messageBufferPool.acquire();
       //messageBufferPool.release(buffer);
-      latchedBuffer.clear();
+      //latchedBuffer.clear();
       Utility.serialize(message, buffer);
-      if (DEBUG  ) {
-        log.info(String.format("Writing %d bytes.", buffer.position()));
-      }
-      Iterator<ChannelHandlerContext> it = channels.iterator();
+      //if(DEBUG) {
+      //  log.info(String.format("Writing %d bytes.", buffer.position()));
+      //}
+      final Iterator<ChannelHandlerContext> it = channels.iterator();
       while(it.hasNext()) {
-    	  ChannelHandlerContext ctx = it.next();
-    	  ctx.write(buffer, new CompletionHandler<Integer, Void>() {
-			@Override
-			public void completed(Integer arg0, Void arg1) {
-				messageBufferPool.release(buffer);
-			}
-
-			@Override
-			public void failed(Throwable arg0, Void arg1) {
-				throw new RuntimeException(arg0);
-			}  
-    	  });
-      }
-    }
+    	  final ChannelHandlerContext ctx = it.next();
+    	  //final Object waitFinish = ctx.getChannelCompletionMutex();
+    	  if( ctx.isReady()) {
+    		  while(true) {
+    		  try {
+    			  ctx.write(buffer, new CompletionHandler<Integer, Void>() {
+    				  @Override
+    				  public void completed(Integer arg0, Void arg1) {
+    				  //messageBufferPool.release(buffer);
+    				  }
+    				  @Override
+    				  public void failed(Throwable arg0, Void arg1) {
+    					  // Broken pipe here if we cant write to client as its dropped
+    					  //throw new RuntimeException(arg0);
+    					  log.info("Closing failed write context:"+ctx);
+    					  try {
+    						  ctx.close();
+    					  } catch (IOException e) {}
+    					  // A write failure should render the context not ready for writes.
+    					  ctx.setReady(false);
+    				  }  
+    			  }); // completion handler
+    		  } catch(WritePendingException wpe) { continue; }
+    		  break;
+    		  } // while
+    	  } // context ready
+      } // ChannelhandlerContext iterator
+    } // loop method
   }
 
   public OutgoingMessageQueue(ExecutorService executorService, List<ChannelHandlerContext> ctxs) throws IOException {
@@ -102,7 +118,7 @@ public class OutgoingMessageQueue<T> {
    */
   public void add(T message) {
     deque.addLast(message);
-    //setLatchedMessage(message);
+    setLatchedMessage(message);
   }
 
   private void setLatchedMessage(T message) {

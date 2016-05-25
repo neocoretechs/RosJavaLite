@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.nio.channels.ReadPendingException;
 import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.internal.message.MessageBufferPool;
+import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
@@ -22,57 +26,65 @@ public class AsynchTCPWorker implements Runnable {
 	private static final Log log = LogFactory.getLog(AsynchTCPWorker.class);
 	public boolean shouldRun = true;
 	private ChannelHandlerContext ctx;
-	private AsynchronousSocketChannel dataSocket;
 	private Object waitHalt = new Object(); 
-	//private TcpRosServer server; // the server we are servicing
-	private ByteBuffer buf = ByteBuffer.allocate(2000000);
+	//private MessageBufferPool pool = new MessageBufferPool();
 	
-    public AsynchTCPWorker(ChannelHandlerContext ctx, AsynchronousSocketChannel datasocket) throws IOException {
+    public AsynchTCPWorker(ChannelHandlerContext ctx) throws IOException {
     	this.ctx = ctx;
-    	this.dataSocket = datasocket;
+    	
     	
     	if( DEBUG )
-    		log.info("AsynchTCPWorker constructed with Asynch socket channel:"+dataSocket+" context:"+ctx);
+    		log.info("AsynchTCPWorker constructed with context:"+ctx);
 	}
 	
-	/**
-	 * Queue a request on this worker,
-	 * Instead of queuing to a running thread request queue, queue this for outbound message
-	 * back to master
-	 * @param res
-	 */
-	public void queueResponse(Object res) {
-	
-		if( DEBUG ) {
-			log.debug("Adding response "+res+" to outbound from worker");
-		}
-		//try {
-			// Write response to master for forwarding to client
-			//OutputStream os = dataSocket.getOutputStream();
-			//ObjectOutputStream oos = new ObjectOutputStream(os);
-			//oos.writeObject(res);
-			//oos.flush();
-		//} catch (IOException e) {
-		//		log.error("Exception writing socket to remote master port "+e);
-		//		throw new RuntimeException(e);
-		//}
-	}
-
 	/**
 	 * Client (Slave port) sends data to our master in the following loop
 	 */
 	@Override
 	public void run() {
-
+		//final Object waitFinish = ctx.getChannelCompletionMutex();
 			try {
 				while(shouldRun) {
-					Future<Integer> read = dataSocket.read(buf);
-					if( DEBUG )
-						log.debug("ROS AsynchTCPWorker for at address "+dataSocket+" command received:"+read.get());
-					ctx.pipeline().fireChannelRead(buf.flip());
-					
-				}
-				dataSocket.close();
+					final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
+					buf.clear();
+					// initiate asynch read
+					// If we get a read pending exception, try again
+					while(true) {
+						try {
+							ctx.read(buf, new CompletionHandler<Integer, Void>() {
+								@Override
+								public void completed(Integer arg0, Void arg1) {
+									buf.flip();
+									if( DEBUG )
+										log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" command received:"+buf);
+									try {
+										ctx.pipeline().fireChannelRead(buf);
+									} catch (Exception e) {
+										if( DEBUG) {
+											log.info("Exception out of fireChannelRead",e);
+											e.printStackTrace();
+										}
+									}
+							
+								}
+								@Override
+								public void failed(Throwable arg0, Void arg1) {
+									if( DEBUG ){
+										log.info("AsynchTcpWorker read op failed:",arg0);
+										arg0.printStackTrace();
+									}
+									try {
+										ctx.pipeline().fireExceptionCaught(arg0);
+									} catch (Exception e) {
+										e.printStackTrace();
+									}
+								} 	
+							});
+						} catch(ReadPendingException rpe) { continue; }
+						break;
+					}// while
+				} // shouldRun
+				ctx.close();
 			} catch(Exception se) {
 				if( se instanceof SocketException ) {
 					log.error("Received SocketException, connection reset..");
@@ -81,7 +93,10 @@ public class AsynchTCPWorker implements Runnable {
 				}
 			} finally {
 				try {
-					dataSocket.close();
+					if( DEBUG )
+						log.info("<<<<<<<<<< Datasocket closing >>>>>>>>");
+					ctx.close();
+					ctx.setReady(false);
 				} catch (IOException e) {}
 			}
 			synchronized(waitHalt) {
