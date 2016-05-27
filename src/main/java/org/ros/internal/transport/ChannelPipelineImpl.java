@@ -264,7 +264,7 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 		Map.Entry<String,ChannelHandler> me = null;
 		while(it.hasNext()) {
 			me = it.next();
-			msg = me.getValue().channelRead(ctx, msg);
+			me.getValue().channelRead(ctx, msg);
 		}
 		return this;
 	}

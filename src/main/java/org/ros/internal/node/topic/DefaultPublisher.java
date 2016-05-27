@@ -1,26 +1,12 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.topic;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
+import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.node.server.NodeIdentifier;
+import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
@@ -40,8 +26,13 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Default implementation of a {@link Publisher}.
+ * An outgoing message queue is constructed to deliver outbound messages.
+ * A ListenerGroup of PublisherListeners.
+ * A MessageFactory
+ * A list of subscribers as ChannelHandlerContexts.
+ * A DefaultPublisherListener is constructed as a default entry in the list.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publisher<T> {
 
@@ -180,7 +171,9 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
     // TODO(damonkohler): Force latch mode to be consistent throughout the life
     // of the publisher.
     outgoingConnectionHeader.addField(ConnectionHeaderFields.LATCHING, getLatchMode() ? "1" : "0");
-    return (ByteBuffer) outgoingConnectionHeader.encode();
+    ByteBuffer buffer = MessageBuffers.dynamicBuffer();
+    Utility.serialize(outgoingConnectionHeader, buffer);
+    return buffer;
   }
 
   /**

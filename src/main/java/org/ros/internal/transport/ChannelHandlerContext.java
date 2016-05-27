@@ -7,6 +7,7 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
@@ -157,8 +158,24 @@ public interface ChannelHandlerContext {
      */
     boolean isReady();
     
+    /**
+     * Set this channel and its context ready or not for traffic.
+     * @param ready
+     */
     void setReady(boolean ready);
 
+    /**
+     * Get the Object representing a mutex to use for completion of operation if necessary.
+     * @return
+     */
     Object getChannelCompletionMutex();
+    
+    /**
+     * Each successive handshake completion will add another message type to this synchronized set.
+     * This set is used to determine whether a message placed on the outbound queue will be sent to the
+     * channel in the context.
+     * @return The synchronized hash set of message type strings
+     */
+    Set<String> getMessageTypes();
 
 }

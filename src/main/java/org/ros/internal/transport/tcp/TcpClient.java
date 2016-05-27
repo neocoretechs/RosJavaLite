@@ -69,6 +69,9 @@ public class TcpClient {
   
   public Channel connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	channel = AsynchronousSocketChannel.open(channelGroup);
+	((AsynchronousSocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
+	((AsynchronousSocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
+	((AsynchronousSocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, true);
 	ctx = new ChannelHandlerContextImpl(channelGroup, channel, executor);
     TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup(), namedChannelHandlers);
     // add handler pipeline factory to stack

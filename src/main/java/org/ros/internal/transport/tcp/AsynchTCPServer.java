@@ -1,17 +1,17 @@
 package org.ros.internal.transport.tcp;
-import java.net.*;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.io.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
 * AsynchTCPServer is the superclass of all objects using AsynchServerSockets.
+* @author jg
 */
 public abstract class AsynchTCPServer implements Cloneable, Runnable {
 	private static boolean DEBUG = true;
@@ -27,8 +27,8 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 			if( DEBUG )
 				log.info("AsynchTCPServer attempt local bind port "+port);
 			channelGroup = group;
-			 server = AsynchronousServerSocketChannel.open(channelGroup);
-			 server.bind(new InetSocketAddress(port));
+			server = AsynchronousServerSocketChannel.open(channelGroup);
+			server.bind(new InetSocketAddress(port));
 			exc.execute(this);
 		}
 	}

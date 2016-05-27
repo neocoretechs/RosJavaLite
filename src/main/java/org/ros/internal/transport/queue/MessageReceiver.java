@@ -1,21 +1,18 @@
 package org.ros.internal.transport.queue;
 
-import java.nio.ByteBuffer;
 
 import org.ros.concurrent.CircularBlockingDeque;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-//import org.jboss.netty.buffer.ChannelBuffer;
-//import org.jboss.netty.channel.ChannelHandlerContext;
-//import org.jboss.netty.channel.MessageEvent;
 
 import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
 
 
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * A circular blocking deque type of ChannelHandler that takes channelRead events and queues them.
+ * It is placed in the stack after handshake to be activated on read events.
+ * @author jg
  * 
  * @param <T>
  *          the message type
@@ -25,10 +22,10 @@ public class MessageReceiver<T> extends AbstractNamedChannelHandler {
   private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(MessageReceiver.class);
 
-  private final CircularBlockingDeque<LazyMessage<T>> lazyMessages;
+  private final CircularBlockingDeque<T> lazyMessages;
 
 
-  public MessageReceiver(CircularBlockingDeque<LazyMessage<T>> lazyMessages) {
+  public MessageReceiver(CircularBlockingDeque<T> lazyMessages) {
     this.lazyMessages = lazyMessages;
 
   }
@@ -40,11 +37,10 @@ public class MessageReceiver<T> extends AbstractNamedChannelHandler {
 
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-    ByteBuffer buffer = (ByteBuffer) msg;
     if (DEBUG) {
-      log.info(String.format("Received %d byte message.", buffer.limit()));
+      log.info(String.format("Received message:"+msg));
     }
-    lazyMessages.addLast(new LazyMessage<T>(buffer));
+    lazyMessages.addLast((T) msg);
     return msg;
   }
 

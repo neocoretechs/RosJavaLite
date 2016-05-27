@@ -22,7 +22,7 @@ public class MessageDispatcher<T> extends CancellableLoop {
   private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(MessageDispatcher.class);
 
-  private final CircularBlockingDeque<LazyMessage<T>> lazyMessages;
+  private final CircularBlockingDeque<T> lazyMessages;
   private final ListenerGroup<MessageListener<T>> messageListeners;
 
   /**
@@ -32,9 +32,9 @@ public class MessageDispatcher<T> extends CancellableLoop {
   private final Object mutex;
 
   private boolean latchMode;
-  private LazyMessage<T> latchedMessage;
+  private T latchedMessage;
 
-  public MessageDispatcher(CircularBlockingDeque<LazyMessage<T>> lazyMessages,
+  public MessageDispatcher(CircularBlockingDeque<T> lazyMessages,
       ExecutorService executorService) {
     this.lazyMessages = lazyMessages;
     messageListeners = new ListenerGroup<MessageListener<T>>(executorService);
@@ -71,11 +71,11 @@ public class MessageDispatcher<T> extends CancellableLoop {
    *          the {@link LazyMessage} to signal {@link MessageListener}s with
    * @return the newly allocated {@link SignalRunnable}
    */
-  private SignalRunnable<MessageListener<T>> newSignalRunnable(final LazyMessage<T> lazyMessage) {
+  private SignalRunnable<MessageListener<T>> newSignalRunnable(final T lazyMessage) {
     return new SignalRunnable<MessageListener<T>>() {
       @Override
       public void run(MessageListener<T> messageListener) {
-        messageListener.onNewMessage(lazyMessage.get());
+        messageListener.onNewMessage(lazyMessage);
       }
     };
   }
@@ -98,11 +98,11 @@ public class MessageDispatcher<T> extends CancellableLoop {
 
   @Override
   public void loop() throws InterruptedException {
-    LazyMessage<T> lazyMessage = lazyMessages.takeFirst();
+    T lazyMessage = lazyMessages.takeFirst();
     synchronized (mutex) {
       latchedMessage = lazyMessage;
       if (DEBUG) {
-        log.info("Dispatching message: " + latchedMessage.get());
+        log.info("Dispatching message: " + latchedMessage);
       }
       messageListeners.signal(newSignalRunnable(latchedMessage));
     }

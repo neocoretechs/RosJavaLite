@@ -7,7 +7,6 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.ReadPendingException;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
@@ -18,24 +17,29 @@ import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
- * This AsynchTCPWorker is spawned for servicing traffic from connected nodes.
- * It functions as a worker for the {@link TcpRosServer} as well as the {@link TcpClient} to handle read traffic.
+ * This AsynchTCPWorker is spawned for servicing traffic for publisher during handshake.
+ * After handshake we dont need to get trqffic FROM subscribers, only send it to them.
+ * Due to that we need a worker that does not fiddle with sockets and try to close them if this thread
+ * is terminated. The thread is designed to be terminated after handshake and replaced with
+ * the outbound message processor.
+ * It functions as a temporary worker for the {@link TcpRosServer} 
+ * as well as the {@link TcpClient} to handle read traffic, in which case a permanent version is used
  * @author jg
  * Copyright (C) NeoCoreTechs 2016
  *
  */
-public class AsynchTCPWorker implements Runnable {
+public class AsynchTempTCPWorker implements Runnable {
 	private static final boolean DEBUG = true;
-	private static final Log log = LogFactory.getLog(AsynchTCPWorker.class);
+	private static final Log log = LogFactory.getLog(AsynchTempTCPWorker.class);
 	public boolean shouldRun = true;
 	private ChannelHandlerContext ctx;
 	private Object waitHalt = new Object(); 
 	//private MessageBufferPool pool = new MessageBufferPool();
 	
-    public AsynchTCPWorker(ChannelHandlerContext ctx) throws IOException {
+    public AsynchTempTCPWorker(ChannelHandlerContext ctx) throws IOException {
     	this.ctx = ctx;
     	if( DEBUG )
-    		log.info("AsynchTCPWorker constructed with context:"+ctx);
+    		log.info("AsynchTempTCPWorker constructed with context:"+ctx);
 	}
 	
 	/**
@@ -45,19 +49,20 @@ public class AsynchTCPWorker implements Runnable {
 	public void run() {
 		//final Object waitFinish = ctx.getChannelCompletionMutex();
 			try {
-				while(shouldRun) {
+				//while(shouldRun) {
 					//final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
 					// initiate asynch read
 					// If we get a read pending exception, try again
 				   	final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
-					buf.clear();
-					final CountDownLatch cdl = new CountDownLatch(1);
-					ctx.read(buf, new CompletionHandler<Integer, Void>() {
+					while(true) {
+						try {
+							buf.clear();
+							ctx.read(buf, new CompletionHandler<Integer, Void>() {
 								@Override
 								public void completed(Integer arg0, Void arg1) {
 									buf.flip();
 									if( DEBUG )
-										log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" command received:"+buf+" Result:"+arg0+","+arg1);
+										log.info("ROS AsynchTempTCPWorker COMPLETED READ for "+ctx+" command received:"+buf);
 									Object res = Utility.deserialize(buf);
 									try {
 										ctx.pipeline().fireChannelRead(res);
@@ -67,13 +72,12 @@ public class AsynchTCPWorker implements Runnable {
 											e.printStackTrace();
 										}
 									}
-									cdl.countDown();
 							
 								}
 								@Override
 								public void failed(Throwable arg0, Void arg1) {
 									if( DEBUG ){
-										log.info("AsynchTcpWorker read op failed:",arg0);
+										log.info("AsynchTempTcpWorker read op failed:",arg0);
 										arg0.printStackTrace();
 									}
 									try {
@@ -84,11 +88,12 @@ public class AsynchTCPWorker implements Runnable {
 									if( arg0 instanceof ClosedChannelException ) {
 										shouldRun = false;
 									}
-									cdl.countDown();
 								} 	
-					});
-					cdl.await(); // readpendingexception if we overlap operations
-				} // shouldRun
+							});
+						} catch(ReadPendingException rpe) { Thread.sleep(1); continue; }
+						break;
+					}// while
+				//} // shouldRun
 				
 			} catch(Exception se) {
 				if( se instanceof SocketException ) {
@@ -96,13 +101,6 @@ public class AsynchTCPWorker implements Runnable {
 				} else {
 					log.error("Remote invocation failure ",se);
 				}
-			} finally {
-				try {
-					if( DEBUG )
-						log.info("<<<<<<<<<< Datasocket closing >>>>>>>>");
-					ctx.close();
-					ctx.setReady(false);
-				} catch (IOException e) {}
 			}
 			synchronized(waitHalt) {
 				waitHalt.notify();

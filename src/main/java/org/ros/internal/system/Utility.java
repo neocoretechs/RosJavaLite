@@ -5,15 +5,22 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
+//import java.nio.channels.Channels;
+//import java.nio.channels.ReadableByteChannel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.message.field.DirectByteArrayOutputStream;
-
+/**
+ * Static methods to serialize and deserialize ByteBuffer to/from Object.
+ * We are using java serialization. Traditional ROS uses XML/RPC so in general
+ * we are using ROS generated messages, with all the associated ROS fields and formats
+ * in a Java serialization context. If we need a ROS gateway the bindings should remain straightforward.
+ * @author jg
+ *
+ */
 public class Utility {
-	 private static boolean DEBUG = true;
+	 private static boolean DEBUG = false;
 	 private static final Log log = LogFactory.getLog(Utility.class);
 	 public static <T> void serialize(T value, ByteBuffer buffer) {
 		    //serializer.serialize((Message) value, buffer);
@@ -36,8 +43,6 @@ public class Utility {
 	 public static Object deserialize(ByteBuffer buffer) {
 		    //return deserializer.deserialize(buffer);
 			byte[] obuf = buffer.array();
-			if( DEBUG )
-				log.info("Deserialize:"+obuf.length);
 			Object Od = null;
 			try {
 						ObjectInputStream s;

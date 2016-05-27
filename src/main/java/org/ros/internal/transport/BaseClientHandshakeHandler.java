@@ -4,10 +4,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
+import org.ros.internal.message.MessageBuffers;
+import org.ros.internal.system.Utility;
 import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.CompletionHandler;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -35,7 +38,20 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) throws Exception {
-    ctx.write(clientHandshake.getOutgoingConnectionHeader().encode());
+	ByteBuffer bb = MessageBuffers.dynamicBuffer();
+	Utility.serialize(clientHandshake.getOutgoingConnectionHeader(), bb);
+    ctx.write(bb, new CompletionHandler<Integer, Void>() {
+		@Override
+		public void completed(Integer arg0, Void arg1) {
+			if( DEBUG )
+				log.info("BaseClientHandshakeHandler channelActive reply to master complete");	
+		}
+		@Override
+		public void failed(Throwable arg0, Void arg1) {
+			log.info("BaseClientHandshakeHandler channelActive reply to master failed with:"+arg0);	
+		}
+    	
+    });
   }
   
   @Override
@@ -45,8 +61,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
 
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object buff) throws Exception {
-    ByteBuffer buffer = (ByteBuffer) buff;
-    ConnectionHeader connectionHeader = ConnectionHeader.decode(buffer);
+    ConnectionHeader connectionHeader = (ConnectionHeader)buff;
     if (clientHandshake.handshake(connectionHeader)) {
       onSuccess(connectionHeader, ctx);
       signalOnSuccess(connectionHeader);
@@ -54,7 +69,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
       onFailure(clientHandshake.getErrorMessage(), ctx);
       signalOnFailure(clientHandshake.getErrorMessage());
     }
-    return buffer;
+    return buff;
   }
 
   @Override

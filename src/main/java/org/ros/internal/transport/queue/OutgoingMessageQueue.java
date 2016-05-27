@@ -7,12 +7,14 @@ import java.nio.channels.CompletionHandler;
 import java.nio.channels.WritePendingException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.CircularBlockingDeque;
+import org.ros.internal.message.Message;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.system.Utility;
@@ -64,30 +66,37 @@ public class OutgoingMessageQueue<T> {
       final Iterator<ChannelHandlerContext> it = channels.iterator();
       while(it.hasNext()) {
     	  final ChannelHandlerContext ctx = it.next();
+    	  final CountDownLatch cdl = new CountDownLatch(1);
     	  //final Object waitFinish = ctx.getChannelCompletionMutex();
-    	  if( ctx.isReady()) {
-    		  while(true) {
-    		  try {
-    			  ctx.write(buffer, new CompletionHandler<Integer, Void>() {
+    	  boolean sendMessage;
+    	  synchronized( ctx.getMessageTypes() ) {
+    		  sendMessage = ctx.getMessageTypes().contains(message.getClass().getName().replace('.', '/'));
+    	  }
+    	  if( ctx.isReady() && sendMessage ) {
+    		buffer.position(0);
+    		ctx.write(buffer, new CompletionHandler<Integer, Void>() {
     				  @Override
     				  public void completed(Integer arg0, Void arg1) {
+    					  if(DEBUG)
+    						  log.info("sent "+buffer+" result:"+arg0+","+arg1);
+    					  cdl.countDown();
     				  //messageBufferPool.release(buffer);
     				  }
     				  @Override
     				  public void failed(Throwable arg0, Void arg1) {
     					  // Broken pipe here if we cant write to client as its dropped
     					  //throw new RuntimeException(arg0);
-    					  log.info("Closing failed write context:"+ctx);
+    					  log.info("Closing failed write context:"+ctx+" due to "+arg0);
+    					  arg0.printStackTrace();
     					  try {
     						  ctx.close();
     					  } catch (IOException e) {}
     					  // A write failure should render the context not ready for writes.
     					  ctx.setReady(false);
+    					  cdl.countDown();
     				  }  
-    			  }); // completion handler
-    		  } catch(WritePendingException wpe) { continue; }
-    		  break;
-    		  } // while
+    		}); // completion handler
+    		cdl.await();
     	  } // context ready
       } // ChannelhandlerContext iterator
     } // loop method

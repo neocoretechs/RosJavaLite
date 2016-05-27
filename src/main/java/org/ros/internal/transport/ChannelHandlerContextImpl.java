@@ -7,13 +7,16 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 /**
  * A handler context contains all the executor, the channel group, the channel, and the pipeline with the handlers.
  * There is one channel per context.
- * There is one pipeline context.
+ * There is one pipeline per context.
  * There is one executor per group of contexts.
  * The pipeline is a stateful collection of handlers that represent the current channel state and means
  * of executing functions in the process of connecting, disconnecting, reading, failing etc.
@@ -21,6 +24,7 @@ import java.util.concurrent.Future;
  * them in order in the pipeline deque.
  * The functions of the system move data through the pipeline, triggering the handlers in the sequence they were
  * added.
+ * Traffic is filtered to subscriber channels via the hash set of requested message types
  * @author jg
  *
  */
@@ -31,6 +35,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	ChannelPipeline pipeline;
 	boolean ready = false;
 	Object mutex = new Object();
+	Set<String> outboundMessageTypes;
 	
 	
 	public ChannelHandlerContextImpl(AsynchronousChannelGroup grp, AsynchronousSocketChannel ch, Executor exc) {
@@ -38,6 +43,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 		channel = ch;
 		executor = exc;
 		pipeline = new ChannelPipelineImpl(this);
+		outboundMessageTypes = (Set<String>) new HashSet<String>();
 	}
 	
 	public void setChannel(AsynchronousSocketChannel sock) {
@@ -130,6 +136,10 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 		return ready;
 	}
 	
+	/**
+	 * Sets this context ready or not to receive traffic
+	 */
+	@Override
 	public void setReady(boolean ready) { this.ready = ready;}
 
 	/**
@@ -137,4 +147,13 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	 * multiple outbound writers accessing the same channel
 	 */
 	public Object getChannelCompletionMutex() { return mutex; }
+	
+	/**
+	 * Get the type of messages we want to send to the attached subscriber, based on the handshakes
+	 * received.
+	 * @return The HashSet of message type as String
+	 */
+	public Set<String> getMessageTypes() { return outboundMessageTypes; }
+	
+	
 }

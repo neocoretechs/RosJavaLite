@@ -43,13 +43,13 @@ public class MessageDispatcherTest {
   private static final int QUEUE_CAPACITY = 128;
 
   private ExecutorService executorService;
-  private CircularBlockingDeque<LazyMessage<std_msgs.Int32>> lazyMessages;
+  private CircularBlockingDeque<std_msgs.Int32> lazyMessages;
   private MessageFactory messageFactory;
 
   @Before
   public void before() {
     executorService = Executors.newCachedThreadPool();
-    lazyMessages = new CircularBlockingDeque<LazyMessage<std_msgs.Int32>>(128);
+    lazyMessages = new CircularBlockingDeque<std_msgs.Int32>(128);
     messageFactory = new DefaultMessageFactory(new MessageDefinitionReflectionProvider());
   }
 
@@ -86,7 +86,7 @@ public class MessageDispatcherTest {
       final int count = i;
       std_msgs.Int32 message = messageFactory.newFromType(std_msgs.Int32._TYPE);
       message.setData(count);
-      lazyMessages.addLast(new LazyMessage<std_msgs.Int32>(message));
+      lazyMessages.addLast((std_msgs.Int32)(message));
     }
 
     assertTrue(latch.await(1, TimeUnit.SECONDS));

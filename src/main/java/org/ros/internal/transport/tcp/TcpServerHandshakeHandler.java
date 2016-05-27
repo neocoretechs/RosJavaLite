@@ -54,14 +54,13 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 	if( DEBUG ) {
 			  log.info("TcpServerHandshakeHandler channelRead:"+e);
 	}
-    ByteBuffer incomingBuffer =  (ByteBuffer)e;
-    ConnectionHeader incomingHeader = ConnectionHeader.decode(incomingBuffer);
+    ConnectionHeader incomingHeader = (ConnectionHeader)e;
     if (incomingHeader.hasField(ConnectionHeaderFields.SERVICE)) {
       handleServiceHandshake(ctx, incomingHeader);
     } else {
       handleSubscriberHandshake(ctx, incomingHeader);
     }
-    return incomingBuffer;
+    return e;
   }
 
   private void handleServiceHandshake(ChannelHandlerContext ctx, ConnectionHeader incomingHeader) throws IOException {
@@ -108,6 +107,10 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 			    // So, we replace the handshake handler with a handler which will
 			    // drop everything.
 			    ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
+			    // Set this context ready to receive the message type specified
+			    synchronized(ctx.getMessageTypes()) {
+			    	ctx.getMessageTypes().add(incomingConnectionHeader.getField(ConnectionHeaderFields.TYPE));
+			    }
 				// set as ready for channel write loop in OutogingMessageQueue
 				ctx.setReady(true);
 				if( DEBUG ) {

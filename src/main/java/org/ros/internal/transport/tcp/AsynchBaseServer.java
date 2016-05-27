@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketOption;
+import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.Future;
 
@@ -47,19 +49,24 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 				if( DEBUG ) {
 					log.info("Accept "+channel.get());
 				}
+				
+				((AsynchronousSocketChannel)channel.get()).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
+				((AsynchronousSocketChannel)channel.get()).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
+				((AsynchronousSocketChannel)channel.get()).setOption(StandardSocketOptions.TCP_NODELAY, true);
 				ChannelHandlerContext ctx = new ChannelHandlerContextImpl(channelGroup, channel.get(), exc);
 				tcpserver.getSubscribers().add(ctx);
-				ctx.pipeline().fireChannelActive();
 				// inject the handlers, start handshake
 				tcpserver.getFactoryStack().inject(ctx);
+				ctx.pipeline().fireChannelRegistered(); 
 				// We have to set context as ready AFTER we do the handshake to keep traffic from
 				// interfering with handshake
 				// notify channel up and ready
-				ctx.pipeline().fireChannelRegistered(); 
-				// spin worker to handle traffic from asynch socket
-                AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
+				// spin TEMP worker to handle traffic from asynch socket
+				// After it gets it the thread terminates and a new handler is inserted to generate outbound traffic
+                AsynchTempTCPWorker uworker = new AsynchTempTCPWorker(ctx);
                 // and send it all to executor for running
-                exc.execute(uworker);  
+                exc.execute(uworker);
+				ctx.pipeline().fireChannelActive();
                 if( DEBUG ) {
                     	log.info("ROS Asynch transport server worker starting for context:"+ctx);
                 }   

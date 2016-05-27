@@ -29,8 +29,8 @@ public class IncomingMessageQueue<T> {
   private final MessageDispatcher<T> messageDispatcher;
 
   public IncomingMessageQueue( ExecutorService executorService) {
-    CircularBlockingDeque<LazyMessage<T>> lazyMessages =
-        new CircularBlockingDeque<LazyMessage<T>>(DEQUE_CAPACITY);
+    CircularBlockingDeque<T> lazyMessages =
+        new CircularBlockingDeque<T>(DEQUE_CAPACITY);
     messageReceiver = new MessageReceiver<T>(lazyMessages);
     messageDispatcher = new MessageDispatcher<T>(lazyMessages, executorService);
     executorService.execute(messageDispatcher);
