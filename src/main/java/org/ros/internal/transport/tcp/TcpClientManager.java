@@ -6,7 +6,7 @@ package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.nio.channels.AsynchronousChannelGroup;
+//import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,14 +30,14 @@ import org.ros.internal.transport.ChannelHandlerContext;
 public class TcpClientManager {
   public static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(TcpClientManager.class);
-  private final AsynchronousChannelGroup channelGroup;
+  private final /*Asynchronous*/ChannelGroup channelGroup;
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
   private final Executor executor;
 
   public TcpClientManager(ExecutorService executor) throws IOException {
     this.executor = executor;
-    this.channelGroup = AsynchronousChannelGroup.withThreadPool(executor);
+    this.channelGroup = new ChannelGroupImpl(executor);/*AsynchronousChannelGroup.withThreadPool(executor);*/
     this.tcpClients = new ArrayList<TcpClient>();
     this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();
 

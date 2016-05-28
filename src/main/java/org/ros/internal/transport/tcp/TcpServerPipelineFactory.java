@@ -27,11 +27,11 @@ public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineF
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
 
-  public TcpServerPipelineFactory(AsynchronousChannelGroup channelGroup,
+  public TcpServerPipelineFactory(ChannelGroup incomingChannelGroup,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
-    super(channelGroup);
+    super(incomingChannelGroup);
     if( DEBUG )
-    	log.info("TcpServerPipeLineFactory ctor:"+channelGroup+" "+topicParticipantManager+" "+serviceManager);
+    	log.info("TcpServerPipeLineFactory ctor:"+incomingChannelGroup+" "+topicParticipantManager+" "+serviceManager);
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
   }

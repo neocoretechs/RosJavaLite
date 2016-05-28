@@ -18,11 +18,11 @@ public class TcpClientPipelineFactory extends ConnectionTrackingChannelPipelineF
   public static final String LENGTH_FIELD_PREPENDER = "LengthFieldPrepender";
   private List<NamedChannelHandler> namedChannelHandlers;
 
-  public TcpClientPipelineFactory(AsynchronousChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
-    super(channelGroup);
+  public TcpClientPipelineFactory(/*Asynchronous*/ChannelGroup asynchronousChannelGroup, List<NamedChannelHandler> namedChannelHandlers) {
+    super(asynchronousChannelGroup);
     this.namedChannelHandlers = namedChannelHandlers;
     if( DEBUG )
-    	log.info("TcpClientPipelineFactory:"+channelGroup);
+    	log.info("TcpClientPipelineFactory:"+asynchronousChannelGroup);
   }
 
   @Override

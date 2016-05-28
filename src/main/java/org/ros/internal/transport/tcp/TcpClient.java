@@ -2,6 +2,7 @@ package org.ros.internal.transport.tcp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.exception.RosRuntimeException;
 import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ChannelHandlerContextImpl;
 
@@ -12,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channel;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -36,12 +38,12 @@ public class TcpClient {
   private final List<NamedChannelHandler> namedChannelHandlers;
   private Executor executor;
   
-  private AsynchronousSocketChannel channel;
-  private AsynchronousChannelGroup channelGroup;
+  private /*Asynchronous*/SocketChannel channel;
+  private /*Asynchronous*/ChannelGroup channelGroup;
   
   private ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   
-  public TcpClient( Executor executor, AsynchronousChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
+  public TcpClient( Executor executor, /*Asynchronous*/ChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
 	this.executor = executor;
 	this.channelGroup = channelGroup;
 	this.namedChannelHandlers = namedChannelHandlers;
@@ -68,10 +70,10 @@ public class TcpClient {
   public ChannelHandlerContext getContext() { return ctx; }
   
   public Channel connect(String connectionName, SocketAddress socketAddress) throws Exception {
-	channel = AsynchronousSocketChannel.open(channelGroup);
-	((AsynchronousSocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
-	((AsynchronousSocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
-	((AsynchronousSocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, true);
+	channel = /*Asynchronous*/SocketChannel.open(/*channelGroup*/);
+	((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
+	((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
+	((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, true);
 	ctx = new ChannelHandlerContextImpl(channelGroup, channel, executor);
     TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup(), namedChannelHandlers);
     // add handler pipeline factory to stack
@@ -99,9 +101,13 @@ public class TcpClient {
     return channel;
   }
 
-  public Future<Integer> write(ByteBuffer buffer) {
+  public /*Future<Integer>*/ int write(ByteBuffer buffer) {
     assert(channel != null);
     assert(buffer != null);
-    return channel.write(buffer);
+    try {
+		return channel.write(buffer);
+	} catch (IOException e) {
+		throw new RosRuntimeException(e);
+	}
   }
 }

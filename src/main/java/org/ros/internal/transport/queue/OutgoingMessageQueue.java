@@ -14,6 +14,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.CircularBlockingDeque;
+import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.Message;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.message.MessageBuffers;
@@ -37,7 +38,6 @@ public class OutgoingMessageQueue<T> {
 
   private final CircularBlockingDeque<T> deque;
   private final Writer writer;
-  private final MessageBufferPool messageBufferPool;
   private final ByteBuffer latchedBuffer;
   private final Object mutex;
 
@@ -105,7 +105,7 @@ public class OutgoingMessageQueue<T> {
   public OutgoingMessageQueue(ExecutorService executorService, List<ChannelHandlerContext> ctxs) throws IOException {
     deque = new CircularBlockingDeque<T>(DEQUE_CAPACITY);
     writer = new Writer();
-    messageBufferPool = new MessageBufferPool();
+    //messageBufferPool = new MessageBufferPool();
     latchedBuffer = MessageBuffers.dynamicBuffer();
     mutex = new Object();
     latchMode = false;
@@ -151,7 +151,11 @@ public class OutgoingMessageQueue<T> {
       Iterator<ChannelHandlerContext> it = channels.iterator();
       while(it.hasNext()) {
     	  ChannelHandlerContext ctx = it.next();
-    	  ctx.write(latchedBuffer);
+    	  try {
+			ctx.write(latchedBuffer);
+		} catch (IOException e) {
+			throw new RosRuntimeException(e);
+		}
       }
     }
   }

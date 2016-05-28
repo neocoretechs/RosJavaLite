@@ -20,10 +20,10 @@ import org.ros.internal.message.field.DirectByteArrayOutputStream;
  *
  */
 public class Utility {
-	 private static boolean DEBUG = false;
+	 private static boolean DEBUG = true;
 	 private static final Log log = LogFactory.getLog(Utility.class);
+	 
 	 public static <T> void serialize(T value, ByteBuffer buffer) {
-		    //serializer.serialize((Message) value, buffer);
 			DirectByteArrayOutputStream dbaos = new DirectByteArrayOutputStream();
 			ObjectOutputStream oos;
 			try {
@@ -41,7 +41,6 @@ public class Utility {
 
 	
 	 public static Object deserialize(ByteBuffer buffer) {
-		    //return deserializer.deserialize(buffer);
 			byte[] obuf = buffer.array();
 			Object Od = null;
 			try {
@@ -53,8 +52,7 @@ public class Utility {
 						s.close();
 						bais.close();
 						//rbc.close();
-			} catch (IOException ioe) {
-			} catch (ClassNotFoundException cnf) {
+			} catch (IOException | ClassNotFoundException cnf) {
 					log.error("Class cannot be deserialized, may have been modified beyond version compatibility");
 			}
 			if( DEBUG )

@@ -8,8 +8,10 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
+import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.message.service.ServiceDescription;
 import org.ros.internal.node.topic.DefaultPublisher;
+import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandler;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
@@ -75,7 +77,7 @@ public class DefaultServiceServer<T, S> implements ServiceServer<T, S> {
     });
   }
 
-  public ConnectionHeader finishHandshake(ConnectionHeader incomingConnectionHeader) {
+  public ByteBuffer finishHandshake(ConnectionHeader incomingConnectionHeader) {
     if (DEBUG) {
       log.info("Client handshake header: " + incomingConnectionHeader);
     }
@@ -88,7 +90,9 @@ public class DefaultServiceServer<T, S> implements ServiceServer<T, S> {
     if (DEBUG) {
       log.info("Server handshake header: " + connectionHeader);
     }
-    return connectionHeader;
+    ByteBuffer headbuf = MessageBuffers.dynamicBuffer();
+    Utility.serialize(connectionHeader, headbuf);
+    return headbuf;
   }
 
   @Override

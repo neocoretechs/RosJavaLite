@@ -14,8 +14,9 @@ import java.nio.channels.CompletionHandler;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Abstraction of top level ChannelHandler interface
+ * Abstraction of top level ChannelHandler interface.
  * Common functionality for {@link ClientHandshake} handlers.
+ * @author jg
  * 
  */
 public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHandler {

@@ -57,8 +57,10 @@ public class TcpRosServer implements Serializable {
   private transient ServiceManager serviceManager;
   private transient ScheduledExecutorService executorService;
 
-  private transient AsynchronousChannelGroup outgoingChannelGroup; // publisher with connected subscribers
-  private transient AsynchronousChannelGroup incomingChannelGroup; // subscriber connected to publishers
+  //private transient AsynchronousChannelGroup outgoingChannelGroup; // publisher with connected subscribers
+  //private transient AsynchronousChannelGroup incomingChannelGroup; // subscriber connected to publishers
+  private transient ChannelGroup outgoingChannelGroup; // publisher with connected subscribers
+  private transient ChannelGroup incomingChannelGroup; // subscriber connected to publishers
   private transient TcpServerPipelineFactory serverPipelineFactory;
   private transient ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   private transient List<ChannelHandlerContext> contexts;
@@ -79,7 +81,7 @@ public class TcpRosServer implements Serializable {
   public void start() {
     //assert(outgoingChannel == null);
 	  try {
-		  incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
+		  incomingChannelGroup = new ChannelGroupImpl(executorService);//AsynchronousChannelGroup.withThreadPool(executorService);
 		  advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
 		  factoryStack = new ChannelInitializerFactoryStack();
 		  serverPipelineFactory =
@@ -154,7 +156,7 @@ public class TcpRosServer implements Serializable {
   
   public ExecutorService getExecutor() { return executorService; }
   
-  public AsynchronousChannelGroup getChannelGroup() { return incomingChannelGroup; }
+  public /*Asynchronous*/ChannelGroup getChannelGroup() { return incomingChannelGroup; }
 
 
 }

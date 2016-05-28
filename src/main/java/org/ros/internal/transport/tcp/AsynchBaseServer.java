@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.SocketOption;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
@@ -45,15 +46,15 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 	public void run() {
 		while(!shouldStop) {
 			try {
-				Future<AsynchronousSocketChannel> channel = server.accept();
+				/*Future<Asynchronous*/SocketChannel/*>*/ channel = server.accept();
 				if( DEBUG ) {
-					log.info("Accept "+channel.get());
+					log.info("Accept "+channel/*.get()*/);
 				}
 				
-				((AsynchronousSocketChannel)channel.get()).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
-				((AsynchronousSocketChannel)channel.get()).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
-				((AsynchronousSocketChannel)channel.get()).setOption(StandardSocketOptions.TCP_NODELAY, true);
-				ChannelHandlerContext ctx = new ChannelHandlerContextImpl(channelGroup, channel.get(), exc);
+				(/*(AsynchronousSocketChannel)*/channel/*.get()*/).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
+				(/*(AsynchronousSocketChannel)*/channel/*.get()*/).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
+				(/*(AsynchronousSocketChannel)*/channel/*.get()*/).setOption(StandardSocketOptions.TCP_NODELAY, true);
+				ChannelHandlerContext ctx = new ChannelHandlerContextImpl(channelGroup, channel/*.get()*/, exc);
 				tcpserver.getSubscribers().add(ctx);
 				// inject the handlers, start handshake
 				tcpserver.getFactoryStack().inject(ctx);

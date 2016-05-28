@@ -2,12 +2,8 @@ package org.ros.internal.transport.tcp;
 
 import org.ros.internal.transport.ChannelHandler;
 
-
-//import org.jboss.netty.channel.ChannelDownstreamHandler;
-//import org.jboss.netty.channel.ChannelHandler;
-//import org.jboss.netty.channel.ChannelUpstreamHandler;
-
 /**
+ * Adds a name property to a channelhandler contract
  * @author jg
  */
 public interface NamedChannelHandler extends ChannelHandler {

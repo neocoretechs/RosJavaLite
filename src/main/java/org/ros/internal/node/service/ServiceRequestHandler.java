@@ -5,6 +5,7 @@ package org.ros.internal.node.service;
 //import org.jboss.netty.channel.ChannelHandlerContext;
 //import org.jboss.netty.channel.MessageEvent;
 //import org.jboss.netty.channel.SimpleChannelHandler;
+import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceException;
 import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.system.Utility;
@@ -13,6 +14,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.message.MessageFactory;
 import org.ros.node.service.ServiceResponseBuilder;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
@@ -39,9 +41,7 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     messageBufferPool = new MessageBufferPool();
   }
 
-  private void handleRequest(ByteBuffer requestBuffer, ByteBuffer responseBuffer)
-      throws ServiceException {
-    T request = (T) Utility.deserialize(requestBuffer);
+  private void handleRequest(T request, ByteBuffer responseBuffer) throws ServiceException {
     S response = messageFactory.newFromType(serviceDeclaration.getType());
     responseBuilder.build(request, response);
     Utility.serialize(response, responseBuffer);
@@ -51,16 +51,26 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     response.setErrorCode(1);
     response.setMessageLength(responseBuffer.limit());
     response.setMessage(responseBuffer);
-    ctx.write(response);
+    ByteBuffer resbuf = messageBufferPool.acquire();
+    Utility.serialize(response,  resbuf);
+    try {
+		ctx.write(resbuf);
+	} catch (IOException e) {
+		throw new RosRuntimeException(e);
+	}
   }
 
-  private void handleError(final ChannelHandlerContext ctx, ServiceServerResponse response,
-      String message) {
+  private void handleError(final ChannelHandlerContext ctx, ServiceServerResponse response, String message, ByteBuffer responseBuffer) {
     response.setErrorCode(0);
     ByteBuffer encodedMessage = Charset.forName("US-ASCII").encode(message);
     response.setMessageLength(encodedMessage.limit());
     response.setMessage(encodedMessage);
-    ctx.write(response);
+    Utility.serialize(response,  responseBuffer);
+    try {
+		ctx.write(responseBuffer);
+	} catch (IOException e) {
+		throw new RosRuntimeException(e);
+	}
   }
 
   @Override
@@ -68,7 +78,7 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     // Although the ChannelHandlerContext is explicitly documented as being safe
     // to keep for later use, the MessageEvent is not. So, we make a defensive
     // copy of the buffer.
-    final ByteBuffer requestBuffer = ((ByteBuffer) e);
+    final T requestBuffer = ((T) e);
     this.executorService.execute(new Runnable() {
       @Override
       public void run() {
@@ -79,7 +89,7 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
           handleRequest(requestBuffer, responseBuffer);
           success = true;
         } catch (ServiceException ex) {
-          handleError(ctx, response, ex.getMessage());
+          handleError(ctx, response, ex.getMessage(), responseBuffer);
           success = false;
         }
         if (success) {

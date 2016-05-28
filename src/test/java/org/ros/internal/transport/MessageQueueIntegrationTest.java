@@ -28,6 +28,8 @@ import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
 import org.ros.internal.transport.queue.OutgoingMessageQueue;
+import org.ros.internal.transport.tcp.ChannelGroup;
+import org.ros.internal.transport.tcp.ChannelGroupImpl;
 import org.ros.internal.transport.tcp.ChannelInitializerFactoryStack;
 import org.ros.internal.transport.tcp.NamedChannelHandler;
 import org.ros.internal.transport.tcp.TcpClient;
@@ -43,6 +45,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -175,13 +179,8 @@ public class MessageQueueIntegrationTest {
 	isock = new InetSocketAddress(0);
     TopicParticipantManager topicParticipantManager = new TopicParticipantManager();
     ServiceManager serviceManager = new ServiceManager();
-	AsynchronousChannelGroup incomingChannelGroup = null;
-	try {
-		incomingChannelGroup = AsynchronousChannelGroup.withThreadPool(executorService);
-	} catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
+	/*Asynchronous*/ChannelGroup incomingChannelGroup = null;
+	incomingChannelGroup = new ChannelGroupImpl(executorService);/* AsynchronousChannelGroup.withThreadPool(executorService);*/
 	ChannelInitializerFactoryStack  factoryStack = new ChannelInitializerFactoryStack();
   
     TcpServerPipelineFactory serverPipelineFactory =
@@ -193,9 +192,9 @@ public class MessageQueueIntegrationTest {
             }
         };
      factoryStack.addLast(serverPipelineFactory);
-	  AsynchronousServerSocketChannel listener = null;
+	  /*AsynchronousServer*/ServerSocketChannel listener = null;
 	try {
-		listener = AsynchronousServerSocketChannel.open(incomingChannelGroup);
+		listener = /*Asynchronous*/ServerSocketChannel.open(/*incomingChannelGroup*/);
 	} catch (IOException e1) {
 		// TODO Auto-generated catch block
 		e1.printStackTrace();
@@ -207,17 +206,18 @@ public class MessageQueueIntegrationTest {
 		e.printStackTrace();
 	}
 
-     Future<AsynchronousSocketChannel> channel = listener.accept();
+     /*Future<Asynchronous*/SocketChannel channel = null;
+	try {
+		channel = listener.accept();
+	} catch (IOException e1) {
+		// TODO Auto-generated catch block
+		e1.printStackTrace();
+	}
 	  if( DEBUG ) {
 		  log.debug("Accept "+channel);
 	  }
      ChannelHandlerContextImpl ctx = null;
-	try {
-		ctx = new ChannelHandlerContextImpl(incomingChannelGroup,channel.get() , executorService);
-	} catch (InterruptedException | ExecutionException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	}
+	ctx = new ChannelHandlerContextImpl(incomingChannelGroup,channel/*.get()*/ , executorService);
      return ctx;
   }
 

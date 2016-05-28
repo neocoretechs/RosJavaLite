@@ -1,6 +1,6 @@
 package org.ros.internal.transport.tcp;
 
-import java.nio.channels.AsynchronousChannelGroup;
+//import java.nio.channels.AsynchronousChannelGroup;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,7 +16,7 @@ public class ConnectionTrackingChannelPipelineFactory extends ChannelInitializer
 
   private final ConnectionTrackingHandler connectionTrackingHandler;
   
-  public ConnectionTrackingChannelPipelineFactory(AsynchronousChannelGroup channelGroup){
+  public ConnectionTrackingChannelPipelineFactory(/*Asynchronous*/ChannelGroup channelGroup){
     this.connectionTrackingHandler = new ConnectionTrackingHandler();
     if(DEBUG)
     	log.info("ConnectionTrackingChannelPipelineFactory ctor"+channelGroup);

@@ -3,22 +3,19 @@ package org.ros.internal.transport.tcp;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
-import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.exception.RosRuntimeException;
+
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.service.DefaultServiceServer;
 import org.ros.internal.node.service.ServiceManager;
-import org.ros.internal.node.service.ServiceResponseEncoder;
 import org.ros.internal.node.topic.DefaultPublisher;
 import org.ros.internal.node.topic.SubscriberIdentifier;
 import org.ros.internal.node.topic.TopicIdentifier;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.transport.ChannelHandler;
 import org.ros.internal.transport.ChannelHandlerContext;
-import org.ros.internal.transport.ChannelPipeline;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
 import org.ros.namespace.GraphName;
@@ -27,7 +24,6 @@ import org.ros.namespace.GraphName;
  * A {@link ChannelHandler} which will process the TCP server handshake.
  * 
  * @author jg
-
  */
 public class TcpServerHandshakeHandler implements ChannelHandler {
   private static final boolean DEBUG = true ;

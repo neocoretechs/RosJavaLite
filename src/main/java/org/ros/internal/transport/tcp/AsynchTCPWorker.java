@@ -52,13 +52,24 @@ public class AsynchTCPWorker implements Runnable {
 				   	final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
 					buf.clear();
 					final CountDownLatch cdl = new CountDownLatch(1);
+					int res = ctx.read(buf);
+					buf.flip();
+					Object reso = Utility.deserialize(buf);
+					if( DEBUG )
+						log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" buffer:"+buf+" result:"+res+" Object:"+reso);
+					/*
 					ctx.read(buf, new CompletionHandler<Integer, Void>() {
 								@Override
 								public void completed(Integer arg0, Void arg1) {
 									buf.flip();
-									if( DEBUG )
-										log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" command received:"+buf+" Result:"+arg0+","+arg1);
 									Object res = Utility.deserialize(buf);
+									//if( res == null ) {
+									//	cdl.countDown();
+									//	return;
+									//}
+										
+									if( DEBUG )
+										log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" buffer:"+buf+" Object:"+res+" Result:"+arg0+","+arg1);
 									try {
 										ctx.pipeline().fireChannelRead(res);
 									} catch (Exception e) {
@@ -87,7 +98,8 @@ public class AsynchTCPWorker implements Runnable {
 									cdl.countDown();
 								} 	
 					});
-					cdl.await(); // readpendingexception if we overlap operations
+					*/
+					//cdl.await(); // readpendingexception if we overlap operations
 				} // shouldRun
 				
 			} catch(Exception se) {

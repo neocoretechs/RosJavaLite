@@ -7,9 +7,12 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.SocketChannel;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+
+import org.ros.internal.transport.tcp.ChannelGroup;
 
 public interface ChannelHandlerContext {
 	  /**
@@ -39,7 +42,7 @@ public interface ChannelHandlerContext {
      * called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
-    AsynchronousSocketChannel bind(SocketAddress localAddress) throws IOException;
+    /*Asynchronous*/SocketChannel bind(SocketAddress localAddress) throws IOException;
 
     /**
      * Request to connect to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation
@@ -53,8 +56,9 @@ public interface ChannelHandlerContext {
      * {@link ChannelOutboundHandler#connect(ChannelHandlerContext, SocketAddress, SocketAddress, CompletionHandler)}
      * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
+     * @throws IOException 
      */
-    void connect(SocketAddress remoteAddress);
+    void connect(SocketAddress remoteAddress) throws IOException;
 
     /**
      * Request to connect to the given {@link SocketAddress} while bind to the localAddress and notify the
@@ -109,8 +113,9 @@ public interface ChannelHandlerContext {
      * {@link ChannelHandler#read(ChannelHandlerContext)}
      * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
+     * @throws IOException 
      */
-    Future<Integer> read(ByteBuffer buf);
+    /*Future<Integer>*/int read(ByteBuffer buf) throws IOException;
     /**
      * Request to Read data from the {@link Channel} into the first inbound buffer, triggers an
      * {@link ChannelHandler#channelRead(ChannelHandlerContext, Object)} event if data was
@@ -122,6 +127,7 @@ public interface ChannelHandlerContext {
      * {@link ChannelHandler#read(ChannelHandlerContext)}
      * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
+     * @throws IOException 
      */
 	void read(ByteBuffer buf,CompletionHandler<Integer, Void> completionHandler);
 
@@ -129,15 +135,16 @@ public interface ChannelHandlerContext {
      * Request to write a message via this {@link ChannelHandlerContext} through the {@link ChannelPipeline}.
      * This method will not request to actual flush, so be sure to call {@link #flush()}
      * once you want to request to flush all pending data to the actual transport.
+     * @throws IOException 
      */
-    Future<Integer> write(Object msg);
+    /*Future<Integer>*/int write(ByteBuffer msg) throws IOException;
 
     /**
      * Request to write a message via this {@link ChannelHandlerContext} through the {@link ChannelPipeline}.
      * This method will not request to actual flush, so be sure to call {@link #flush()}
      * once you want to request to flush all pending data to the actual transport.
      */
-    void write(Object msg, CompletionHandler<Integer,Void> handler);
+    void write(ByteBuffer msg, CompletionHandler<Integer,Void> handler);
 
 
     /**
@@ -149,7 +156,7 @@ public interface ChannelHandlerContext {
      * Return the channel group
      * 
      */
-    AsynchronousChannelGroup getChannelGroup();
+    /*Asynchronous*/ChannelGroup getChannelGroup();
 
     /**
      * Determine if this channel is ready for processing, it is configured, has a socket
