@@ -51,12 +51,29 @@ public class AsynchTCPWorker implements Runnable {
 					// If we get a read pending exception, try again
 				   	final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
 					buf.clear();
-					final CountDownLatch cdl = new CountDownLatch(1);
+					//final CountDownLatch cdl = new CountDownLatch(1);
 					int res = ctx.read(buf);
-					buf.flip();
-					Object reso = Utility.deserialize(buf);
-					if( DEBUG )
-						log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" buffer:"+buf+" result:"+res+" Object:"+reso);
+					// seems like a -1 is generated when channel breaks, so stop
+					// this worker on that case
+					if( res == -1) {
+						shouldRun = false;
+						if( DEBUG )
+							log.info("ROS AsynchTCPWorker CHANNEL BREAK, TERMINATING for "+ctx);
+					} else {
+						buf.flip();
+						Object reso = Utility.deserialize(buf);
+						if( DEBUG )
+							log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" buffer:"+buf+" result:"+res+" Object:"+reso);
+						try {
+							ctx.pipeline().fireChannelRead(reso);
+						} catch (Exception e) {
+							if( DEBUG) {
+								log.info("Exception out of fireChannelRead",e);
+								e.printStackTrace();
+							}
+							ctx.pipeline().fireExceptionCaught(e);
+						}
+					}
 					/*
 					ctx.read(buf, new CompletionHandler<Integer, Void>() {
 								@Override
@@ -103,17 +120,13 @@ public class AsynchTCPWorker implements Runnable {
 				} // shouldRun
 				
 			} catch(Exception se) {
-				if( se instanceof SocketException ) {
-					log.error("Received SocketException, connection reset..");
-				} else {
-					log.error("Remote invocation failure ",se);
-				}
+					log.error("AsynchTCPWorker terminating due to ",se);
 			} finally {
 				try {
 					if( DEBUG )
 						log.info("<<<<<<<<<< Datasocket closing >>>>>>>>");
-					ctx.close();
 					ctx.setReady(false);
+					ctx.close();
 				} catch (IOException e) {}
 			}
 			synchronized(waitHalt) {

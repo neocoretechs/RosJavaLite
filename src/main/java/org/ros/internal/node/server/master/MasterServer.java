@@ -276,7 +276,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
 	try {
 		client = new SlaveClient(MASTER_NODE_NAME, subscriberSlaveUri);
 	} catch (IOException e) {
-		log.error("MasterServer cannot construct slave cleint to unknown host "+subscriberSlaveUri,e);
+		log.error("MasterServer cannot construct slave client to unknown host "+subscriberSlaveUri,e);
 		throw new RosRuntimeException(e);
 	}
     client.publisherUpdate(topicName, publisherUris);
@@ -490,7 +490,10 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
       return result;
     }
   }
-
+  /**
+   * Create a new SlaveClient with passed NodeRegistrationInfo
+   * Triggered after shutdown and removal of publishers and subscribers from old slave node
+   */
   @Override
   public void onNodeReplacement(NodeRegistrationInfo nodeInfo) {
     // A node in the registration manager is being replaced. Contact the node

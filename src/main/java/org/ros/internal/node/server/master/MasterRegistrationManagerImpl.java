@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2012 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.server.master;
 
 import java.net.InetSocketAddress;
@@ -21,10 +5,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.ros.internal.node.service.ServiceIdentifier;
 import org.ros.master.client.TopicSystemState;
 import org.ros.namespace.GraphName;
@@ -37,10 +23,10 @@ import org.ros.node.service.ServiceServer;
  * <p>
  * This class is not thread-safe.
  * 
- * @author khughes@google.com (Keith M. Hughes)
+ * @author jg
  */
 public class MasterRegistrationManagerImpl {
-
+  private static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(MasterRegistrationManagerImpl.class);
 
   /**
@@ -64,6 +50,7 @@ public class MasterRegistrationManagerImpl {
    * A listener for master registration events.
    */
   private final MasterRegistrationListener listener;
+
 
   public MasterRegistrationManagerImpl(MasterRegistrationListener listener) {
     this.listener = listener;
@@ -425,21 +412,27 @@ public class MasterRegistrationManagerImpl {
       }
       log.info("Replacing node "+node.getNodeSlaveUri()+" with new requested "+nodeSlaveUri);
       // The node is switching slave URIs, so we need a new one.
-      potentiallyDeleteNode(node);
+      //potentiallyDeleteNode(node);
+      nodes.remove(nodeName);
       cleanupNode(node);
+      NodeRegistrationInfo newNode = new NodeRegistrationInfo(nodeName, nodeSlaveUri);
+      nodes.put(nodeName, newNode);
+      // Try to reach old node via SlaveClient to shut it down
+      /*
       try {
         listener.onNodeReplacement(node);
       } catch (Exception e) {
         // No matter what, we want to keep going
         log.error("Error during onNodeReplacement call", e);
       }
+      */
+      return newNode;
+    } else {
+    	// no existing node
+    	node = new NodeRegistrationInfo(nodeName, nodeSlaveUri);
+    	nodes.put(nodeName, node);
+    	return node;
     }
-
-    // Either no existing node, or the old node needs to go away
-    node = new NodeRegistrationInfo(nodeName, nodeSlaveUri);
-    nodes.put(nodeName, node);
-
-    return node;
   }
 
   /**
@@ -463,6 +456,39 @@ public class MasterRegistrationManagerImpl {
     }
   }
 
+  /**
+   * A node is being replaced. Change the NodeRegistrationInfo to the new address
+   * 
+   * @param node
+   *          the node being replaced
+   * @param newNode
+   * 		  the new node
+   */
+  private void replaceNode(NodeRegistrationInfo node, NodeRegistrationInfo newNode) {
+	boolean found = false;
+    for (TopicRegistrationInfo topic : node.getPublishers()) {
+    	found = topic.removePublisher(node);
+    	if( found ) {
+    		if( DEBUG )
+    			log.info("Replacing publisher:"+node+" "+newNode+" "+topic);
+    		topic.addPublisher(newNode, topic.getMessageType());
+    	}
+    }
+
+    for (TopicRegistrationInfo topic : node.getSubscribers()) {
+      found = topic.removeSubscriber(node);
+      if( found ) {
+    		if( DEBUG )
+    			log.info("Replacing subscriber:"+node+" "+newNode+" "+topic);
+    		topic.addSubscriber(newNode, topic.getMessageType());
+      }
+    }
+    
+    // TODO: service?
+    for (ServiceRegistrationInfo service : node.getServices()) {
+      services.remove(service.getServiceName());
+    }
+  }
   /**
    * Remove a node from registration if it no longer has any registrations.
    * 

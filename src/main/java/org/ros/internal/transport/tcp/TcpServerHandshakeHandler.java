@@ -50,6 +50,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 	if( DEBUG ) {
 			  log.info("TcpServerHandshakeHandler channelRead:"+e);
 	}
+	// check for null, possible fault on bad connect
     ConnectionHeader incomingHeader = (ConnectionHeader)e;
     if (incomingHeader.hasField(ConnectionHeaderFields.SERVICE)) {
       handleServiceHandshake(ctx, incomingHeader);

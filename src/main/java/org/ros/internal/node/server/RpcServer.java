@@ -8,10 +8,8 @@ import org.ros.exception.RosRuntimeException;
 import org.ros.internal.system.Process;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -33,18 +31,16 @@ public abstract class RpcServer {
 
   public RpcServer(BindAddress bindAddress, AdvertiseAddress advertiseAddress) throws IOException {
     this.advertiseAddress = advertiseAddress;
-    /*
-    this.advertiseAddress.setPortCallable(new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return server.getPort();
-      }
-    });
-    */
   }
 
- 
+  /**
+   * Invoke a method via remote call.
+   * @param rri The RemoteRequestInterface passed from remote client
+   * @return The Object result of invocation
+   * @throws Exception
+   */
   public abstract Object invokeMethod(RemoteRequestInterface rri) throws Exception;
+  
   /**
    * Start up the remote calling server.
    * 
