@@ -27,7 +27,7 @@ import org.ros.internal.node.topic.PublisherFactory;
 import org.ros.internal.node.topic.SubscriberFactory;
 import org.ros.internal.node.topic.TopicDeclaration;
 import org.ros.internal.node.topic.TopicParticipantManager;
-import org.ros.internal.transport.tcp.TcpRosServer;
+
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.namespace.GraphName;
@@ -62,7 +62,7 @@ import java.util.concurrent.TimeUnit;
  * 
  */
 public class DefaultNode implements ConnectedNode {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(DefaultNode.class);
   /**
    * The maximum delay before shutdown will begin even if all

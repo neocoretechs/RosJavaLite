@@ -19,7 +19,7 @@ import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
  */
 public class MessageReceiver<T> extends AbstractNamedChannelHandler {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(MessageReceiver.class);
 
   private final CircularBlockingDeque<T> lazyMessages;

@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.client;
 
 
@@ -24,35 +8,30 @@ import org.ros.internal.node.response.GraphNameListResultFactory;
 import org.ros.internal.node.response.IntegerResultFactory;
 import org.ros.internal.node.response.ObjectResultFactory;
 import org.ros.internal.node.response.Response;
-import org.ros.internal.node.response.ResultFactory;
-import org.ros.internal.node.response.StringListResultFactory;
+
 import org.ros.internal.node.response.StringResultFactory;
 import org.ros.internal.node.response.VoidResultFactory;
 import org.ros.internal.node.rpc.MasterRpcEndpointImpl;
 import org.ros.internal.node.rpc.ParameterServerRpcEndpoint;
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.server.ParameterServer;
-import org.ros.internal.transport.tcp.TcpRosServer;
+
 import org.ros.namespace.GraphName;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
 
 /**
  * Provide access to the RPC API for a ROS {@link ParameterServer}.
+ * The ParameterServer typically starts one port higher than the master.
  * 
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
  * @author jg
  */
 public class ParameterClient extends Client<ParameterServerRpcEndpoint> {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(ParameterClient.class);  
   private final NodeIdentifier nodeIdentifier;
   private final String nodeName;

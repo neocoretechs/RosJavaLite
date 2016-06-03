@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ConnectionHeader implements Serializable {
   private static final long serialVersionUID = -7508346673596180951L;
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(ConnectionHeader.class);
 
   private Map<String, String> fields = new ConcurrentHashMap<String, String>();

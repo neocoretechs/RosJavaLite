@@ -1,46 +1,60 @@
 package org.ros.internal.transport.tcp;
 
-//import org.jboss.netty.channel.Channel;
-//import org.jboss.netty.channel.group.ChannelGroup;
-//import org.jboss.netty.channel.group.DefaultChannelGroup;
-
 import java.io.IOException;
 import java.net.SocketAddress;
 //import java.nio.channels.AsynchronousChannelGroup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.transport.ChannelHandlerContext;
-
 
 
 /**
  * TcpClientManager manages TCP clients which are the subscriber and service clients that communicate with
  * remote peers outside master domain. 
- * It requires the context with the channel group, and executor service constructed.
+ * It requires the executor service constructed.
  * For each TcpClient constructed there will be an associated ChannelHandlerContext.
  * We maintain a list of the ChannelHandlerContexts here (as TcpClients) such that we may perform the necessary ops on them.
+ * This class is set up as a singleton returning instances for each executor.
  * @author jg
  */
 public class TcpClientManager {
-  public static boolean DEBUG = true;
+  public static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpClientManager.class);
   private final /*Asynchronous*/ChannelGroup channelGroup;
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
-  private final Executor executor;
+  private final ExecutorService executor;
+  
+  private static ArrayBlockingQueue<ExecutorService> executors = new ArrayBlockingQueue<ExecutorService>(16);
+  private static ArrayBlockingQueue<TcpClientManager> instances = new ArrayBlockingQueue<TcpClientManager>(16);
 
-  public TcpClientManager(ExecutorService executor) throws IOException {
-    this.executor = executor;
+  public static TcpClientManager getInstance(ExecutorService exc) {
+	  if( executors.contains(exc) ) {
+		  Object[] exe = executors.toArray();
+		  Object[] ths = instances.toArray();
+		  for(int i = 0; i < exe.length; i++) {
+			  if( exe.equals(exc) )
+				  return (TcpClientManager) ths[i];
+		  }
+	  }
+	  executors.add(exc);
+	  TcpClientManager tcp =  new TcpClientManager(exc);
+	  instances.add(tcp);
+	  return tcp;
+  }
+  
+  private TcpClientManager(ExecutorService executor) {
+	this.executor = executor;
     this.channelGroup = new ChannelGroupImpl(executor);/*AsynchronousChannelGroup.withThreadPool(executor);*/
     this.tcpClients = new ArrayList<TcpClient>();
     this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();
-
     if( DEBUG )
     	log.info("TcpClientManager:"+executor+" "+channelGroup);
   }

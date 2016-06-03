@@ -26,7 +26,7 @@ import org.ros.namespace.GraphName;
  * @author Groff
  */
 public class ParameterServer extends RpcServer {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(ParameterServer.class);
 
   private final Map<String, Object> tree;

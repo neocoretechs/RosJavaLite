@@ -1,7 +1,5 @@
 package org.ros.internal.transport.tcp;
 
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.Channel;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -12,7 +10,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  * @author jg
  */
 public class TcpClientPipelineFactory extends ConnectionTrackingChannelPipelineFactory {
-  public static boolean DEBUG = true;
+  public static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpClientPipelineFactory.class);
   public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
   public static final String LENGTH_FIELD_PREPENDER = "LengthFieldPrepender";

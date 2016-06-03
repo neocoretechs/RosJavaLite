@@ -26,7 +26,7 @@ import org.ros.node.service.ServiceServer;
  * @author jg
  */
 public class MasterRegistrationManagerImpl {
-  private static boolean DEBUG = true;
+  private static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(MasterRegistrationManagerImpl.class);
 
   /**

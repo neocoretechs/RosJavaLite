@@ -48,7 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class TcpRosServer implements Serializable {
   private static final long serialVersionUID = 1298495789043968855L;
-  private static final boolean DEBUG = true ;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpRosServer.class);
 
   private BindAddress bindAddress;

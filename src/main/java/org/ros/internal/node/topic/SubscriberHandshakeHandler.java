@@ -8,6 +8,8 @@ import org.ros.internal.transport.ChannelPipeline;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
+import org.ros.internal.transport.tcp.AsynchTCPWorker;
+import org.ros.internal.transport.tcp.AsynchTempTCPWorker;
 import org.ros.internal.transport.tcp.NamedChannelHandler;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
@@ -28,7 +30,7 @@ import java.util.concurrent.ExecutorService;
  *          the {@link Subscriber} may only subscribe to messages of this type
  */
 class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
-  private static boolean DEBUG = true;
+  private static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(SubscriberHandshakeHandler.class);
 
   private final IncomingMessageQueue<T> incomingMessageQueue;
@@ -40,25 +42,40 @@ class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
     if( DEBUG )
     	log.info("subscriberhandshakeHandler ctor:"+this);
   }
-
+  /**
+   * Triggered from BaseClientHandshakeHandler channelRead
+   */
   @Override
   protected void onSuccess(ConnectionHeader incomingConnectionHeader, ChannelHandlerContext ctx) {
 	if( DEBUG )
 		log.info("SubscriberHandshakeHandler.onSuccess:"+ctx+" "+incomingConnectionHeader);
     ChannelPipeline pipeline = ctx.pipeline();
-    pipeline.remove(SubscriberHandshakeHandler.this);
+    pipeline.remove(getName());
     NamedChannelHandler namedChannelHandler = incomingMessageQueue.getMessageReceiver();
     pipeline.addLast(namedChannelHandler.getName(), namedChannelHandler);
     String latching = incomingConnectionHeader.getField(ConnectionHeaderFields.LATCHING);
     if (latching != null && latching.equals("1")) {
       incomingMessageQueue.setLatchMode(true);
     }
-    ctx.setReady(true);
+    // the termination of the AsynchTempTCPWorker after successful handshake will set context ready
+    // Launch the permanent worker
+    AsynchTCPWorker uworker = null;
+	try {
+		uworker = new AsynchTCPWorker(ctx);
+	} catch (IOException e) {
+		log.error("Cannot start worker for context:"+ctx);
+		e.printStackTrace();
+		return;
+	}
+    executor.execute(uworker); 
   }
-
+  /**
+   * Triggered from BaseClientHandshakeHandler
+   */
   @Override
   protected void onFailure(String errorMessage, ChannelHandlerContext ctx) throws IOException {
     log.info("Subscriber handshake failed: " + errorMessage);
+    ctx.setReady(false);
     ctx.close();
   }
 

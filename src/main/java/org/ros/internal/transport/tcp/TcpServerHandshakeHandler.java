@@ -26,7 +26,7 @@ import org.ros.namespace.GraphName;
  * @author jg
  */
 public class TcpServerHandshakeHandler implements ChannelHandler {
-  private static final boolean DEBUG = true ;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpServerHandshakeHandler.class);
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
@@ -44,7 +44,9 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
   public void channelActive(ChannelHandlerContext ctx) {
 	  log.info("Channel active");
   }
-  
+  /**
+   * Channel read initiated by pipeline generated message
+   */
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object e) throws Exception {
 	if( DEBUG ) {
@@ -59,7 +61,12 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     }
     return e;
   }
-
+  /**
+   * Handle the handshake for a service
+   * @param ctx
+   * @param incomingHeader
+   * @throws IOException
+   */
   private void handleServiceHandshake(ChannelHandlerContext ctx, ConnectionHeader incomingHeader) throws IOException {
 	if( DEBUG ) {
 		  log.info("service handshake:"+ctx+" header:"+incomingHeader);
@@ -78,7 +85,13 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
       ctx.pipeline().addLast("ServiceRequestHandler", serviceServer.newRequestHandler());
     }
   }
-
+  /**
+   * Handle the handshake for a typical (not a service) subscriber.
+   * @param ctx
+   * @param incomingConnectionHeader
+   * @throws InterruptedException
+   * @throws Exception
+   */
   private void handleSubscriberHandshake(final ChannelHandlerContext ctx, final ConnectionHeader incomingConnectionHeader)
       throws InterruptedException, Exception {
 	  if( DEBUG ) {
@@ -90,10 +103,10 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
         GraphName.of(incomingConnectionHeader.getField(ConnectionHeaderFields.TOPIC));
     assert(topicParticipantManager.hasPublisher(topicName)) :
         "No publisher for topic: " + topicName;
+    
     final DefaultPublisher<?> publisher = topicParticipantManager.getPublisher(topicName);
     final ByteBuffer outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
-    // Write the handshake data back to client and upon completion set this channel
-    // ready for write queue
+    // Write the handshake data back to client
     ctx.write(outgoingBuffer, new CompletionHandler<Integer, Void>() {
 		@Override
 		public void completed(Integer arg0, Void arg1) {
@@ -101,15 +114,14 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 			   publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
 			    // Once the handshake is complete, there will be nothing incoming on the
 			    // channel as we are only queueing outbound traffic to the subscriber, which is done by the OutgoingMessgequeue.
-			    // So, we replace the handshake handler with a handler which will
-			    // drop everything.
+			    // So, we remove the handler
 			    ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
 			    // Set this context ready to receive the message type specified
 			    synchronized(ctx.getMessageTypes()) {
 			    	ctx.getMessageTypes().add(incomingConnectionHeader.getField(ConnectionHeaderFields.TYPE));
 			    }
-				// set as ready for channel write loop in OutogingMessageQueue
-				ctx.setReady(true);
+			    // The handshake is complete and the only task is to set the context ready, which will allow
+			    // the outbound queue to start sending messages.
 				if( DEBUG ) {
 					  log.info("subscriber complete:"+outgoingBuffer);
 				}

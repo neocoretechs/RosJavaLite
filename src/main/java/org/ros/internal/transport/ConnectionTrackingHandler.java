@@ -21,7 +21,7 @@ import java.io.IOException;
  */
 public class ConnectionTrackingHandler extends AbstractNamedChannelHandler {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(ConnectionTrackingHandler.class);
 
   public ConnectionTrackingHandler() {

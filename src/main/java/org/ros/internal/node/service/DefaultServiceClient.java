@@ -1,4 +1,3 @@
-
 package org.ros.internal.node.service;
 
 
@@ -27,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Default implementation of a {@link ServiceClient}.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
 
@@ -96,7 +95,7 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
     // TODO(damonkohler): Support non-persistent connections.
     connectionHeader.addField(ConnectionHeaderFields.PERSISTENT, "1");
     connectionHeader.merge(serviceDeclaration.toConnectionHeader());
-    tcpClientManager = new TcpClientManager(executorService);
+    tcpClientManager = TcpClientManager.getInstance(executorService);
     ServiceClientHandshakeHandler<T, S> serviceClientHandshakeHandler =
         new ServiceClientHandshakeHandler<T, S>(connectionHeader, responseListeners, executorService);
     handshakeLatch = new HandshakeLatch();

@@ -10,14 +10,12 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.AsynchronousSocketChannel;
+
 import java.nio.channels.Channel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -27,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TcpClient {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpClient.class);
 
   private static final int DEFAULT_CONNECTION_TIMEOUT_DURATION = 5;
@@ -73,7 +71,7 @@ public class TcpClient {
 	channel = /*Asynchronous*/SocketChannel.open(/*channelGroup*/);
 	((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
 	((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
-	((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, true);
+	((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, false);
 	ctx = new ChannelHandlerContextImpl(channelGroup, channel, executor);
     TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup(), namedChannelHandlers);
     // add handler pipeline factory to stack
@@ -85,7 +83,7 @@ public class TcpClient {
     // connect outbound to pub
     ctx.connect(socketAddress);
   
-    AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
+    AsynchTempTCPWorker uworker = new AsynchTempTCPWorker(ctx);
     executor.execute(uworker); 
     // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
     ctx.pipeline().fireChannelActive();

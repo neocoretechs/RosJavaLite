@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.client;
 
 import org.apache.commons.logging.Log;
@@ -34,7 +18,7 @@ import org.ros.internal.node.topic.TopicParticipantManagerListener;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URI;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -45,12 +29,11 @@ import java.util.concurrent.TimeUnit;
  * Manages topic, and service registrations of a {@link SlaveServer} with the
  * {@link MasterServer}.
  * 
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class Registrar implements TopicParticipantManagerListener, ServiceManagerListener {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(Registrar.class);
 
   private static final int SHUTDOWN_TIMEOUT = 5;

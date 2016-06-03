@@ -1,14 +1,10 @@
 package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
-import java.net.InetAddress;
+
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketOption;
 import java.net.StandardSocketOptions;
-import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,7 +17,7 @@ import org.ros.internal.transport.ChannelHandlerContextImpl;
  *
  */
 public final class AsynchBaseServer extends AsynchTCPServer {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
     private static final Log log = LogFactory.getLog(AsynchBaseServer.class);
 	public int WORKBOOTPORT = 0;
 	public InetSocketAddress address = null;

@@ -15,8 +15,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.CircularBlockingDeque;
 import org.ros.exception.RosRuntimeException;
-import org.ros.internal.message.Message;
-import org.ros.internal.message.MessageBufferPool;
+
 import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandlerContext;
@@ -31,7 +30,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  */
 public class OutgoingMessageQueue<T> {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(OutgoingMessageQueue.class);
 
   private static final int DEQUE_CAPACITY = 16384;
@@ -52,13 +51,10 @@ public class OutgoingMessageQueue<T> {
    *
    */
   private final class Writer extends CancellableLoop {
-	//final Object waitFinish = new Object();
     @Override
     public void loop() throws InterruptedException {
       T message = deque.takeFirst();
       final ByteBuffer buffer = (ByteBuffer) latchedBuffer.clear();//messageBufferPool.acquire();
-      //messageBufferPool.release(buffer);
-      //latchedBuffer.clear();
       Utility.serialize(message, buffer);
       //if(DEBUG) {
       //  log.info(String.format("Writing %d bytes.", buffer.position()));
@@ -67,7 +63,6 @@ public class OutgoingMessageQueue<T> {
       while(it.hasNext()) {
     	  final ChannelHandlerContext ctx = it.next();
     	  final CountDownLatch cdl = new CountDownLatch(1);
-    	  //final Object waitFinish = ctx.getChannelCompletionMutex();
     	  boolean sendMessage;
     	  synchronized( ctx.getMessageTypes() ) {
     		  sendMessage = ctx.getMessageTypes().contains(message.getClass().getName().replace('.', '/'));

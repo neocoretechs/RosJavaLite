@@ -18,7 +18,7 @@ import org.ros.internal.transport.ChannelPipeline;
  * @author jg
  */
 public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineFactory {
-  public static boolean DEBUG = true;
+  public static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpServerPipelineFactory.class);
   public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
   public static final String LENGTH_FIELD_PREPENDER = "LengthFieldPrepender";

@@ -9,7 +9,7 @@ import org.apache.commons.logging.LogFactory;
 * TCPServer is the superclass of all objects using ServerSockets.
 */
 public abstract class TCPServer implements Cloneable, Runnable {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(TCPServer.class);
 	ServerSocket server = null;
 	Socket data = null;

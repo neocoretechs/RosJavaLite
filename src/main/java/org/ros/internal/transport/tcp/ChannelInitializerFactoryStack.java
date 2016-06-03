@@ -17,7 +17,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  *
  */
 public class ChannelInitializerFactoryStack {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(ChannelInitializerFactoryStack.class);
 	
 	private LinkedBlockingDeque<ChannelInitializer> queue = new LinkedBlockingDeque<ChannelInitializer>();

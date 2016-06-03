@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class RpcServer {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(RpcServer.class);
 
   private final AdvertiseAddress advertiseAddress;

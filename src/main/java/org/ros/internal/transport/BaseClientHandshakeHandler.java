@@ -20,12 +20,14 @@ import java.util.concurrent.ExecutorService;
  * 
  */
 public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHandler {
-  protected static boolean DEBUG = true;
+  protected static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(BaseClientHandshakeHandler.class);
   private final ClientHandshake clientHandshake;
   private final ListenerGroup<ClientHandshakeListener> clientHandshakeListeners;
+  protected final ExecutorService executor;
 
   public BaseClientHandshakeHandler(ClientHandshake clientHandshake, ExecutorService executorService) {
+	this.executor = executorService;
     this.clientHandshake = clientHandshake;
     clientHandshakeListeners = new ListenerGroup<ClientHandshakeListener>(executorService);
   }

@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
  *
  */
 public class TCPWorker implements Runnable {
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(TCPWorker.class);
 	public boolean shouldRun = true;
 	private Socket dataSocket;

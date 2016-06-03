@@ -1,18 +1,12 @@
 package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
-import java.net.SocketException;
+
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.CompletionHandler;
-import java.nio.channels.ReadPendingException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.message.MessageBufferPool;
+
 import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandlerContext;
@@ -25,7 +19,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  *
  */
 public class AsynchTCPWorker implements Runnable {
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(AsynchTCPWorker.class);
 	public boolean shouldRun = true;
 	private ChannelHandlerContext ctx;

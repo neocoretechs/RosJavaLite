@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
  *
  */
 public class ThreadPoolManager {
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	  private static final Log log = LogFactory.getLog(ThreadPoolManager.class);
 	private static String DEFAULT_THREAD_POOL = "RPCSERVER";
 	private int threadNum = 0;

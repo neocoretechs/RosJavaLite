@@ -1,21 +1,16 @@
 package org.ros.internal.transport;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.SocketAddress;
+
 import java.nio.ByteBuffer;
-//import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.SocketChannel;
-import java.util.Collections;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import org.ros.internal.transport.tcp.ChannelGroup;
 

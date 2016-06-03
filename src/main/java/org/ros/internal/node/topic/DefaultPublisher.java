@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publisher<T> {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(DefaultPublisher.class);
 
   /**

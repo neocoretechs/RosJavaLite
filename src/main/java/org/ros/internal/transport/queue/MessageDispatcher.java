@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutorService;
  */
 public class MessageDispatcher<T> extends CancellableLoop {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(MessageDispatcher.class);
 
   private final CircularBlockingDeque<T> lazyMessages;

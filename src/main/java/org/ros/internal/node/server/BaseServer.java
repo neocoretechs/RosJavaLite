@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
  *
  */
 public final class BaseServer extends TCPServer {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
     private static final Log log = LogFactory.getLog(BaseServer.class);
 	public int WORKBOOTPORT = 8090;
 	public InetAddress address = null;

@@ -10,7 +10,7 @@ import org.ros.internal.transport.ConnectionTrackingHandler;
 /**
  */
 public class ConnectionTrackingChannelPipelineFactory extends ChannelInitializer {
-  public static boolean DEBUG = true;
+  public static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(ConnectionTrackingChannelPipelineFactory.class);
   public static final String CONNECTION_TRACKING_HANDLER = "ConnectionTrackingHandler";
 

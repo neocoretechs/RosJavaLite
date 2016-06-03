@@ -1,17 +1,17 @@
 package org.ros.internal.transport.tcp;
 
-import java.io.IOException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.exception.RosRuntimeException;
+
 import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
+ * Provides operations on a named channel
+ * @author jg
  * 
  */
 public abstract class AbstractNamedChannelHandler implements NamedChannelHandler {
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(AbstractNamedChannelHandler.class);
 	
 	@Override

@@ -20,7 +20,7 @@ import org.ros.internal.message.field.DirectByteArrayOutputStream;
  *
  */
 public class Utility {
-	 private static boolean DEBUG = true;
+	 private static boolean DEBUG = false;
 	 private static final Log log = LogFactory.getLog(Utility.class);
 	 
 	 public static <T> void serialize(T value, ByteBuffer buffer) {

@@ -16,7 +16,7 @@ import org.apache.commons.logging.LogFactory;
 * @author jg
 */
 public abstract class AsynchTCPServer implements Cloneable, Runnable {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(AsynchTCPServer.class);
 	//AsynchronousServerSocketChannel server = null;
 	//AsynchronousChannelGroup channelGroup;
