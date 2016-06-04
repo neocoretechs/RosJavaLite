@@ -29,6 +29,7 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -63,7 +64,9 @@ public class TcpRosServer implements Serializable {
   private transient ChannelGroup incomingChannelGroup; // subscriber connected to publishers
   private transient TcpServerPipelineFactory serverPipelineFactory;
   private transient ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
-  private transient List<ChannelHandlerContext> contexts;
+  private transient ArrayBlockingQueue<ChannelHandlerContext> contexts;
+  
+  private transient AsynchBaseServer server = null;
   
   public TcpRosServer() {}
 
@@ -75,7 +78,7 @@ public class TcpRosServer implements Serializable {
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     this.executorService = executorService;
-    this.contexts = new ArrayList<ChannelHandlerContext>();
+    this.contexts = new ArrayBlockingQueue<ChannelHandlerContext>(1024);
   }
 
   public void start() {
@@ -88,7 +91,7 @@ public class TcpRosServer implements Serializable {
 			        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); 
 		  factoryStack.addLast(serverPipelineFactory);
 		    
-		  AsynchBaseServer server = new AsynchBaseServer(this);
+		  server = new AsynchBaseServer(this);
 		  server.startServer(incomingChannelGroup,(Executor) executorService, bindAddress.toInetSocketAddress());
 	      if (DEBUG) {
 		 	     log.info("TcpRosServer starting and Bound to:" + bindAddress + " with advertise address:"+advertiseAddress);
@@ -148,7 +151,7 @@ public class TcpRosServer implements Serializable {
    * 
    * @return the array of contexts from the remote connections that have attached for subscription
    */
-  public List<ChannelHandlerContext> getSubscribers() {
+  public ArrayBlockingQueue<ChannelHandlerContext> getSubscribers() {
 	  return contexts;
   }
   

@@ -131,12 +131,17 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
 
   @Override
   public void call(T request, ServiceResponseListener<S> listener) {
-    ByteBuffer buffer = messageBufferPool.acquire();
+    //ByteBuffer buffer = messageBufferPool.acquire();
     // serialize request to buffer
-    Utility.serialize(request, buffer);
+    //Utility.serialize(request, buffer);
     responseListeners.add(listener);
-    tcpClient.write(buffer);
-    messageBufferPool.release(buffer);
+    try {
+		tcpClient.getContext().write(request);
+	} catch (IOException e) {
+		
+		e.printStackTrace();
+	}
+    //messageBufferPool.release(buffer);
   }
 
   @Override

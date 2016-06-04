@@ -167,7 +167,7 @@ public class DefaultNode implements ConnectedNode {
       }
     });
   }
-
+  
   private void start() {
     // The Registrar must be started first so that master registration is
     // possible during startup.

@@ -41,6 +41,8 @@ import org.ros.message.MessageListener;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
@@ -49,6 +51,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -73,7 +76,7 @@ public class MessageQueueIntegrationTest {
   private IncomingMessageQueue<std_msgs.String> firstIncomingMessageQueue;
   private IncomingMessageQueue<std_msgs.String> secondIncomingMessageQueue;
   private std_msgs.String expectedMessage;
-  private List<ChannelHandlerContext> channelHandlerContexts = new ArrayList<ChannelHandlerContext>();
+  private ArrayBlockingQueue<ChannelHandlerContext> channelHandlerContexts = new ArrayBlockingQueue<ChannelHandlerContext>(1024);
   
   private InetSocketAddress isock = null;
 
@@ -192,9 +195,9 @@ public class MessageQueueIntegrationTest {
             }
         };
      factoryStack.addLast(serverPipelineFactory);
-	  /*AsynchronousServer*/ServerSocketChannel listener = null;
+	  /*AsynchronousServer*/ServerSocket listener = null;
 	try {
-		listener = /*Asynchronous*/ServerSocketChannel.open(/*incomingChannelGroup*/);
+		listener = /*Asynchronous*/new ServerSocket(/*incomingChannelGroup*/);
 	} catch (IOException e1) {
 		// TODO Auto-generated catch block
 		e1.printStackTrace();
@@ -206,7 +209,7 @@ public class MessageQueueIntegrationTest {
 		e.printStackTrace();
 	}
 
-     /*Future<Asynchronous*/SocketChannel channel = null;
+     /*Future<AsynchronousSocketChannel*/ Socket channel = null;
 	try {
 		channel = listener.accept();
 	} catch (IOException e1) {
@@ -221,8 +224,8 @@ public class MessageQueueIntegrationTest {
      return ctx;
   }
 
-  private TcpClient connect(TcpClientManager TcpClientManager) throws Exception {
-    return TcpClientManager.connect("Foo", isock);
+  private void connect(TcpClientManager TcpClientManager) throws Exception {
+   TcpClientManager.connect("Foo", isock);
   }
 
   private CountDownLatch expectMessage(IncomingMessageQueue<std_msgs.String> incomingMessageQueue)

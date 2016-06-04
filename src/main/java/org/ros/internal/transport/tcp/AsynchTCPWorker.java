@@ -19,7 +19,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  *
  */
 public class AsynchTCPWorker implements Runnable {
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final Log log = LogFactory.getLog(AsynchTCPWorker.class);
 	public boolean shouldRun = true;
 	private ChannelHandlerContext ctx;
@@ -43,21 +43,23 @@ public class AsynchTCPWorker implements Runnable {
 					//final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
 					// initiate asynch read
 					// If we get a read pending exception, try again
-				   	final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
-					buf.clear();
+				   	//final ByteBuffer buf = MessageBuffers.dynamicBuffer();//pool.acquire();
+					//buf.clear();
 					//final CountDownLatch cdl = new CountDownLatch(1);
-					int res = ctx.read(buf);
+					//int res = ctx.read(buf);
 					// seems like a -1 is generated when channel breaks, so stop
 					// this worker on that case
-					if( res == -1) {
-						shouldRun = false;
+					//if( res == -1) {
+					//	shouldRun = false;
+					//	if( DEBUG )
+					//		log.info("ROS AsynchTCPWorker CHANNEL BREAK, TERMINATING for "+ctx);
+					//} else {
+					//	buf.flip();
+					//	Object reso = Utility.deserialize(buf);
+					Object reso = ctx.read();
+					
 						if( DEBUG )
-							log.info("ROS AsynchTCPWorker CHANNEL BREAK, TERMINATING for "+ctx);
-					} else {
-						buf.flip();
-						Object reso = Utility.deserialize(buf);
-						if( DEBUG )
-							log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+" buffer:"+buf+" result:"+res+" Object:"+reso);
+							log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+"  Object:"+reso);
 						try {
 							ctx.pipeline().fireChannelRead(reso);
 						} catch (Exception e) {
@@ -67,7 +69,7 @@ public class AsynchTCPWorker implements Runnable {
 							}
 							ctx.pipeline().fireExceptionCaught(e);
 						}
-					}
+					//}
 					/*
 					ctx.read(buf, new CompletionHandler<Integer, Void>() {
 								@Override

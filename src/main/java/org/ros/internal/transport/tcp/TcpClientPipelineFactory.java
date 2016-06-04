@@ -7,9 +7,10 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
+ * ChannelInitializer responsible for setting the NamedChannelhandlers into the pipeline
  * @author jg
  */
-public class TcpClientPipelineFactory extends ConnectionTrackingChannelPipelineFactory {
+public class TcpClientPipelineFactory extends ChannelInitializer {
   public static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpClientPipelineFactory.class);
   public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
@@ -17,7 +18,6 @@ public class TcpClientPipelineFactory extends ConnectionTrackingChannelPipelineF
   private List<NamedChannelHandler> namedChannelHandlers;
 
   public TcpClientPipelineFactory(/*Asynchronous*/ChannelGroup asynchronousChannelGroup, List<NamedChannelHandler> namedChannelHandlers) {
-    super(asynchronousChannelGroup);
     this.namedChannelHandlers = namedChannelHandlers;
     if( DEBUG )
     	log.info("TcpClientPipelineFactory:"+asynchronousChannelGroup);

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -55,15 +56,15 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
   private final NodeIdentifier nodeIdentifier;
   private final MessageFactory messageFactory;
   // List of channelHandlerContexts that represent subscribers connected through publisher socket
-  private final List<ChannelHandlerContext> subscribers;
+  private final ArrayBlockingQueue<ChannelHandlerContext> subscribers;
 
   public DefaultPublisher(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration,
-		  MessageFactory messageFactory, ScheduledExecutorService executorService, List<ChannelHandlerContext> subscribers) throws IOException {
+		  MessageFactory messageFactory, ScheduledExecutorService executorService, ArrayBlockingQueue<ChannelHandlerContext> arrayBlockingQueue) throws IOException {
     super(topicDeclaration);
     this.nodeIdentifier = nodeIdentifier;
     this.messageFactory = messageFactory;
-    this.subscribers = subscribers;
-    outgoingMessageQueue = new OutgoingMessageQueue<T>(executorService, subscribers);
+    this.subscribers = arrayBlockingQueue;
+    outgoingMessageQueue = new OutgoingMessageQueue<T>(executorService, arrayBlockingQueue);
     listeners = new ListenerGroup<PublisherListener<T>>(executorService);
     listeners.add(new DefaultPublisherListener<T>() {
       @Override
@@ -147,7 +148,8 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
    * 
    * @return encoded connection header from subscriber
    */
-  public ByteBuffer finishHandshake(ConnectionHeader incomingHeader) {
+  //public ByteBuffer finishHandshake(ConnectionHeader incomingHeader) {
+public ConnectionHeader finishHandshake(ConnectionHeader incomingHeader) {
     ConnectionHeader topicDefinitionHeader = getTopicDeclarationHeader();
     if (DEBUG) {
       //log.info("Subscriber handshake header: " + incomingHeader);
@@ -171,9 +173,16 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
     // TODO(damonkohler): Force latch mode to be consistent throughout the life
     // of the publisher.
     outgoingConnectionHeader.addField(ConnectionHeaderFields.LATCHING, getLatchMode() ? "1" : "0");
+    return outgoingConnectionHeader;
+    /*
     ByteBuffer buffer = MessageBuffers.dynamicBuffer();
+    buffer.position(4);
     Utility.serialize(outgoingConnectionHeader, buffer);
+    buffer.rewind();
+    buffer.putInt(buffer.limit()-4); // put the TLV size
+    buffer.position(buffer.limit());
     return buffer;
+    */
   }
 
   /**

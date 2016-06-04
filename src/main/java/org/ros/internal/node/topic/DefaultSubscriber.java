@@ -129,7 +129,6 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
         return;
       }
       try {
-    	
 		tcpClientManager.connect(toString(), address);
       } catch (IOException e) {
     	log.error("Failure attempting to add publisher "+toString()+" "+address);

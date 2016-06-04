@@ -1,13 +1,12 @@
 package org.ros.internal.transport;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.AsynchronousSocketChannel;
+
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.SocketChannel;
+
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -18,7 +17,7 @@ public interface ChannelHandlerContext {
 	  /**
      * Return the {@link Channel} which is bound to the {@link ChannelHandlerContext}.
      */
-    Channel channel();
+    Socket channel();
 
     /**
      * The {@link Executor} that is used to dispatch the events. This can also be used to directly
@@ -42,7 +41,7 @@ public interface ChannelHandlerContext {
      * called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
-    /*Asynchronous*/SocketChannel bind(SocketAddress localAddress) throws IOException;
+    void bind(SocketAddress localAddress) throws IOException;
 
     /**
      * Request to connect to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation
@@ -102,6 +101,7 @@ public interface ChannelHandlerContext {
      */
     void close() throws IOException;
 
+    
     /**
      * Request to Read data from the {@link Channel} into the first inbound buffer, triggers an
      * {@link ChannelHandler#channelRead(ChannelHandlerContext, Object)} event if data was
@@ -115,21 +115,7 @@ public interface ChannelHandlerContext {
      * {@link Channel}.
      * @throws IOException 
      */
-    /*Future<Integer>*/int read(ByteBuffer buf) throws IOException;
-    /**
-     * Request to Read data from the {@link Channel} into the first inbound buffer, triggers an
-     * {@link ChannelHandler#channelRead(ChannelHandlerContext, Object)} event if data was
-     * read, and triggers a
-     * {@link ChannelHandler#channelReadComplete(ChannelHandlerContext) channelReadComplete} event so the
-     * handler can decide to continue reading.  If there's a pending read operation already, this method does nothing.
-     * <p>
-     * This will result in having the
-     * {@link ChannelHandler#read(ChannelHandlerContext)}
-     * method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
-     * {@link Channel}.
-     * @throws IOException 
-     */
-	void read(ByteBuffer buf,CompletionHandler<Integer, Void> completionHandler);
+	Object read() throws IOException;
 
     /**
      * Request to write a message via this {@link ChannelHandlerContext} through the {@link ChannelPipeline}.
@@ -137,14 +123,7 @@ public interface ChannelHandlerContext {
      * once you want to request to flush all pending data to the actual transport.
      * @throws IOException 
      */
-    /*Future<Integer>*/int write(ByteBuffer msg) throws IOException;
-
-    /**
-     * Request to write a message via this {@link ChannelHandlerContext} through the {@link ChannelPipeline}.
-     * This method will not request to actual flush, so be sure to call {@link #flush()}
-     * once you want to request to flush all pending data to the actual transport.
-     */
-    void write(ByteBuffer msg, CompletionHandler<Integer,Void> handler);
+    void write(Object msg) throws IOException;
 
 
     /**
@@ -184,5 +163,11 @@ public interface ChannelHandlerContext {
      * @return The synchronized hash set of message type strings
      */
     Set<String> getMessageTypes();
+
+	void write(Object msg, CompletionHandler<Integer, Void> handler);
+
+	Object read(CompletionHandler<Integer, Void> handler);
+
+
 
 }

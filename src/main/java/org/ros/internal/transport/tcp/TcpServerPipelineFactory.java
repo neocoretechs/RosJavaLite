@@ -1,8 +1,5 @@
 package org.ros.internal.transport.tcp;
 
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.Channel;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.service.ServiceManager;
@@ -17,7 +14,7 @@ import org.ros.internal.transport.ChannelPipeline;
  * user level initializing action.
  * @author jg
  */
-public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineFactory {
+public class TcpServerPipelineFactory extends ChannelInitializer {
   public static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpServerPipelineFactory.class);
   public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
@@ -29,7 +26,6 @@ public class TcpServerPipelineFactory extends ConnectionTrackingChannelPipelineF
 
   public TcpServerPipelineFactory(ChannelGroup incomingChannelGroup,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
-    super(incomingChannelGroup);
     if( DEBUG )
     	log.info("TcpServerPipeLineFactory ctor:"+incomingChannelGroup+" "+topicParticipantManager+" "+serviceManager);
     this.topicParticipantManager = topicParticipantManager;

@@ -11,18 +11,14 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.concurrent.ArrayBlockingQueue;
 
-
-
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.node.response.VoidResultFactory;
 import org.ros.internal.node.server.RemoteRequestInterface;
 import org.ros.internal.node.server.ThreadPoolManager;
-import org.ros.internal.transport.tcp.TcpRosServer;
+
 
 /**
- * This class functions as client to the  remote node.
+ * This class functions as client to the remote node.
  * @author jg
  * Copyright (C) NeoCoreTechs 2014,2015
  */
@@ -40,21 +36,12 @@ public class RemoteClient implements Runnable {
 	private boolean shouldRun = true; // master service thread control
 	private Object waitHalt = new Object(); 
 	
-	private VoidResultFactory handleNull = new VoidResultFactory();
-	
 	ArrayBlockingQueue<RemoteRequestInterface> requests = new ArrayBlockingQueue<RemoteRequestInterface>(1);
 	ArrayBlockingQueue<Object> responses = new ArrayBlockingQueue<Object>(1);
 	
 	
 	/**
-	 * Start a relatrix client. Contact the boot time portion of server and queue a CommandPacket to open the desired
-	 * database and get back the master and slave ports of the remote server. The main client thread then
-	 * contacts the server master port, and the remote slave port contacts the master of the client. A WorkerRequestProcessor
-	 * thread is created to handle the processing of payloads and a comm thread handles the bidirectional traffic to server
-	 * @param dbName The name of the remote DB in full qualified path form
-	 * @param remote The remote database name for cluster server
-	 * @param bootNode The name of the remote server host
-	 * @param bootPort Then name of the remote host port on which RelatrixServer is running
+	 * Start a remote client.
 	 */
 	public RemoteClient(String bootNode, int bootPort)  throws IOException {
 		if( TEST ) {

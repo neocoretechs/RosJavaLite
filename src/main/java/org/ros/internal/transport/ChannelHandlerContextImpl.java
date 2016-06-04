@@ -1,12 +1,14 @@
 package org.ros.internal.transport;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.net.SocketAddress;
 
-import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.SocketChannel;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,14 +34,14 @@ import org.ros.internal.transport.tcp.ChannelGroup;
 public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	/*Asynchronous*/ChannelGroup channelGroup;
 	Executor executor;
-	/*Asynchronous*/SocketChannel channel;
+	/*Asynchronous*/Socket/*Channel*/ channel;
 	ChannelPipeline pipeline;
 	boolean ready = false;
 	Object mutex = new Object();
 	Set<String> outboundMessageTypes;
 	
 	
-	public ChannelHandlerContextImpl(/*Asynchronous*/ChannelGroup channelGroup2, /*Asynchronous*/SocketChannel channel2, Executor exc) {
+	public ChannelHandlerContextImpl(/*Asynchronous*/ChannelGroup channelGroup2, /*Asynchronous*/Socket channel2, Executor exc) {
 		channelGroup = channelGroup2;
 		channel = channel2;
 		executor = exc;
@@ -47,7 +49,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 		outboundMessageTypes = (Set<String>) new HashSet<String>();
 	}
 	
-	public void setChannel(/*Asynchronous*/SocketChannel sock) {
+	public void setChannel(/*Asynchronous*/Socket/*Channel*/ sock) {
 		this.channel = sock;
 	}
 	
@@ -64,8 +66,8 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 
 	@Override
-	public /*Asynchronous*/SocketChannel bind(SocketAddress localAddress) throws IOException {
-		return channel.bind(localAddress);
+	public /*AsynchronousChannel*/void  bind(SocketAddress localAddress) throws IOException {
+		/*return*/ channel.bind(localAddress);
 	}
 
 	@Override
@@ -92,33 +94,44 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 
 	@Override
-	public /*Future<Integer>*/ int read(ByteBuffer buf) throws IOException {
-		return channel.read(buf);
-	}
-
-	@Override
-	public /*Future<Integer>*/int write(ByteBuffer msg) throws IOException {
-			return channel.write(msg);
-	}
-
-	@Override
-	public void write(ByteBuffer msg, CompletionHandler<Integer, Void> handler) {
+	public Object read() throws IOException {
+		InputStream is = channel.getInputStream();
+		ObjectInputStream ois = new ObjectInputStream(is);
 		try {
-			int res = channel.write(msg/*, null, handler*/);
-			handler.completed(res, null);
+			return ois.readObject();
+		} catch (ClassNotFoundException e) {
+			throw new IOException(e);
+		}
+	}
+
+	@Override
+	public void write(Object msg) throws IOException {
+		OutputStream os = channel.getOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(os);
+		oos.writeObject(msg);
+		oos.flush();
+	}
+
+	@Override
+	public void write(Object msg, CompletionHandler<Integer, Void> handler) {
+		try {
+			write(msg);
+			handler.completed(0, null);
 		} catch (IOException e) {
 			handler.failed(e, null);
 		}
 	}
 
 	@Override
-	public void read(ByteBuffer buf, CompletionHandler<Integer, Void> handler) {
+	public Object read(CompletionHandler<Integer, Void> handler) {
 		try {
-			int res = channel.read(buf/*, null, handler*/);
-			handler.completed(res, null);
+			Object o = read();
+			handler.completed(0, null);
+			return o;
 		} catch (IOException e) {
 			handler.failed(e, null);
 		}
+		return null;
 	}
 
 
@@ -133,7 +146,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	}
 
 	@Override
-	public Channel channel() {
+	public Socket channel() {
 		return channel;
 	}
 

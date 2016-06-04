@@ -66,7 +66,7 @@ class ServiceClientHandshakeHandler<T, S> extends BaseClientHandshakeHandler {
 @Override
 public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
 	if( DEBUG )
-		log.debug("Handler added "+arg0);
+		log.debug(this+" Handler added "+arg0);
 	
 }
 

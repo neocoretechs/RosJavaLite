@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -65,7 +66,7 @@ public class SlaveServer extends RpcServer {
    * Return the ChannelHandlerContext array of subscribers
    * @return
    */
-  public List<ChannelHandlerContext> getSubscribers() {
+  public ArrayBlockingQueue<ChannelHandlerContext> getSubscribers() {
 	  return tcpRosServer.getSubscribers();
   }
   /**

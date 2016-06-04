@@ -1,12 +1,14 @@
 package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.SocketChannel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.service.DefaultServiceServer;
 import org.ros.internal.node.service.ServiceManager;
@@ -26,13 +28,12 @@ import org.ros.namespace.GraphName;
  * @author jg
  */
 public class TcpServerHandshakeHandler implements ChannelHandler {
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(TcpServerHandshakeHandler.class);
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
 
-  public TcpServerHandshakeHandler(TopicParticipantManager topicParticipantManager,
-      ServiceManager serviceManager) {
+  public TcpServerHandshakeHandler(TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     if( DEBUG ) {
@@ -105,11 +106,17 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
         "No publisher for topic: " + topicName;
     
     final DefaultPublisher<?> publisher = topicParticipantManager.getPublisher(topicName);
-    final ByteBuffer outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
+    //final ByteBuffer outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
+    final ConnectionHeader outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
     // Write the handshake data back to client
+   
+    ctx.write(outgoingBuffer);
+    
+    /*
     ctx.write(outgoingBuffer, new CompletionHandler<Integer, Void>() {
 		@Override
 		public void completed(Integer arg0, Void arg1) {
+		*/
 			   String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
 			   publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
 			    // Once the handshake is complete, there will be nothing incoming on the
@@ -122,22 +129,26 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 			    }
 			    // The handshake is complete and the only task is to set the context ready, which will allow
 			    // the outbound queue to start sending messages.
+			    ctx.setReady(true);
+			    
 				if( DEBUG ) {
 					  log.info("subscriber complete:"+outgoingBuffer);
 				}
+				/*
 		}
 		@Override
 		public void failed(Throwable arg0, Void arg1) {
 			log.info("Failed to perform handshake for:"+ctx);
 		} 
-    });
+		*/
+    //});
 
  
   }
 
 @Override
 public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-	log.info("Handler added "+ctx);
+	log.info(this+" Handler added "+ctx);
 	
 }
 

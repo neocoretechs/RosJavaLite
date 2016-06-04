@@ -7,6 +7,7 @@ import java.nio.channels.CompletionHandler;
 import java.nio.channels.WritePendingException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
@@ -15,7 +16,6 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.CancellableLoop;
 import org.ros.concurrent.CircularBlockingDeque;
 import org.ros.exception.RosRuntimeException;
-
 import org.ros.internal.message.MessageBuffers;
 import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandlerContext;
@@ -30,7 +30,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  */
 public class OutgoingMessageQueue<T> {
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(OutgoingMessageQueue.class);
 
   private static final int DEQUE_CAPACITY = 16384;
@@ -43,7 +43,7 @@ public class OutgoingMessageQueue<T> {
   private boolean latchMode;
   private T latchedMessage;
   
-  private List<ChannelHandlerContext> channels;
+  private ArrayBlockingQueue<ChannelHandlerContext> channels;
   /**
    * This class is submitted to the executor to process the deque entries
    * and serialize them to the latched buffer for outbound publisher channel
@@ -54,21 +54,36 @@ public class OutgoingMessageQueue<T> {
     @Override
     public void loop() throws InterruptedException {
       T message = deque.takeFirst();
-      final ByteBuffer buffer = (ByteBuffer) latchedBuffer.clear();//messageBufferPool.acquire();
-      Utility.serialize(message, buffer);
+      //final ByteBuffer buffer = (ByteBuffer) latchedBuffer.clear();//messageBufferPool.acquire();
+      //Utility.serialize(message, buffer);
       //if(DEBUG) {
       //  log.info(String.format("Writing %d bytes.", buffer.position()));
       //}
       final Iterator<ChannelHandlerContext> it = channels.iterator();
       while(it.hasNext()) {
     	  final ChannelHandlerContext ctx = it.next();
-    	  final CountDownLatch cdl = new CountDownLatch(1);
+    	  //final CountDownLatch cdl = new CountDownLatch(1);
     	  boolean sendMessage;
     	  synchronized( ctx.getMessageTypes() ) {
     		  sendMessage = ctx.getMessageTypes().contains(message.getClass().getName().replace('.', '/'));
     	  }
     	  if( ctx.isReady() && sendMessage ) {
-    		buffer.position(0);
+    		  try {
+    			if( DEBUG )
+    				log.info("Outgoing queue writing:"+message+" to "+ctx);
+				ctx.write(message);
+			} catch (IOException e) {
+				log.info("Closing failed write context:"+ctx+" due to "+e);
+				e.printStackTrace();
+				try {
+					  ctx.close();
+			    } catch (IOException e1) {}
+				// A write failure should render the context not ready for writes.
+				ctx.setReady(false);
+			}
+    	  
+    		//buffer.position(0);
+    		  /*
     		ctx.write(buffer, new CompletionHandler<Integer, Void>() {
     				  @Override
     				  public void completed(Integer arg0, Void arg1) {
@@ -92,19 +107,24 @@ public class OutgoingMessageQueue<T> {
     				  }  
     		}); // completion handler
     		cdl.await();
-    	  } // context ready
+    		*/
+    	  } else {
+				if( DEBUG )
+					log.info("Skipping context:"+ctx+" for sendMessage:"+sendMessage+" for message "+message.getClass().getName().replace('.', '/'));
+		  }
+    	  
       } // ChannelhandlerContext iterator
     } // loop method
   }
 
-  public OutgoingMessageQueue(ExecutorService executorService, List<ChannelHandlerContext> ctxs) throws IOException {
+  public OutgoingMessageQueue(ExecutorService executorService, ArrayBlockingQueue<ChannelHandlerContext> arrayBlockingQueue) throws IOException {
     deque = new CircularBlockingDeque<T>(DEQUE_CAPACITY);
     writer = new Writer();
     //messageBufferPool = new MessageBufferPool();
     latchedBuffer = MessageBuffers.dynamicBuffer();
     mutex = new Object();
     latchMode = false;
-    channels = ctxs;
+    channels = arrayBlockingQueue;
     executorService.execute(writer);
   }
 

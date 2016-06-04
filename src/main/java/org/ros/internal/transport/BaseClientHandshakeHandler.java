@@ -9,8 +9,11 @@ import org.ros.internal.system.Utility;
 import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -20,7 +23,7 @@ import java.util.concurrent.ExecutorService;
  * 
  */
 public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHandler {
-  protected static boolean DEBUG = false;
+  protected static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(BaseClientHandshakeHandler.class);
   private final ClientHandshake clientHandshake;
   private final ListenerGroup<ClientHandshakeListener> clientHandshakeListeners;
@@ -40,21 +43,32 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
   }
 
   @Override
-  public void channelActive(ChannelHandlerContext ctx) throws Exception {
-	ByteBuffer bb = MessageBuffers.dynamicBuffer();
+  public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+	//final ByteBuffer bb = MessageBuffers.dynamicBuffer();
+	if( DEBUG ) {
+		log.info("Preparing OutgoingConnectionHeader:"+clientHandshake.getOutgoingConnectionHeader());
+	}
+	
+	ctx.write(clientHandshake.getOutgoingConnectionHeader());
+	
+	if( DEBUG )
+		log.info("BaseClientHandshakeHandler channelActive "+ctx+" OutgoingConnectionHeader reply to master complete");	
+	/*
 	Utility.serialize(clientHandshake.getOutgoingConnectionHeader(), bb);
+	
     ctx.write(bb, new CompletionHandler<Integer, Void>() {
 		@Override
 		public void completed(Integer arg0, Void arg1) {
 			if( DEBUG )
-				log.info("BaseClientHandshakeHandler channelActive reply to master complete");	
+				log.info("BaseClientHandshakeHandler channelActive "+ctx+" reply to master complete with "+arg0+" buffer:"+bb);	
 		}
 		@Override
 		public void failed(Throwable arg0, Void arg1) {
-			log.info("BaseClientHandshakeHandler channelActive reply to master failed with:"+arg0);	
+			log.info("BaseClientHandshakeHandler channelActive "+ctx+" reply to master failed with:"+arg0);	
 		}
     	
     });
+    */
   }
   
   @Override

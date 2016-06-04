@@ -1,6 +1,8 @@
 package org.ros.internal.transport.tcp;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 //import java.nio.channels.AsynchronousChannelGroup;
@@ -21,9 +23,9 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 	//AsynchronousServerSocketChannel server = null;
 	//AsynchronousChannelGroup channelGroup;
 	//AsynchronousSocketChannel data = null;
-	ServerSocketChannel server = null;
+	ServerSocket server = null;
 	ChannelGroup channelGroup;
-	SocketChannel data = null;
+	Socket data = null;
 	Executor exc;
 	boolean shouldStop = false;
 	//public synchronized void startServer(AsynchronousChannelGroup group, Executor exc, int port) throws IOException {
@@ -34,7 +36,7 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 				log.info("AsynchTCPServer attempt local bind port "+port);
 			channelGroup = group;
 			//server = AsynchronousServerSocketChannel.open(channelGroup);
-			server = ServerSocketChannel.open();//channelGroup);
+			server = new ServerSocket();//channelGroup);
 			server.bind(new InetSocketAddress(port));
 			exc.execute(this);
 		}
@@ -45,7 +47,7 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 			if( DEBUG )
 				log.info("AsynchTCPServer attempt bind "+binder);
 			channelGroup = group;
-			server = ServerSocketChannel.open();//channelGroup);
+			server = new ServerSocket();
 			server.bind(binder);
 			exc.execute(this);
 		}

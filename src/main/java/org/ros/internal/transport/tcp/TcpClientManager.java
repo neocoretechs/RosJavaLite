@@ -32,8 +32,8 @@ public class TcpClientManager {
   private final List<NamedChannelHandler> namedChannelHandlers;
   private final ExecutorService executor;
   
-  private static ArrayBlockingQueue<ExecutorService> executors = new ArrayBlockingQueue<ExecutorService>(16);
-  private static ArrayBlockingQueue<TcpClientManager> instances = new ArrayBlockingQueue<TcpClientManager>(16);
+  private static ArrayBlockingQueue<ExecutorService> executors = new ArrayBlockingQueue<ExecutorService>(1024);
+  private static ArrayBlockingQueue<TcpClientManager> instances = new ArrayBlockingQueue<TcpClientManager>(1024);
 
   public static TcpClientManager getInstance(ExecutorService exc) {
 	  if( executors.contains(exc) ) {

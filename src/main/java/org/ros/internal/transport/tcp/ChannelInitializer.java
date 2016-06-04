@@ -26,10 +26,6 @@ public abstract class ChannelInitializer {
      */
     protected abstract void initChannel(ChannelHandlerContext ch) throws Exception;
 
-    public final void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        initChannel(ctx);
-        ctx.pipeline().fireChannelRegistered();
-    }
 
     /**
      * Handle the {@link Throwable} by logging and closing the {@link Channel}. Sub-classes may override this.

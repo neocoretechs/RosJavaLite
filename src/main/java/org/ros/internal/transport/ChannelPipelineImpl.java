@@ -280,9 +280,5 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 		return this;
 	}
 
-	@Override
-	public String toString() {
-		return new String("[Channel pipeline:"+ctx.channel()+" with "+queue.size()+" handlers]");
-	}
 
 }
