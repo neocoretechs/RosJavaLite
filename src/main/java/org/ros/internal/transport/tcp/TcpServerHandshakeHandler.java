@@ -1,11 +1,6 @@
 package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.CompletionHandler;
-import java.nio.channels.SocketChannel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,6 +19,8 @@ import org.ros.namespace.GraphName;
 
 /**
  * A {@link ChannelHandler} which will process the TCP server handshake.
+ * Once an incoming channel read takes place the handshake handler is removed and the traffic
+ * handler is placed in the pipeline
  * 
  * @author jg
  */
@@ -43,10 +40,13 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
-	  log.info("Channel active");
+	  if(DEBUG)
+		  log.info("Channel active");
   }
   /**
    * Channel read initiated by pipeline generated message
+   * We make the assumption that the inbound object is of type ConnectionHeader
+   * when talking to this handler
    */
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object e) throws Exception {
@@ -63,7 +63,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     return e;
   }
   /**
-   * Handle the handshake for a service
+   * Handle the handshake for a service in response to channel read
    * @param ctx
    * @param incomingHeader
    * @throws IOException
@@ -87,7 +87,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     }
   }
   /**
-   * Handle the handshake for a typical (not a service) subscriber.
+   * Handle the handshake for a typical (not a service) subscriber in response to a channel read.
    * @param ctx
    * @param incomingConnectionHeader
    * @throws InterruptedException
@@ -112,54 +112,43 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
    
     ctx.write(outgoingBuffer);
     
-    /*
-    ctx.write(outgoingBuffer, new CompletionHandler<Integer, Void>() {
-		@Override
-		public void completed(Integer arg0, Void arg1) {
-		*/
-			   String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
-			   publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
-			    // Once the handshake is complete, there will be nothing incoming on the
-			    // channel as we are only queueing outbound traffic to the subscriber, which is done by the OutgoingMessgequeue.
-			    // So, we remove the handler
-			    ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
-			    // Set this context ready to receive the message type specified
-			    synchronized(ctx.getMessageTypes()) {
+	String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
+	publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
+	// Once the handshake is complete, there will be nothing incoming on the
+	// channel as we are only queueing outbound traffic to the subscriber, which is done by the OutgoingMessgequeue.
+	// So, we remove the handler
+	ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
+	// Set this context ready to receive the message type specified
+	synchronized(ctx.getMessageTypes()) {
 			    	ctx.getMessageTypes().add(incomingConnectionHeader.getField(ConnectionHeaderFields.TYPE));
-			    }
-			    // The handshake is complete and the only task is to set the context ready, which will allow
-			    // the outbound queue to start sending messages.
-			    ctx.setReady(true);
+	}
+	// The handshake is complete and the only task is to set the context ready, which will allow
+	// the outbound queue to start sending messages.
+	ctx.setReady(true);
 			    
-				if( DEBUG ) {
-					  log.info("subscriber complete:"+outgoingBuffer);
-				}
-				/*
-		}
-		@Override
-		public void failed(Throwable arg0, Void arg1) {
-			log.info("Failed to perform handshake for:"+ctx);
-		} 
-		*/
-    //});
-
- 
+	if( DEBUG ) {
+			log.info("subscriber complete:"+outgoingBuffer);
+	}
+	
   }
 
 @Override
 public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+	if( DEBUG )
 	log.info(this+" Handler added "+ctx);
 	
 }
 
 @Override
 public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+	if(DEBUG)
 	log.info("Handler removed "+ctx);
 	
 }
 
 @Override
 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+	if(DEBUG)
 	log.info("Channel inactive "+ctx);
 	
 }
@@ -167,6 +156,7 @@ public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
 @Override
 public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+	if(DEBUG)
 	log.info("channel read complete "+ctx);
 	
 }
@@ -180,6 +170,7 @@ public void exceptionCaught(ChannelHandlerContext ctx, Throwable msg)throws Exce
 @Override
 public void userEventTriggered(ChannelHandlerContext ctx, Object event)
 		throws Exception {
+	if(DEBUG)
 	log.info("User event triggered "+ctx+" "+event);
 	
 }

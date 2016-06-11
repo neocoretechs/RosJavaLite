@@ -70,7 +70,7 @@ public class TcpClient {
   public Socket connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	//channel = /*Asynchronous*/SocketChannel.open(/*channelGroup*/);
 	  channel = new Socket();
-	  channel.setTcpNoDelay(false);
+	  //channel.setTcpNoDelay(true);
 	  channel.setSendBufferSize(4096000);
 	  channel.setSendBufferSize(4096000);
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);

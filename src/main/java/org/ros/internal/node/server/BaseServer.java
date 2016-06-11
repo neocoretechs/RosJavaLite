@@ -55,7 +55,7 @@ public final class BaseServer extends TCPServer {
 				try {
 					Socket datasocket = server.accept();
                     // disable Nagles algoritm; do not combine small packets into larger ones
-                    datasocket.setTcpNoDelay(true);
+                    //datasocket.setTcpNoDelay(true);
                     // wait 1 second before close; close blocks for 1 sec. and data can be sent
                     datasocket.setSoLinger(true, 1);
 					//

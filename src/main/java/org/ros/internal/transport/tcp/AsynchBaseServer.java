@@ -50,7 +50,7 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 				//(/*(AsynchronousSocketChannel)*/channel/*.get()*/).setOption(StandardSocketOptions.TCP_NODELAY, true);
 				channel.setSendBufferSize(4096000);
 				channel.setReceiveBufferSize(4096000);
-				channel.setTcpNoDelay(true);
+				//channel.setTcpNoDelay(true);
 				ChannelHandlerContext ctx = new ChannelHandlerContextImpl(channelGroup, channel/*.get()*/, exc);
 				tcpserver.getSubscribers().add(ctx);
 				// inject the handlers, start handshake
