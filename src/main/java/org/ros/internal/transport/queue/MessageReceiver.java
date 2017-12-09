@@ -10,12 +10,11 @@ import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
 
 
 /**
- * A circular blocking deque type of ChannelHandler that takes channelRead events and queues them.
+ * A type of ChannelHandler that takes channelRead events and queues them.
+ * Contains the circular blocking deque shared by MessageDispatcher and managed by IncomingMessageQueue.
  * It is placed in the stack after handshake to be activated on read events.
- * @author jg
- * 
- * @param <T>
- *          the message type
+ * @author jg (C) NeoCoretechs 2017
+ * @param <T> the message type
  */
 public class MessageReceiver<T> extends AbstractNamedChannelHandler {
 
@@ -24,10 +23,8 @@ public class MessageReceiver<T> extends AbstractNamedChannelHandler {
 
   private final CircularBlockingDeque<T> lazyMessages;
 
-
   public MessageReceiver(CircularBlockingDeque<T> lazyMessages) {
     this.lazyMessages = lazyMessages;
-
   }
 
   @Override
@@ -46,10 +43,8 @@ public class MessageReceiver<T> extends AbstractNamedChannelHandler {
 
 
 @Override
-public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1)
-		throws Exception {
-	log.error(arg1);
-	
+public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1) throws Exception {
+	log.error(arg1);	
 }
 
 
@@ -57,8 +52,7 @@ public void exceptionCaught(ChannelHandlerContext arg0, Throwable arg1)
 public void handlerAdded(ChannelHandlerContext arg0) throws Exception {
     if( DEBUG ) {
 		  log.info(this+" handler added:"+arg0);
-	}
-	
+	}	
 }
 
 @Override
@@ -66,7 +60,6 @@ public void handlerRemoved(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
 			  log.info("MessageReceiver handler removed:"+arg0);
 		}
-	
 }
 
 @Override
@@ -74,7 +67,6 @@ public void channelActive(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
 			  log.info("MessageReceiver channel active:"+arg0);
 		}
-	
 }
 
 @Override
@@ -82,7 +74,6 @@ public void channelInactive(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
 			  log.info("MessageReceiver channel inactive:"+arg0);
 		}
-	
 }
 
 @Override
@@ -90,18 +81,14 @@ public void channelReadComplete(ChannelHandlerContext arg0) throws Exception {
 	   if( DEBUG ) {
 			  log.info("MessageReceiver read complete:"+arg0);
 		}
-	
 }
 
 @Override
-public void userEventTriggered(ChannelHandlerContext arg0, Object arg1)
-		throws Exception {
+public void userEventTriggered(ChannelHandlerContext arg0, Object arg1) throws Exception {
 	   if( DEBUG ) {
 			  log.debug("MessageReceiver user event triggered:"+arg0);
 		}
-	
 }
-
 
 
 }

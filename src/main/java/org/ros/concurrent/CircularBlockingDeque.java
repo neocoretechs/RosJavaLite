@@ -183,6 +183,8 @@ public class CircularBlockingDeque<T> implements Iterable<T> {
   public boolean isEmpty() {
     return length == 0;
   }
+  
+  public int length() { return length; }
 
   /**
    * Returns an iterator over the queue.

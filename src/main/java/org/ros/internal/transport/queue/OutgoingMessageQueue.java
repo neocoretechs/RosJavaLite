@@ -137,8 +137,7 @@ public class OutgoingMessageQueue<T> {
   }
 
   /**
-   * @param message
-   *          the message to add to the queue
+   * @param message the message to add to the queue
    */
   public void add(T message) {
     deque.addLast(message);
@@ -159,7 +158,8 @@ public class OutgoingMessageQueue<T> {
   }
 
 
-  private void writeLatchedMessage() {
+@SuppressWarnings("unused")
+private void writeLatchedMessage() {
     synchronized (mutex) {
       latchedBuffer.clear();
       Utility.serialize(latchedMessage, latchedBuffer);

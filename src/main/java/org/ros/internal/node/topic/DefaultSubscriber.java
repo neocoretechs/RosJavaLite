@@ -2,9 +2,9 @@ package org.ros.internal.node.topic;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
-import org.ros.exception.RosRuntimeException;
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.transport.ProtocolNames;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
@@ -128,12 +128,7 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
       if (knownPublishers.contains(publisherIdentifier)) {
         return;
       }
-      try {
-		tcpClientManager.connect(toString(), address);
-      } catch (IOException e) {
-    	log.error("Failure attempting to add publisher "+toString()+" "+address);
-		throw new RosRuntimeException(e);
-      }
+	  tcpClientManager.connect(toString(), address);
       // TODO(damonkohler): knownPublishers is duplicate information that is
       // already available to the TopicParticipantManager.
       knownPublishers.add(publisherIdentifier);

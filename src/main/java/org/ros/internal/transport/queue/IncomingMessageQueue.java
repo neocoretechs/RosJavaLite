@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * Created in default subscriber to handle the incoming messages.
  * Creates a MessageReceiver and a MessageDispatcher.
+ * The MessageDispatcher is spun up by the ExecutorService.
  * @author jg
  */
 public class IncomingMessageQueue<T> {
@@ -18,17 +19,17 @@ public class IncomingMessageQueue<T> {
    * The maximum number of incoming messages that will be queued.
    * <p>
    * This limit applies to dispatching {@link LazyMessage}s as they arrive over
-   * the network. It is independent of {@link MessageDispatcher} queue
-   * capacities specified by
+   * the network. It is independent of {@link MessageDispatcher} queue capacities specified by
    * {@link IncomingMessageQueue#addListener(MessageListener, int)} which are
    * consumed by user provided {@link MessageListener}s.
+   * @author Groff (C) NeoCoreTechs 2017
    */
-  private static final int DEQUE_CAPACITY = 8192;
+  private static final int DEQUE_CAPACITY = 256;
 
   private final MessageReceiver<T> messageReceiver;
   private final MessageDispatcher<T> messageDispatcher;
 
-  public IncomingMessageQueue( ExecutorService executorService) {
+  public IncomingMessageQueue(ExecutorService executorService) {
     CircularBlockingDeque<T> lazyMessages =
         new CircularBlockingDeque<T>(DEQUE_CAPACITY);
     messageReceiver = new MessageReceiver<T>(lazyMessages);

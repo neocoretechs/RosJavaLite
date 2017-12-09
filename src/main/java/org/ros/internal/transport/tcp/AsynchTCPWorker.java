@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
@@ -46,9 +45,13 @@ public class AsynchTCPWorker implements Runnable {
 						}
 						ctx.pipeline().fireExceptionCaught(e);
 					}
+					ctx.pipeline().fireChannelReadComplete();
 				} // shouldRun		
 			} catch(Exception se) {
 					log.error("AsynchTCPWorker terminating due to ",se);
+					try {
+						ctx.pipeline().fireExceptionCaught(se);
+					} catch (Exception e) {}
 			} finally {
 				try {
 					if( DEBUG )

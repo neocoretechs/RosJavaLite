@@ -39,8 +39,9 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	boolean ready = false;
 	Object mutex = new Object();
 	Set<String> outboundMessageTypes;
-	
-	
+	InputStream is = null;
+	OutputStream os = null;
+
 	public ChannelHandlerContextImpl(/*Asynchronous*/ChannelGroup channelGroup2, /*Asynchronous*/Socket channel2, Executor exc) {
 		channelGroup = channelGroup2;
 		channel = channel2;
@@ -73,6 +74,9 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	@Override
 	public void connect(SocketAddress remoteAddress) throws IOException {
 		channel.connect(remoteAddress);
+		is = channel.getInputStream();
+		os = channel.getOutputStream();
+		
 	}
 
 	@Override
@@ -95,7 +99,6 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public Object read() throws IOException {
-		InputStream is = channel.getInputStream();
 		ObjectInputStream ois = new ObjectInputStream(is);
 		try {
 			return ois.readObject();
@@ -106,7 +109,6 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public void write(Object msg) throws IOException {
-		OutputStream os = channel.getOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(os);
 		oos.writeObject(msg);
 		oos.flush();

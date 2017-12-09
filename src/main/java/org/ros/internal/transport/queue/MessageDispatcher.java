@@ -12,10 +12,11 @@ import org.ros.message.MessageListener;
 import java.util.concurrent.ExecutorService;
 
 /**
- * @author jg
- * 
- * @param <T>
- *          the message type
+ * The IncomingMessageQueue creates this and spins it up via the ExecutorService.
+ * It shares the CircularBlockingDeque with the MessageReceiver.
+ * It services the MessageListeners with received messages from the queue.
+ * @param <T> the message type
+ * @author jg (C) NeoCoreTechs 2017
  */
 public class MessageDispatcher<T> extends CancellableLoop {
 
@@ -34,8 +35,7 @@ public class MessageDispatcher<T> extends CancellableLoop {
   private boolean latchMode;
   private T latchedMessage;
 
-  public MessageDispatcher(CircularBlockingDeque<T> lazyMessages,
-      ExecutorService executorService) {
+  public MessageDispatcher(CircularBlockingDeque<T> lazyMessages, ExecutorService executorService) {
     this.lazyMessages = lazyMessages;
     messageListeners = new ListenerGroup<MessageListener<T>>(executorService);
     mutex = new Object();
@@ -55,8 +55,7 @@ public class MessageDispatcher<T> extends CancellableLoop {
       log.info("Adding listener.");
     }
     synchronized (mutex) {
-      EventDispatcher<MessageListener<T>> eventDispatcher =
-          messageListeners.add(messageListener, limit);
+      EventDispatcher<MessageListener<T>> eventDispatcher = messageListeners.add(messageListener, limit);
       if (latchMode && latchedMessage != null) {
         eventDispatcher.signal(newSignalRunnable(latchedMessage));
       }
@@ -67,8 +66,7 @@ public class MessageDispatcher<T> extends CancellableLoop {
    * Returns a newly allocated {@link SignalRunnable} for the specified
    * {@link LazyMessage}.
    * 
-   * @param lazyMessage
-   *          the {@link LazyMessage} to signal {@link MessageListener}s with
+   * @param lazyMessage the {@link LazyMessage} to signal {@link MessageListener}s with
    * @return the newly allocated {@link SignalRunnable}
    */
   private SignalRunnable<MessageListener<T>> newSignalRunnable(final T lazyMessage) {
@@ -81,9 +79,7 @@ public class MessageDispatcher<T> extends CancellableLoop {
   }
 
   /**
-   * @param enabled
-   *          {@code true} if latch mode should be enabled, {@code false}
-   *          otherwise
+   * @param enabled {@code true} if latch mode should be enabled, {@code false} otherwise
    */
   public void setLatchMode(boolean enabled) {
     latchMode = enabled;
