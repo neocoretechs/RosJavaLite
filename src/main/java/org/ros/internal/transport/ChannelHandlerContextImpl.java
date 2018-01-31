@@ -7,14 +7,15 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
-
 import java.nio.channels.CompletionHandler;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.internal.transport.tcp.ChannelGroup;
+
 
 /**
  * A handler context contains all the executor, the channel group, the channel, and the pipeline with the handlers.
@@ -32,6 +33,8 @@ import org.ros.internal.transport.tcp.ChannelGroup;
  *
  */
 public class ChannelHandlerContextImpl implements ChannelHandlerContext {
+	private static final boolean DEBUG = false;
+	private static final Log log = LogFactory.getLog(ChannelHandlerContextImpl.class);
 	/*Asynchronous*/ChannelGroup channelGroup;
 	Executor executor;
 	/*Asynchronous*/Socket/*Channel*/ channel;
@@ -53,8 +56,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	public void setChannel(/*Asynchronous*/Socket/*Channel*/ sock) {
 		this.channel = sock;
 	}
-	
-	
+		
 	@Override
 	public Executor executor() {
 		return executor;
@@ -73,10 +75,24 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public void connect(SocketAddress remoteAddress) throws IOException {
-		channel.connect(remoteAddress);
-		is = channel.getInputStream();
-		os = channel.getOutputStream();
-		
+		int try_num = 1;
+		int secondsMax = 30;
+		int secondsToWait = 1;
+		while(secondsToWait < secondsMax) {
+			try {
+				channel.connect(remoteAddress);
+				//is = channel.getInputStream();
+				//os = channel.getOutputStream();
+				return;
+			} catch(Exception e) { }
+			secondsToWait = (int) Math.min(secondsMax, Math.pow(2, try_num++));
+			log.info("Failed to connect to remote address "+remoteAddress+", waiting "+secondsToWait+" seconds for retry...");
+			try {
+				Thread.sleep(secondsToWait*1000);
+			} catch (InterruptedException e) {}
+		}
+		// Exceeded maximum wait, bomb
+		throw new IOException("failed to connect to remote address "+remoteAddress+" after maximum retries");
 	}
 
 	@Override
@@ -99,6 +115,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public Object read() throws IOException {
+		is = channel.getInputStream();
 		ObjectInputStream ois = new ObjectInputStream(is);
 		try {
 			return ois.readObject();
@@ -109,6 +126,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public void write(Object msg) throws IOException {
+		os = channel.getOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(os);
 		oos.writeObject(msg);
 		oos.flush();

@@ -4,7 +4,6 @@ import java.lang.reflect.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.transport.tcp.TcpRosServer;
 
 /**
 * The remote call mechanism depends on Java reflection to provide access to methods that can be
@@ -13,8 +12,8 @@ import org.ros.internal.transport.tcp.TcpRosServer;
 * This class handles reflection of the user requests to call designated methods in the server side classes,
 * It starts by populating a table of those methods, and at runtime, creates a method call transport for client,
 * and provides for server-side invocation of those methods.
-* Option to skip leading arguments for  whatever reason is provided.
-* @author Groff Copyright (C) NeoCoreTechs 1998-2000, 2015
+* Option to skip leading arguments for whatever reason is provided.
+* @author Groff Copyright (C) NeoCoreTechs 1998-2000, 2015, 2017
 */
 public final class ServerInvokeMethod {
 	private static final boolean DEBUG = false;
@@ -30,7 +29,7 @@ public final class ServerInvokeMethod {
     * designated class.  Reflect hierarchy in reverse (to get proper
     * overload) and look for methods
     * @param tclass The class name we are targeting
-    * @param skipArgs > 0 if we want to skip first args.
+    * @param tskipArgs > 0 if we want to skip first args.
     */
     public ServerInvokeMethod(String tclass, int tskipArgs) throws ClassNotFoundException {      
                 pkmnap.classClass = Class.forName(tclass);
@@ -41,9 +40,9 @@ public final class ServerInvokeMethod {
                 Method m[];
                 m = pkmnap.classClass.getMethods();
                 for(int i = m.length-1; i >= 0 ; i--) {
-                        //if( m[i].getName().startsWith("Relatrix_") ) {
-                                pkmnap.methodNames.add(m[i].getName()/*.substring(9)*/);
-                                log.info("Method :"+m[i].getName()/*.substring(9)*/);
+                        //if( m[i].getName().startsWith("Reflect_") ) {
+                                pkmnap.methodNames.add(m[i].getName()/*.substring(8)*/);
+                                log.info("Method :"+m[i].getName()/*.substring(8)*/);
                         //}
                 }
                 // create arrays
@@ -54,14 +53,14 @@ public final class ServerInvokeMethod {
                 int methCnt = 0;
                 //
                 for(int i = m.length-1; i >= 0 ; i--) {
-                        //if( m[i].getName().startsWith("Relatrix_") ) {
+                        //if( m[i].getName().startsWith("Reflect_") ) {
                                 pkmnap.methodParams[methCnt] = m[i].getParameterTypes();
                                 pkmnap.methodSigs[methCnt] = m[i].toString();
                                 pkmnap.returnTypes[methCnt] = m[i].getReturnType();
                                 if( pkmnap.returnTypes[methCnt] == void.class ) 
                                 	pkmnap.returnTypes[methCnt] = Void.class;
-                                //int ind1 = pkmnap.methodSigs[methCnt].indexOf("Relatrix_");
-                                //pkmnap.methodSigs[methCnt] = pkmnap.methodSigs[methCnt].substring(0,ind1)+pkmnap.methodSigs[methCnt].substring(ind1+9);
+                                //int ind1 = pkmnap.methodSigs[methCnt].indexOf("Reflect_");
+                                //pkmnap.methodSigs[methCnt] = pkmnap.methodSigs[methCnt].substring(0,ind1)+pkmnap.methodSigs[methCnt].substring(ind1+8);
                                 if( skipArgs > 0) {
                                    try {
                                         int ind1 = pkmnap.methodSigs[methCnt].indexOf("(");
@@ -88,18 +87,20 @@ public final class ServerInvokeMethod {
     		return invokeMethod(tmc, null);
        }
        /**
-       * For an incoming RelatrixStatement, verify and invoke the proper
-       * method.  We assume there is a table of class names and this and
-       * it has been used to locate this object. 
+       * For an incoming RemoteRequestInterface implementor of a concrete composition, verify and invoke the proper
+       * method.  We assume there is a table of class names and method params properly populated. Compare the
+       * method signatures in the RemoteRequest to the table, if a match, invoke the method on localObject.
+       * If skipArgs, a class variable, is not zero, the first number of skipArgs parameters in the method
+       * described by RemoteRequest will not be compared against table entry, but the values will be passed into
+       * the method upon invocation.
        * @return Object of result of method invocation
        */
        public Object invokeMethod(RemoteRequestInterface tmc, Object localObject) throws Exception {
-                //NoSuchMethodException, InvocationTargetException, IllegalAccessException, PowerSpaceException  {               
+                //NoSuchMethodException, InvocationTargetException, IllegalAccessException  {               
                 String targetMethod = tmc.getMethodName();
                 int methodIndex = pkmnap.methodNames.indexOf(targetMethod);
                 String whyNotFound = "No such method";
                 while( methodIndex != -1 && methodIndex < pkmnap.methodNames.size()) {
-                //        System.out.println(jj);
                         Class[] params = tmc.getParams();
                         //
                         //
