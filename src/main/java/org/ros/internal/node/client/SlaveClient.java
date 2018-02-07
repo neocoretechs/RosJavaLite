@@ -1,5 +1,7 @@
 package org.ros.internal.node.client;
 
+import org.ros.exception.RemoteException;
+import org.ros.exception.RemoteNotFoundException;
 import org.ros.internal.node.response.IntegerResultFactory;
 import org.ros.internal.node.response.ProtocolDescriptionResultFactory;
 import org.ros.internal.node.response.Response;
@@ -15,7 +17,6 @@ import org.ros.namespace.GraphName;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-
 import java.util.Collection;
 import java.util.List;
 
@@ -78,8 +79,8 @@ public class SlaveClient extends Client<SlaveRpcEndpoint> {
   }
 
   public Response<ProtocolDescription> requestTopic(GraphName topic,
-      Collection<String> requestedProtocols) {
-    return Response.fromListChecked(rpcEndpoint.requestTopic(nodeName.toString(), topic.toString(),
+      Collection<String> requestedProtocols) throws RemoteException, RemoteNotFoundException {
+    return Response.fromListCheckedNotFound(rpcEndpoint.requestTopic(nodeName.toString(), topic.toString(),
         new Object[][] { requestedProtocols.toArray() }), new ProtocolDescriptionResultFactory());
   }
 }

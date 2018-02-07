@@ -171,7 +171,7 @@ public class SlaveServer extends RpcServer {
     }
   }
   /**
-   * Request a topic conforming to the specified set of protocols, fir instance
+   * Request a topic conforming to the specified set of protocols, for instance
    * if a ProtocolNames.TCPROS is included, a new TcpRosProtocolDescription from tcpRosServer.getAdvertiseAddress
    * using tcpRosServer class field will be returned
    * @param topicName

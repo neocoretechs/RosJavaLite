@@ -18,7 +18,9 @@ import org.ros.internal.node.server.ThreadPoolManager;
 
 
 /**
- * This class functions as client to the remote node.
+ * This class functions as client to the remote node. MasterRpcEndpoint has one of these each for master and parameter server
+ * SlaveRpcEndpoint has but one for contacting the remote master and issuing commands via the remote invokable methods.
+ * The transport is accomplished via the RemoteRequestinterface implementors.
  * @author jg
  * Copyright (C) NeoCoreTechs 2014,2015
  */
@@ -63,8 +65,7 @@ public class RemoteClient implements Runnable {
 	
 	
 	/**
-	 * Look for messages coming back from the workers. Extract the UUID of the returned packet
-	 * and get the real request from the ConcurrentHashTable buffer
+	 * Look for messages coming back from the workers. 
 	 */
 	@Override
 	public void run() {
@@ -83,10 +84,17 @@ public class RemoteClient implements Runnable {
 				 responses.put(ret);
 			} catch (SocketException e) {
 					log.error("RemoteClient: receive socket error "+e+" Address:"+IPAddress+" port:"+remotePort);
-					break;
+					try {
+						if( workerSocket != null ) workerSocket.close();
+					} catch (IOException e2) {}
+					workerSocket = null;
 			} catch (IOException e) {
 				// we lost the remote, try to close worker and wait for reconnect
 				log.debug("RemoteClient: receive IO error "+e+" Address:"+IPAddress+" port:"+remotePort);
+				try {
+					if( workerSocket != null ) workerSocket.close();
+				} catch (IOException e2) {}
+				workerSocket = null;
 			} catch (ClassNotFoundException e1) {
 				log.error("Class not found for deserialization "+e1+" Address:"+IPAddress+" port:"+remotePort);
 				break;

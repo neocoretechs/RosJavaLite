@@ -43,7 +43,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
 
   @Override
   public List<Object> getBusStats(String callerId) {
-	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"getBusStats",
 				callerId);   
     return (List<Object>) remoteSlave.queue(rri);//slave.getBusStats(callerId);
@@ -51,7 +51,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
 
   @Override
   public List<Object> getBusInfo(String callerId) {
-		RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+		RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"getBusInfo",
 				callerId); 
     List<Object> busInfo = (List<Object>) remoteSlave.queue(rri);//slave.getBusInfo(callerId);
@@ -60,7 +60,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
 
   @Override
   public List<Object> getMasterUri(String callerId) {
-	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"getMasterUri"
 				); 
     InetSocketAddress uri = (InetSocketAddress) remoteSlave.queue(rri);//slave.getMasterUri();
@@ -70,7 +70,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
   @Override
   public List<Object> shutdown(String callerId, String message) {
     log.info("Shutdown requested by " + callerId + " with message \"" + message + "\"");
-    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 			"shutdown"
 			); 
 	//slave.shutdown();
@@ -80,7 +80,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
   @Override
   public List<Object> getPid(String callerId) {
     try {
-        RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+        RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
     			"getPid"
     			); 
       int pid = (int) remoteSlave.queue(rri);//slave.getPid();
@@ -92,7 +92,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
 
   @Override
   public List<Object> getSubscriptions(String callerId) {
-	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"getSubscriptions"
 				); 
     Collection<DefaultSubscriber<?>> subscribers = (Collection<DefaultSubscriber<?>>) remoteSlave.queue(rri);//slave.getSubscriptions();
@@ -105,7 +105,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
 
   @Override
   public List<Object> getPublications(String callerId) {
-	    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+	    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"getPublications"
 				); 
     Collection<DefaultPublisher<?>> publishers = (Collection<DefaultPublisher<?>>) remoteSlave.queue(rri);//slave.getPublications();
@@ -117,7 +117,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
   }
 
   private List<Object> parameterUpdate(String parameterName, Object parameterValue) {
-	    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+	    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"paramUpdate",
 				GraphName.of(parameterName), parameterValue); 
     if ((int)remoteSlave.queue(rri) > 0) {
@@ -140,7 +140,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
         InetSocketAddress uri = (InetSocketAddress)publisher;
         publisherUris.add(uri);
       }
-	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"publisherUpdate",
 				callerId, topicName, publisherUris); 
       //slave.publisherUpdate(callerId, topicName, publisherUris);
@@ -155,11 +155,11 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
       requestedProtocols.add((String) ((Object[]) protocols[i])[0]);
     }
     ProtocolDescription protocol = null;
-    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.SlaverServer",
+    RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.SlaveServer",
 				"requestTopic",
 				topic, requestedProtocols); 
     // The remote request may reference a topic with no publishers
-    // in that case the call on the remote side return null, which is translated to
+    // in that case the call on the remote side returns null, which is translated to
     // an empty object instance by the time it gets here, so check for proper
     // type returned before cast fail
     Object res = remoteSlave.queue(rri);//slave.requestTopic(topic, requestedProtocols);
@@ -171,7 +171,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
     		log.info("Requested topic " + topic + " with proto:" + requestedProtocols + ". response: "+ response.toString());
     	}
     } else {
-    	response = Response.newFailure("Requested topic "+topic+" failed to return a valid protcol response, may not exist", 1).toList();
+    	response = Response.newNotfound("Requested topic:"+topic+" failed to return a valid protocol response from requested protocol:"+requestedProtocols+". Publisher may not exist.", 1).toList();
     }
     return response;
   }

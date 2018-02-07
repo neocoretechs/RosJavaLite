@@ -1,36 +1,16 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.response;
 
 import org.ros.exception.RemoteException;
+import org.ros.exception.RemoteNotFoundException;
 import org.ros.exception.RosRuntimeException;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
- * The response from an XML-RPC call.
+ * The response from a remote call.
  * 
- * @author damonkohler@google.com (Damon Kohler)
- * 
- * @param <T>
+ * @author jg Copyright (C) NeoCoreTechs 2018
  */
 public class Response<T> {
 
@@ -50,14 +30,18 @@ public class Response<T> {
     return new Response<T>(StatusCode.SUCCESS, message, value);
   }
 
+  public static <T> Response<T> newNotfound(String message, T value) {
+	    return new Response<T>(StatusCode.NOTFOUND, message, value);
+  }
+
   /**
    * Creates a {@link Response} from the {@link List} of {@link Object}s
-   * returned from an XML-RPC call. Throws {@link RemoteException} if the
+   * returned from a remote call. Throws {@link RemoteException} if the
    * {@link StatusCode} is StatusCode.FAILURE.
    * 
    * @param <T>
    * @param response
-   *          the {@link List} of {@link Object}s returned from the XML-RPC call
+   *          the {@link List} of {@link Object}s returned from the remote call
    * @param resultFactory
    *          a {@link ResultFactory} that creates a result from the third
    *          {@link Object} in the {@link Response}
@@ -96,7 +80,7 @@ public class Response<T> {
    * 
    * @param <T>
    * @param response
-   *          the {@link List} of {@link Object}s returned from the XML-RPC call
+   *          the {@link List} of {@link Object}s returned from the remote call
    * @param resultFactory
    *          a {@link ResultFactory} that creates a result from the third
    *          {@link Object} in the {@link Response}
@@ -114,11 +98,51 @@ public class Response<T> {
       statusCode = StatusCode.fromInt((Integer) response.get(0));
       message = (String) response.get(1);
       if (statusCode != StatusCode.SUCCESS) {
+   
         throw new RemoteException(statusCode, message);
       }
     } catch (ClassCastException e) {
-      throw new RosRuntimeException(
-          "Remote side did not return correct type (status code/message).", e);
+      throw new RosRuntimeException("Remote side did not return correct type (status code/message).", e);
+    }
+    try {
+      return new Response<T>(statusCode, message, resultFactory.newFromValue(response.get(2)));
+    } catch (ClassCastException e) {
+      throw new RosRuntimeException("Remote side did not return correct value type.", e);
+    }
+  }
+
+  /**
+   * Creates a {@link Response} from the {@link List} of {@link Object}s
+   * returned from an RPC call. Throws {@link RemoteNotfoundException} if the
+   * {@link StatusCode} is not found, and {@link RemoteException) if it is not a success.
+   * 
+   * @param <T>
+   * @param response
+   *          the {@link List} of {@link Object}s returned from the remote call
+   * @param resultFactory
+   *          a {@link ResultFactory} that creates a result from the third
+   *          {@link Object} in the {@link Response}
+   * @return a {@link Response} using the specified {@link ResultFactory} to
+   *         generate the result
+   * @throws RemoteException
+   *           if the {@link Response}'s {@link StatusCode} does not indicate
+   *           success
+   * @throws RemoteNotfoundException if the remote call tried to locate a resource not there
+   */
+  public static <T> Response<T> fromListCheckedNotFound(List<Object> response,
+      ResultFactory<T> resultFactory) throws RemoteException, RemoteNotFoundException {
+    StatusCode statusCode;
+    String message;
+    try {
+      statusCode = StatusCode.fromInt((Integer) response.get(0));
+      message = (String) response.get(1);
+      if (statusCode != StatusCode.SUCCESS) {
+    	if( statusCode == StatusCode.NOTFOUND )
+    		throw new RemoteNotFoundException(statusCode, message);
+        throw new RemoteException(statusCode, message);
+      }
+    } catch (ClassCastException e) {
+      throw new RosRuntimeException("Remote side did not return correct type (status code/message).", e);
     }
     try {
       return new Response<T>(statusCode, message, resultFactory.newFromValue(response.get(2)));

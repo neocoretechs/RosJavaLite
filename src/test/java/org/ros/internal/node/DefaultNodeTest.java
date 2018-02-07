@@ -25,6 +25,8 @@ import org.junit.Test;
 //import org.ros.RosCore;
 import org.ros.RosTest;
 import org.ros.concurrent.Holder;
+import org.ros.exception.RemoteException;
+import org.ros.exception.RemoteNotFoundException;
 import org.ros.internal.node.client.SlaveClient;
 import org.ros.internal.node.response.Response;
 import org.ros.internal.node.server.master.MasterServer;
@@ -44,7 +46,6 @@ import org.ros.node.topic.Subscriber;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -189,7 +190,7 @@ public class DefaultNodeTest extends RosTest {
   }
 
   @Test
-  public void testPublicAddresses() throws InterruptedException, IOException {
+  public void testPublicAddresses() throws InterruptedException, IOException, RemoteException, RemoteNotFoundException {
     //RosCore rosCore = RosCore.newPublic(8090);
     //rosCore.start();
     //assertTrue(rosCore.awaitStart(1, TimeUnit.SECONDS));

@@ -21,15 +21,17 @@ package org.ros.exception;
  */
 public class ServiceNotFoundException extends RosException {
 
-  public ServiceNotFoundException(final Throwable throwable) {
-    super(throwable);
-  }
+	private static final long serialVersionUID = -706891733230399864L;
 
-  public ServiceNotFoundException(final String message, final Throwable throwable) {
-    super(message, throwable);
-  }
+	public ServiceNotFoundException(final Throwable throwable) {
+		super(throwable);
+	}
 
-  public ServiceNotFoundException(final String message) {
-    super(message);
-  }
+	public ServiceNotFoundException(final String message, final Throwable throwable) {
+		super(message, throwable);
+	}
+
+	public ServiceNotFoundException(final String message) {
+		super(message);
+	}
 }
