@@ -35,7 +35,7 @@ public class RemoteClient implements Runnable {
 	private Socket workerSocket = null; // socket assigned to slave port
 	private SocketAddress workerSocketAddress; //address of slave
 
-	private boolean shouldRun = true; // master service thread control
+	private volatile boolean shouldRun = true; // master service thread control
 	private Object waitHalt = new Object(); 
 	
 	ArrayBlockingQueue<RemoteRequestInterface> requests = new ArrayBlockingQueue<RemoteRequestInterface>(1);
@@ -70,7 +70,7 @@ public class RemoteClient implements Runnable {
 	@Override
 	public void run() {
  
-		while(shouldRun ) {
+		while(shouldRun) {
 			try {
 				// sets workerSocket
 				send(requests.take());
