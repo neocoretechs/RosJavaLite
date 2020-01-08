@@ -13,7 +13,6 @@ import java.util.concurrent.ThreadFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-
 /**
  * Class to manage thread resources throughout the application. Singleton
  * Usage pattern is ThreadPoolManager.getInstance().spin([your Runnable])
@@ -27,17 +26,21 @@ import org.apache.commons.logging.LogFactory;
  */
 public class ThreadPoolManager {
 	private static final boolean DEBUG = false;
-	  private static final Log log = LogFactory.getLog(ThreadPoolManager.class);
+	private static final Log log = LogFactory.getLog(ThreadPoolManager.class);
 	private static String DEFAULT_THREAD_POOL = "RPCSERVER";
 	private int threadNum = 0;
     private static Map<String, ExecutorService> executor = new HashMap<String, ExecutorService>();// = Executors.newCachedThreadPool(dtf);
 
-	public static ThreadPoolManager threadPoolManager = null;
+	public static volatile ThreadPoolManager threadPoolManager = null;
 	private ThreadPoolManager() { }
 	
 	public static ThreadPoolManager getInstance() {
 		if( threadPoolManager == null ) {
-			threadPoolManager = new ThreadPoolManager();
+			synchronized(ThreadPoolManager.class) {
+				if(threadPoolManager == null) {
+					threadPoolManager = new ThreadPoolManager();
+				}
+			}
 			// set up pool for system processes
 			executor.put(DEFAULT_THREAD_POOL, Executors.newCachedThreadPool(getInstance().new LocalThreadFactory(DEFAULT_THREAD_POOL)));
 		}
