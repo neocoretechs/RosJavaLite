@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -30,28 +31,21 @@ public class TcpClientManager {
   private final /*Asynchronous*/ChannelGroup channelGroup;
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
-  private final ExecutorService executor;
   
-  private static ArrayBlockingQueue<ExecutorService> executors = new ArrayBlockingQueue<ExecutorService>(1024);
-  private static ArrayBlockingQueue<TcpClientManager> instances = new ArrayBlockingQueue<TcpClientManager>(1024);
+  private static ConcurrentHashMap<ExecutorService, TcpClientManager> executors = new ConcurrentHashMap<ExecutorService, TcpClientManager>(1024);
 
   public static TcpClientManager getInstance(ExecutorService exc) {
-	  if( executors.contains(exc) ) {
-		  Object[] exe = executors.toArray();
-		  Object[] ths = instances.toArray();
-		  for(int i = 0; i < exe.length; i++) {
-			  if( exe.equals(exc) )
-				  return (TcpClientManager) ths[i];
+	  synchronized(TcpClientManager.class) {
+		  TcpClientManager tcm = executors.get(exc);
+		  if( tcm == null ) {
+			  tcm =  new TcpClientManager(exc);
+			  executors.put(exc,  tcm);
 		  }
+		  return tcm;
 	  }
-	  executors.add(exc);
-	  TcpClientManager tcp =  new TcpClientManager(exc);
-	  instances.add(tcp);
-	  return tcp;
   }
   
   private TcpClientManager(ExecutorService executor) {
-	this.executor = executor;
     this.channelGroup = new ChannelGroupImpl(executor);/*AsynchronousChannelGroup.withThreadPool(executor);*/
     this.tcpClients = new ArrayList<TcpClient>();
     this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();
@@ -82,7 +76,7 @@ public class TcpClientManager {
   public TcpClient connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	if( DEBUG )
 	    	log.info("TcpClient connect:"+connectionName+" "+socketAddress);
-    TcpClient tcpClient = new TcpClient(executor, channelGroup, namedChannelHandlers);
+    TcpClient tcpClient = new TcpClient(channelGroup, namedChannelHandlers);
     tcpClient.connect(connectionName, socketAddress);
     tcpClients.add(tcpClient);
     return tcpClient;

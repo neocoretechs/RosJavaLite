@@ -21,20 +21,18 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 	public InetSocketAddress address = null;
 	private TcpRosServer tcpserver = null;
 	AsynchTCPWorker uworker = null;
-	
-	
+		
 	public AsynchBaseServer(TcpRosServer tcpserver) throws IOException {
 		super();
 		this.address = tcpserver.getAddress();
 		this.tcpserver = tcpserver;
-		this.exc = tcpserver.getExecutor();
 		this.channelGroup = tcpserver.getChannelGroup();
 	}
 
 	public void startServer() throws IOException {
 		if( address == null )
 			throw new IOException("Server address not defined, can not start Base Server");
-		startServer(channelGroup, exc, address);
+		startServer(channelGroup, address);
 	}
 
 	
@@ -51,8 +49,10 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 				channel.setSendBufferSize(4096000);
 				channel.setReceiveBufferSize(4096000);
 				//channel.setTcpNoDelay(true);
-				ChannelHandlerContext ctx = new ChannelHandlerContextImpl(channelGroup, channel/*.get()*/, exc);
-				tcpserver.getSubscribers().add(ctx);
+				ChannelHandlerContext ctx = new ChannelHandlerContextImpl(channelGroup, channel/*.get()*/);
+				//if(DEBUG)
+				//	log.info("Adding new ChannelHandlerContext to subscribers array, subscribers="+tcpserver.getSubscribers().size()+" "+ctx);
+				//tcpserver.getSubscribers().add(ctx);
 				// inject the handlers, start handshake
 			    // inject calls initChannel on each ChannelInitializer in the factoryStack
 				tcpserver.getFactoryStack().inject(ctx);
@@ -65,10 +65,10 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 				// After it gets it the thread terminates and a new handler is inserted to generate outbound traffic
                 uworker = new AsynchTCPWorker(ctx);
                 // and send it all to executor for running
-                exc.execute(uworker);
+                channelGroup.getExecutorService().execute(uworker);
 				ctx.pipeline().fireChannelActive();
                 if( DEBUG ) {
-                    	log.info("ROS Asynch transport server worker starting for context:"+ctx);
+                    	log.info("AsynchBaseServer worker starting for context:"+ctx);
                 }   
 			} catch(Exception e) {
                     log.error("Asynch Server socket accept exception "+e,e);

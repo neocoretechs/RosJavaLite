@@ -26,11 +26,9 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 	ServerSocket server = null;
 	ChannelGroup channelGroup;
 	Socket data = null;
-	Executor exc;
-	boolean shouldStop = false;
-	//public synchronized void startServer(AsynchronousChannelGroup group, Executor exc, int port) throws IOException {
-	public synchronized void startServer(ChannelGroup group, Executor exc, int port) throws IOException {	
-		this.exc = exc;
+	volatile boolean shouldStop = false;
+
+	public synchronized void startServer(ChannelGroup group, int port) throws IOException {	
 		if( server == null ) {
 			if( DEBUG )
 				log.info("AsynchTCPServer attempt local bind port "+port);
@@ -38,18 +36,18 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 			//server = AsynchronousServerSocketChannel.open(channelGroup);
 			server = new ServerSocket();//channelGroup);
 			server.bind(new InetSocketAddress(port));
-			exc.execute(this);
+			group.getExecutorService().execute(this);
 		}
 	}
-	//public synchronized void startServer(AsynchronousChannelGroup group, Executor exc, InetSocketAddress binder) throws IOException {
-	public synchronized void startServer(ChannelGroup group, Executor exc, InetSocketAddress binder) throws IOException {
+	//public synchronized void startServer(AsynchronousChannelGroup group, InetSocketAddress binder) throws IOException {
+	public synchronized void startServer(ChannelGroup group, InetSocketAddress binder) throws IOException {
 		if( server == null ) {
 			if( DEBUG )
 				log.info("AsynchTCPServer attempt bind "+binder);
 			channelGroup = group;
 			server = new ServerSocket();
 			server.bind(binder);
-			exc.execute(this);
+			group.getExecutorService().execute(this);
 		}
 	}
 	public synchronized void stopServer() throws IOException {

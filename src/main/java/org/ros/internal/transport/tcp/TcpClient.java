@@ -18,8 +18,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Creates the critical ChannelHandlerContext and the AsynchTCPWorker that services it.<br/>
+ * Contains the Socket that is the channel.<br/>
+ * These are all populated when the 'connect' method is called.
  * Add the named channel handlers beforehand using the supplied methods and they will
- * be injected into the pipeline of the ChannelHandlerContext when the channel is initialized
+ * be injected into the pipeline of the ChannelHandlerContext when the channel is initialized.
  * @author jg
  */
 public class TcpClient {
@@ -33,7 +36,6 @@ public class TcpClient {
   
   private ChannelHandlerContext ctx;
   private final List<NamedChannelHandler> namedChannelHandlers;
-  private Executor executor;
   
   private Socket channel;
   
@@ -41,8 +43,7 @@ public class TcpClient {
   
   private ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   
-  public TcpClient( Executor executor, /*Asynchronous*/ChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
-	this.executor = executor;
+  public TcpClient( /*Asynchronous*/ChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
 	this.channelGroup = channelGroup;
 	this.namedChannelHandlers = namedChannelHandlers;
 	this.factoryStack = new ChannelInitializerFactoryStack();
@@ -68,6 +69,9 @@ public class TcpClient {
   public ChannelHandlerContext getContext() { return ctx; }
   
   public Socket connect(String connectionName, SocketAddress socketAddress) throws Exception {
+	 if (DEBUG) {
+	   log.info("TcpClient attempting connection "+connectionName+" to socket: " + socketAddress);
+	 }
 	//channel = /*Asynchronous*/SocketChannel.open(/*channelGroup*/);
 	  channel = new Socket();
 	  //channel.setTcpNoDelay(true);
@@ -76,7 +80,7 @@ public class TcpClient {
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, false);
-	ctx = new ChannelHandlerContextImpl(channelGroup, channel, executor);
+	ctx = new ChannelHandlerContextImpl(channelGroup, channel);
     TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup(), namedChannelHandlers);
     // add handler pipeline factory to stack
     factoryStack.addLast(tcpClientPipelineFactory);
@@ -89,13 +93,13 @@ public class TcpClient {
     ctx.connect(socketAddress);
   
     AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
-    executor.execute(uworker); 
+    channelGroup.getExecutorService().execute(uworker); 
     // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
     ctx.pipeline().fireChannelActive();
 	// recall we keep the list of contexts in TcpClientManager
     
     if (DEBUG) {
-        log.info("TcpClient Connected to socket: " + socketAddress+" with worker "+uworker);
+        log.info("TcpClient Connected with ChannelHandlerContext "+ctx);
     }
     //} else {
       // We expect the first connection to succeed. If not, fail fast.

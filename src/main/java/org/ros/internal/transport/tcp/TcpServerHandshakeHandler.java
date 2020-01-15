@@ -25,7 +25,7 @@ import org.ros.namespace.GraphName;
  * @author jg
  */
 public class TcpServerHandshakeHandler implements ChannelHandler {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpServerHandshakeHandler.class);
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
@@ -41,7 +41,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
 	  if(DEBUG)
-		  log.info("Channel active");
+		  log.info("Channel active for ChannelHandlerContext:"+ctx);
   }
   /**
    * Channel read initiated by pipeline generated message
@@ -51,7 +51,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object e) throws Exception {
 	if( DEBUG ) {
-			  log.info("TcpServerHandshakeHandler channelRead:"+e);
+			  log.info("TcpServerHandshakeHandler channelRead ChannelHandlerContext:"+ctx+" payload:"+e);
 	}
 	// check for null, possible fault on bad connect
     ConnectionHeader incomingHeader = (ConnectionHeader)e;
@@ -70,7 +70,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
    */
   private void handleServiceHandshake(ChannelHandlerContext ctx, ConnectionHeader incomingHeader) throws IOException {
 	if( DEBUG ) {
-		  log.info("service handshake:"+ctx+" header:"+incomingHeader);
+		  log.info("Service handshake ChannelHandlerContext:"+ctx+" header:"+incomingHeader);
 	}
     GraphName serviceName = GraphName.of(incomingHeader.getField(ConnectionHeaderFields.SERVICE));
     assert(serviceManager.hasServer(serviceName));
@@ -96,7 +96,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
   private void handleSubscriberHandshake(final ChannelHandlerContext ctx, final ConnectionHeader incomingConnectionHeader)
       throws InterruptedException, Exception {
 	  if( DEBUG ) {
-		  log.info("subscriber handshake:"+ctx+" header:"+incomingConnectionHeader);
+		  log.info("Subscriber handshake ChannelHandlerContext:"+ctx+" header:"+incomingConnectionHeader);
 	  }
     assert(incomingConnectionHeader.hasField(ConnectionHeaderFields.TOPIC)) :
         "Handshake header missing field: " + ConnectionHeaderFields.TOPIC;
@@ -114,6 +114,8 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     
 	String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
 	publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
+	if(DEBUG)
+		log.info("Current subscribers:"+publisher.getNumberOfSubscribers()+" for publisher "+publisher);
 	// Once the handshake is complete, there will be nothing incoming on the
 	// channel as we are only queueing outbound traffic to the subscriber, which is done by the OutgoingMessgequeue.
 	// So, we remove the handler
@@ -127,7 +129,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 	ctx.setReady(true);
 			    
 	if( DEBUG ) {
-			log.info("subscriber complete:"+outgoingBuffer);
+		log.info("Subscriber complete for ChannelHandlerContext:"+ctx+" subscribers="+publisher.getNumberOfSubscribers());
 	}
 	
   }
@@ -135,21 +137,21 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 @Override
 public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 	if( DEBUG )
-	log.info(this+" Handler added "+ctx);
+	log.info(" Handler added for ChannelHandlerContext:"+ctx);
 	
 }
 
 @Override
 public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
 	if(DEBUG)
-	log.info("Handler removed "+ctx);
+	log.info("Handler removed for ChannelHandlerContext:"+ctx);
 	
 }
 
 @Override
 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 	if(DEBUG)
-	log.info("Channel inactive "+ctx);
+	log.info("Channel inactive for ChannelHandlerContext:"+ctx);
 	
 }
 
@@ -157,7 +159,7 @@ public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 @Override
 public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
 	if(DEBUG)
-	log.info("channel read complete "+ctx);
+	log.info("Channel read complete for ChannelHandlerContext:"+ctx);
 	
 }
 
@@ -171,7 +173,7 @@ public void exceptionCaught(ChannelHandlerContext ctx, Throwable msg)throws Exce
 public void userEventTriggered(ChannelHandlerContext ctx, Object event)
 		throws Exception {
 	if(DEBUG)
-	log.info("User event triggered "+ctx+" "+event);
+	log.info("User event triggered for ChannelHandlerContext:"+ctx+" event:"+event);
 	
 }
 

@@ -33,7 +33,7 @@ public class OutgoingMessageQueue<T> {
   private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(OutgoingMessageQueue.class);
 
-  private static final int DEQUE_CAPACITY = 256;
+  private static final int DEQUE_CAPACITY = 16;
 
   private final CircularBlockingDeque<T> deque;
   private final Writer writer;
@@ -60,6 +60,8 @@ public class OutgoingMessageQueue<T> {
       //  log.info(String.format("Writing %d bytes.", buffer.position()));
       //}
       final Iterator<ChannelHandlerContext> it = channels.iterator();
+      if(DEBUG)
+    	  log.info("Messaging "+channels.size()+" channels.");
       while(it.hasNext()) {
     	  final ChannelHandlerContext ctx = it.next();
     	  //final CountDownLatch cdl = new CountDownLatch(1);
@@ -70,7 +72,7 @@ public class OutgoingMessageQueue<T> {
     	  if( ctx.isReady() && sendMessage ) {
     		  try {
     			if( DEBUG )
-    				log.info("Outgoing queue writing:"+message+" to "+ctx);
+    				log.info("Outgoing queue size="+deque.length()+" writing:"+message+" to "+ctx+" from "+Thread.currentThread().getName());
 				ctx.write(message);
 			} catch (IOException e) {
 				log.info("Closing failed write context:"+ctx+" due to "+e);

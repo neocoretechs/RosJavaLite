@@ -35,7 +35,7 @@ public class MessageReceiver<T> extends AbstractNamedChannelHandler {
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     if (DEBUG) {
-      log.info(String.format("Received message:"+msg));
+      log.info(String.format("Received message:"+msg+" ***"+Thread.currentThread().getName()));
     }
     lazyMessages.addLast((T) msg);
     return msg;

@@ -220,7 +220,7 @@ public class MessageQueueIntegrationTest {
 		  log.debug("Accept "+channel);
 	  }
      ChannelHandlerContextImpl ctx = null;
-	ctx = new ChannelHandlerContextImpl(incomingChannelGroup,channel/*.get()*/ , executorService);
+	ctx = new ChannelHandlerContextImpl(incomingChannelGroup,channel/*.get()*/);
      return ctx;
   }
 

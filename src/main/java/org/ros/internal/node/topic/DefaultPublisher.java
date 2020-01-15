@@ -65,6 +65,8 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
     this.messageFactory = messageFactory;
     this.subscribers = arrayBlockingQueue;
     outgoingMessageQueue = new OutgoingMessageQueue<T>(executorService, arrayBlockingQueue);
+    if(DEBUG)
+    	log.info("DefaultPublisher contructed with "+outgoingMessageQueue.getNumberOfChannels()+" channels.");
     listeners = new ListenerGroup<PublisherListener<T>>(executorService);
     listeners.add(new DefaultPublisherListener<T>() {
       @Override
@@ -154,7 +156,7 @@ public ConnectionHeader finishHandshake(ConnectionHeader incomingHeader) {
     if (DEBUG) {
       //log.info("Subscriber handshake header: " + incomingHeader);
       //log.info("Publisher handshake header: " + topicDefinitionHeader);
-    	log.info("%%%%%%%%%%%%%%%% Handshake Complete %%%%%%%%%%%%%%%");
+    	log.info("%%%%%%%%%%%%%%%% Finishing Handshake with "+outgoingMessageQueue.getNumberOfChannels()+" channels. %%%%%%%%%%%%%%%");
     }
     // TODO(damonkohler): Return errors to the subscriber over the wire.
     String incomingType = incomingHeader.getField(ConnectionHeaderFields.TYPE);
@@ -195,11 +197,14 @@ public ConnectionHeader finishHandshake(ConnectionHeader incomingHeader) {
    */
   public void addSubscriber(SubscriberIdentifier subscriberIdentifer, ChannelHandlerContext ctx) {
     if (DEBUG) {
-      log.info(String.format("Adding subscriber %s channel %s to publisher %s.",
+      log.info(String.format("Adding subscriber %s ChannelHandlerContext %s to publisher %s.",
           subscriberIdentifer, ctx, this));
     }
     //outgoingMessageQueue.addChannel(ctx);
     subscribers.add(ctx);
+    if (DEBUG) {
+        log.info("Current number of subscribers:"+subscribers.size());
+    }
     signalOnNewSubscriber(subscriberIdentifer);
   }
 

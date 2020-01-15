@@ -23,7 +23,7 @@ public class AsynchTCPWorker implements Runnable {
     public AsynchTCPWorker(ChannelHandlerContext ctx) throws IOException {
     	this.ctx = ctx;
     	if( DEBUG )
-    		log.info("AsynchTCPWorker constructed with context:"+ctx);
+    		log.info("AsynchTCPWorker constructed with ChannelHandlerContext:"+ctx);
 	}
 	
 	/**
@@ -34,28 +34,18 @@ public class AsynchTCPWorker implements Runnable {
 			try {
 				while(shouldRun) {
 					Object reso = ctx.read();
-					if( DEBUG )
-							log.info("ROS AsynchTCPWorker COMPLETED READ for "+ctx+"  Object:"+reso);
-					try {
-							ctx.pipeline().fireChannelRead(reso);
-					} catch (Exception e) {
-						if( DEBUG) {
-								log.info("Exception out of fireChannelRead",e);
-								e.printStackTrace();
-						}
-						ctx.pipeline().fireExceptionCaught(e);
-					}
+					//if( DEBUG )
+					//		log.info("AsynchTCPWorker COMPLETED READ for ChannelHandlerContext "+ctx+"  Result:"+reso);
+					ctx.pipeline().fireChannelRead(reso);
 					ctx.pipeline().fireChannelReadComplete();
 				} // shouldRun		
 			} catch(Exception se) {
-					log.error("AsynchTCPWorker terminating due to ",se);
+					log.error("AsynchTCPWorker terminating, ChannelHandlerContext "+ctx+" read failure due to ",se);
 					try {
 						ctx.pipeline().fireExceptionCaught(se);
 					} catch (Exception e) {}
 			} finally {
 				try {
-					if( DEBUG )
-						log.info("<<<<<<<<<< Datasocket closing >>>>>>>>");
 					ctx.setReady(false);
 					ctx.close();
 				} catch (IOException e) {}

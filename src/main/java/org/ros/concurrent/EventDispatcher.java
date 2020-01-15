@@ -24,7 +24,6 @@ package org.ros.concurrent;
  *          the listener type
  */
 public class EventDispatcher<T> extends CancellableLoop {
-
   private final T listener;
   private final CircularBlockingDeque<SignalRunnable<T>> events;
 
@@ -35,11 +34,14 @@ public class EventDispatcher<T> extends CancellableLoop {
 
   public void signal(final SignalRunnable<T> signalRunnable) {
     events.addLast(signalRunnable);
+    //System.out.println("Event length addLast="+events.length()+" ***"+Thread.currentThread().getName());
   }
 
   @Override
   public void loop() throws InterruptedException {
     SignalRunnable<T> signalRunnable = events.takeFirst();
+    //System.out.println("Event length loop preRun="+events.length()+" ***"+Thread.currentThread().getName());
     signalRunnable.run(listener);
+    //System.out.println("Event length loop postRun="+events.length()+" ***"+Thread.currentThread().getName());
   }
 }

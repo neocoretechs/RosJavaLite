@@ -36,7 +36,6 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(ChannelHandlerContextImpl.class);
 	/*Asynchronous*/ChannelGroup channelGroup;
-	Executor executor;
 	/*Asynchronous*/Socket/*Channel*/ channel;
 	ChannelPipeline pipeline;
 	boolean ready = false;
@@ -45,10 +44,9 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	InputStream is = null;
 	OutputStream os = null;
 
-	public ChannelHandlerContextImpl(/*Asynchronous*/ChannelGroup channelGroup2, /*Asynchronous*/Socket channel2, Executor exc) {
+	public ChannelHandlerContextImpl(/*Asynchronous*/ChannelGroup channelGroup2, /*Asynchronous*/Socket channel2) {
 		channelGroup = channelGroup2;
 		channel = channel2;
-		executor = exc;
 		pipeline = new ChannelPipelineImpl(this);
 		outboundMessageTypes = (Set<String>) new HashSet<String>();
 	}
@@ -59,7 +57,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 		
 	@Override
 	public Executor executor() {
-		return executor;
+		return channelGroup.getExecutorService();
 	}
 
 	@Override
@@ -172,7 +170,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public String toString() {
-		return new String("ChannelHandlerContext:"+channel+" "+channelGroup+" "+executor+" "+pipeline+" ready:"+ready);
+		return new String("ChannelHandlerContext:"+channel+" ChannelGroup:"+channelGroup+" ChannelPipeline:"+pipeline+" ready:"+ready);
 	}
 
 	@Override

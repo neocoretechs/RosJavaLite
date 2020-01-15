@@ -10,7 +10,7 @@ import org.ros.internal.transport.ConnectionHeaderFields;
  * Handshake logic from the subscriber side of a topic connection.
  * The publisher receives the request for fields associated with the topic.
  * The subscriber receives the return from the publisher with the available fields and the
- * MD5 checksum to verifiy the message and complete the handshake.
+ * MD5 checksum to verify the message and complete the handshake.
  * 
  * @author jg
  */

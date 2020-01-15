@@ -23,9 +23,13 @@ public class ChannelInitializerFactoryStack {
 	private LinkedBlockingDeque<ChannelInitializer> queue = new LinkedBlockingDeque<ChannelInitializer>();
 	
 	public void addFirst(ChannelInitializer ch) {
+		if(DEBUG)
+			log.info("Adding First ChannelInitializer "+ch+" queue size="+queue.size());
 		queue.addFirst(ch);
 	}
 	public void addLast(ChannelInitializer ch) {
+		if(DEBUG)
+			log.info("Adding Last ChannelInitializer "+ch+" queue size="+queue.size());
 		queue.addLast(ch);
 	}
 	/**
@@ -35,9 +39,14 @@ public class ChannelInitializerFactoryStack {
 	 * @throws Exception
 	 */
 	public void inject(ChannelHandlerContext ctx) throws Exception {
+		if(DEBUG)
+			log.info("Injecting ChannelHandlerContext "+ctx+" queue size="+queue.size());
 		Iterator<ChannelInitializer> it = queue.iterator();
 		while(it.hasNext()) {
-			it.next().initChannel(ctx);
+			ChannelInitializer ch = it.next();
+			if(DEBUG)
+				log.info("ChannelInitializer.initChannel "+ch);
+			ch.initChannel(ctx);
 		}
 	}
 	
