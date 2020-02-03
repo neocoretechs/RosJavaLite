@@ -1,8 +1,11 @@
 package org.ros.internal.transport.tcp;
 
+import java.util.Collection;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.service.ServiceManager;
+import org.ros.internal.node.topic.DefaultPublisher;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ChannelPipeline;
@@ -15,7 +18,7 @@ import org.ros.internal.transport.ChannelPipeline;
  * @author jg
  */
 public class TcpServerPipelineFactory extends ChannelInitializer {
-  public static boolean DEBUG = false;
+  public static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(TcpServerPipelineFactory.class);
   public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
   public static final String LENGTH_FIELD_PREPENDER = "LengthFieldPrepender";
@@ -40,5 +43,15 @@ public class TcpServerPipelineFactory extends ChannelInitializer {
     //pipeline.addLast(LENGTH_FIELD_PREPENDER, new LengthFieldPrepender(4));
     //pipeline.addLast(LENGTH_FIELD_BASED_FRAME_DECODER, new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 4, 0, 4));
     pipeline.addLast(HANDSHAKE_HANDLER, new TcpServerHandshakeHandler(topicParticipantManager,serviceManager));
+	if( DEBUG ) {
+		log.info("TcpServerPipelineFactory TopicParticipantManager:"+topicParticipantManager);
+		Collection<DefaultPublisher<?>> pubs = topicParticipantManager.getPublishers();
+		if( pubs.isEmpty()) {
+			log.info("NO PUBLISHERS IN TopicParticipantManager "+topicParticipantManager);
+		}
+		for(DefaultPublisher<?> p : pubs) {
+			log.info("PUBLISHER:"+p);
+		}
+	}
   }
 }

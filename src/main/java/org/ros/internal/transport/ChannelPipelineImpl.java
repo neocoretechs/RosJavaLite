@@ -20,7 +20,7 @@ import org.ros.exception.RosRuntimeException;
  */
 public class ChannelPipelineImpl implements ChannelPipeline {
 	
-	LinkedBlockingDeque<Entry<String, ChannelHandler>> queue = new LinkedBlockingDeque<Entry<String, ChannelHandler>>();
+	private LinkedBlockingDeque<Entry<String, ChannelHandler>> queue = new LinkedBlockingDeque<Entry<String, ChannelHandler>>();
 	private ChannelHandlerContext ctx;
 	
 	public ChannelPipelineImpl(ChannelHandlerContext ctx) {
@@ -28,7 +28,7 @@ public class ChannelPipelineImpl implements ChannelPipeline {
 	}
 	//public ChannelPipelineImpl() {}
 	
-	public void setContext(ChannelHandlerContext ctx) { this.ctx = ctx; }
+	//public void setContext(ChannelHandlerContext ctx) { this.ctx = ctx; }
 	
 
 	@Override

@@ -1,5 +1,7 @@
 package org.ros.internal.node.server;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.client.MasterClient;
@@ -28,10 +30,17 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
+ * SlaveServer is the remote execution endpoint.<br/> This class is reflected for its invokable
+ * methods and that is made available to remote clients as the callable remote procedures.<br/>
+ * A remote client can request connections, get collections of publishers and subscriber and information
+ * about the state of the bus including connections between publishers and subscribers. TcpRosServer is
+ * the class that does most of the work and is wrapped by this class, which is here to provide the subset of
+ * remotely invokable methods.
  * @author jg
  */
 public class SlaveServer extends RpcServer {
-
+  private static boolean DEBUG = true;
+  private static final Log log = LogFactory.getLog(SlaveServer.class);
   private final GraphName nodeName;
   private final MasterClient masterClient;
   private final TopicParticipantManager topicParticipantManager;
@@ -53,10 +62,14 @@ public class SlaveServer extends RpcServer {
 		invokableMethods = new ServerInvokeMethod(this.getClass().getName(), 0);
 	} catch (ClassNotFoundException e) {
 		throw new IOException(e);
-	}
-   
+	}  
     this.tcpRosServer =
         new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager, serviceManager, executorService);
+    if(DEBUG) {
+    	log.info("ADDRESSES SlaveServer ctor:"+nodeName+" TCPBind:"+tcpRosBindAddress+", TCPRosAdv:"+tcpRosAdvertiseAddress+", RPCBind:"+rpcBindAddress+", RPCAdv:"+rpcAdvertiseAddress);
+    	log.info("MANAGERS SlaveServer ctor:"+nodeName+" MasterClient:"+master+" TopicParticipantManager:"+topicParticipantManager+
+    			" ServiceManager:"+serviceManager+" ParameterManager:"+parameterManager+" SchedulaedExecutorService:"+executorService);
+    }
   }
 
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
@@ -89,7 +102,17 @@ public class SlaveServer extends RpcServer {
   public List<Object> getBusStats(String callerId) {
     throw new UnsupportedOperationException();
   }
-
+  /**
+   * We are returning a list of ArrayList of strings. Each ArrayList of string will
+   * contain 5 elements representing subscriber or publisher bus information.<br/>
+   * The first element of each list is a monotonically increasing integer.<br/>
+   * The second element is the node identifier of the opposite party, sub for pub and pub for sub.<br/>
+   * The third element is o for subscriber, i for publisher<br/>
+   * The fourth element is the protocol<br/>
+   * The fifth element is the topic name.<br/>
+   * @param callerId
+   * @return
+   */
   public List<Object> getBusInfo(String callerId) {
     List<Object> busInfo = new ArrayList<Object>();
     // The connection ID field is opaque to the user. A monotonically increasing
@@ -159,7 +182,12 @@ public class SlaveServer extends RpcServer {
   public int paramUpdate(GraphName parameterName, Object parameterValue) {
     return parameterManager.updateParameter(parameterName, parameterValue);
   }
-
+  /**
+   * 
+   * @param callerId
+   * @param topicName
+   * @param publisherUris
+   */
   public void publisherUpdate(String callerId, String topicName, Collection<InetSocketAddress> publisherUris) {
     GraphName graphName = GraphName.of(topicName);
     if (topicParticipantManager.hasSubscriber(graphName)) {
@@ -168,6 +196,11 @@ public class SlaveServer extends RpcServer {
       Collection<PublisherIdentifier> identifiers =
           PublisherIdentifier.newCollectionFromUris(publisherUris, topicDeclaration);
       subscriber.updatePublishers(identifiers);
+      if(DEBUG) {
+    	  log.info("Updating subscriber:"+subscriber);
+    	  for(InetSocketAddress i: publisherUris)
+    		  log.info("Publisher:"+i);
+      }
     }
   }
   /**
@@ -183,6 +216,8 @@ public class SlaveServer extends RpcServer {
     // TODO(damonkohler): Use NameResolver.
     // Canonicalize topic name.
     GraphName graphName = GraphName.of(topicName).toGlobal();
+    if( DEBUG )
+    	log.info("Requesting topic:"+topicName+" for GraphName:"+graphName);
     if (!topicParticipantManager.hasPublisher(graphName)) {
       //throw new ServerException("No publishers for topic: " + graphName);
     	return null;
@@ -190,6 +225,8 @@ public class SlaveServer extends RpcServer {
     for (String protocol : protocols) {
       if (protocol.equals(ProtocolNames.TCPROS)) {
         try {
+        	if( DEBUG )
+        	  log.info("Requested topic:"+topicName+" for GraphName:"+graphName+" returning:"+tcpRosServer.getAdvertiseAddress());
           return new TcpRosProtocolDescription(tcpRosServer.getAdvertiseAddress());
         } catch (Exception e) {
           throw new ServerException(e);

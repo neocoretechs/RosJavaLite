@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.topic;
 
 import org.apache.commons.logging.Log;
@@ -34,9 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * @author kwc@willowgarage.com (Ken Conley)
  * @author damonkohler@google.com (Damon Kohler)
+ * @author jg
  */
 public class TopicParticipantManager {
-
+	private static boolean DEBUG = true;
 	private static Log log = LogFactory.getLog(TopicParticipantManager.class);
   /**
    * A mapping from topic name to {@link Subscriber}.
@@ -91,6 +76,8 @@ public class TopicParticipantManager {
   }
 
   public void addPublisher(DefaultPublisher<?> publisher) {
+	  if(DEBUG)
+		  log.info("Adding publisher:"+publisher+" to "+this);
     publishers.put(publisher.getTopicName(), publisher);
     if (listener != null) {
       listener.onPublisherAdded(publisher);
@@ -105,6 +92,8 @@ public class TopicParticipantManager {
   }
 
   public void addSubscriber(DefaultSubscriber<?> subscriber) {
+	  if(DEBUG)
+		  log.info("Adding subscriber:"+subscriber+" to "+this);
     subscribers.put(subscriber.getTopicName(), subscriber);
     if (listener != null) {
       listener.onSubscriberAdded(subscriber);
@@ -119,7 +108,8 @@ public class TopicParticipantManager {
   }
 
   public void addSubscriberConnection(DefaultSubscriber<?> subscriber, PublisherIdentifier publisherIdentifier) {
-	  //log.info("sub:"+subscriber+" pub:"+publisherIdentifier);
+	  if(DEBUG)
+		  log.info("Connecting subscriber:"+subscriber+" to publisher Identifier:"+publisherIdentifier+" for "+this);
 	  List<PublisherIdentifier> pubs = subscriberConnections.get(subscriber);
 	  //for(PublisherIdentifier p: pubs) log.info("Pub: "+p);
 	  if( pubs == null ) {
@@ -140,6 +130,8 @@ public class TopicParticipantManager {
   }
 
   public void addPublisherConnection(DefaultPublisher<?> publisher, SubscriberIdentifier subscriberIdentifier) {
+	  if(DEBUG)
+		  log.info("Connecting publisher:"+publisher+" to subscriber Identifier:"+subscriberIdentifier+" for "+this);
 	  List<SubscriberIdentifier> subs = publisherConnections.get(publisher);
 	  if( subs == null) {
 		  subs = new ArrayList<SubscriberIdentifier>();

@@ -15,7 +15,7 @@ import org.ros.internal.transport.ChannelHandlerContextImpl;
  *
  */
 public final class AsynchBaseServer extends AsynchTCPServer {
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
     private static final Log log = LogFactory.getLog(AsynchBaseServer.class);
 	public int WORKBOOTPORT = 0;
 	public InetSocketAddress address = null;
@@ -57,7 +57,7 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 			    // inject calls initChannel on each ChannelInitializer in the factoryStack
 				tcpserver.getFactoryStack().inject(ctx);
 				// notify handlers that a registration has occured
-				ctx.pipeline().fireChannelRegistered(); 
+				//ctx.pipeline().fireChannelRegistered(); 
 				// We have to set context as ready AFTER we do the handshake to keep traffic from
 				// interfering with handshake
 				// notify channel up and ready

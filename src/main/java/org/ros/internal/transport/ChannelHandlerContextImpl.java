@@ -39,7 +39,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	/*Asynchronous*/Socket/*Channel*/ channel;
 	ChannelPipeline pipeline;
 	boolean ready = false;
-	Object mutex = new Object();
+	private Object mutex = new Object();
 	Set<String> outboundMessageTypes;
 	InputStream is = null;
 	OutputStream os = null;
@@ -188,6 +188,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	 * Object to synchronize read and write completion for the channel in this context, since we will have
 	 * multiple outbound writers accessing the same channel
 	 */
+	@Override
 	public Object getChannelCompletionMutex() { return mutex; }
 	
 	/**
@@ -195,6 +196,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	 * received.
 	 * @return The HashSet of message type as String
 	 */
+	@Override
 	public Set<String> getMessageTypes() { return outboundMessageTypes; }
 	
 	

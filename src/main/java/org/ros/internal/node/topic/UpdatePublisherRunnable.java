@@ -20,7 +20,7 @@ import org.ros.node.topic.Subscriber;
  * @author jg
  */
 class UpdatePublisherRunnable<MessageType> implements Runnable {
-
+  private static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(UpdatePublisherRunnable.class);
 
   private final DefaultSubscriber<MessageType> subscriber;
@@ -46,10 +46,13 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
   public void run() {
     SlaveClient slaveClient;
     try {
-      log.info("Attempting to create SlaveClient:"+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
+    	if(DEBUG)
+    		log.info("Attempting to create SlaveClient:"+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
       slaveClient = new SlaveClient(nodeIdentifier.getName(), publisherIdentifier.getNodeUri());
-      log.info("Slave client created "+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
-      log.info("Requesting topic name "+subscriber.getTopicName());
+      	if(DEBUG) {
+      		log.info("SlaveClient created "+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
+      		log.info("Requesting topic name "+subscriber.getTopicName());
+      	}
       Response<ProtocolDescription> response =
           slaveClient.requestTopic(subscriber.getTopicName(), ProtocolNames.SUPPORTED);
       // If null there is no publisher for the requested topic

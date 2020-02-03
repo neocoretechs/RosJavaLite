@@ -1,6 +1,7 @@
 package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,7 +26,7 @@ import org.ros.namespace.GraphName;
  * @author jg
  */
 public class TcpServerHandshakeHandler implements ChannelHandler {
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(TcpServerHandshakeHandler.class);
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
@@ -34,14 +35,14 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     if( DEBUG ) {
-		  log.info("TcpServerHandshakeHandler ctor:"+topicParticipantManager+" "+serviceManager);
+		  log.info("TcpServerHandshakeHandler ctor:"+topicParticipantManager+" "+serviceManager+" for:"+this);
 	}
   }
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
 	  if(DEBUG)
-		  log.info("Channel active for ChannelHandlerContext:"+ctx);
+		  log.info("Channel active for ChannelHandlerContext:"+ctx+" for:"+this);
   }
   /**
    * Channel read initiated by pipeline generated message
@@ -51,7 +52,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object e) throws Exception {
 	if( DEBUG ) {
-			  log.info("TcpServerHandshakeHandler channelRead ChannelHandlerContext:"+ctx+" payload:"+e);
+			  log.info("TcpServerHandshakeHandler channelRead ChannelHandlerContext:"+ctx+" for:"+this+" payload:"+e);
 	}
 	// check for null, possible fault on bad connect
     ConnectionHeader incomingHeader = (ConnectionHeader)e;
@@ -70,7 +71,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
    */
   private void handleServiceHandshake(ChannelHandlerContext ctx, ConnectionHeader incomingHeader) throws IOException {
 	if( DEBUG ) {
-		  log.info("Service handshake ChannelHandlerContext:"+ctx+" header:"+incomingHeader);
+		  log.info("Service handshake ChannelHandlerContext:"+ctx+" header:"+incomingHeader+" for:"+this);
 	}
     GraphName serviceName = GraphName.of(incomingHeader.getField(ConnectionHeaderFields.SERVICE));
     assert(serviceManager.hasServer(serviceName));
@@ -95,18 +96,30 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
    */
   private void handleSubscriberHandshake(final ChannelHandlerContext ctx, final ConnectionHeader incomingConnectionHeader)
       throws InterruptedException, Exception {
-	  if( DEBUG ) {
-		  log.info("Subscriber handshake ChannelHandlerContext:"+ctx+" header:"+incomingConnectionHeader);
-	  }
+	if( DEBUG ) {
+		log.info("Subscriber handshake ChannelHandlerContext:"+ctx+" for:"+this+" header:"+incomingConnectionHeader);
+	}
     assert(incomingConnectionHeader.hasField(ConnectionHeaderFields.TOPIC)) :
         "Handshake header missing field: " + ConnectionHeaderFields.TOPIC;
     final GraphName topicName =
         GraphName.of(incomingConnectionHeader.getField(ConnectionHeaderFields.TOPIC));
     assert(topicParticipantManager.hasPublisher(topicName)) :
         "No publisher for topic: " + topicName;
-    
+	if( DEBUG ) {
+		log.info("Subscriber handshake Topic ChannelHandlerContext:"+ctx+" Requesting topic name:"+topicName+" from TopicParticipantManager:"+topicParticipantManager+" for:"+this);
+		Collection<DefaultPublisher<?>> pubs = topicParticipantManager.getPublishers();
+		if( pubs.isEmpty()) {
+			log.info("NO PUBLISHERS IN TopicParticipantManager "+topicParticipantManager+" for:"+this);
+		}
+		for(DefaultPublisher<?> p : pubs) {
+			log.info("PUBLISHER:"+p+" for:"+this);
+		}
+	}
     final DefaultPublisher<?> publisher = topicParticipantManager.getPublisher(topicName);
     //final ByteBuffer outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
+	if( DEBUG ) {
+		log.info("Subscriber handshake Publisher ChannelHandlerContext:"+ctx+" publisher:"+publisher+" for:"+this);
+	}
     final ConnectionHeader outgoingBuffer = publisher.finishHandshake(incomingConnectionHeader);
     // Write the handshake data back to client
    
@@ -115,21 +128,21 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 	String nodeName = incomingConnectionHeader.getField(ConnectionHeaderFields.CALLER_ID);
 	publisher.addSubscriber(new SubscriberIdentifier(NodeIdentifier.forName(nodeName), new TopicIdentifier(topicName)), ctx);
 	if(DEBUG)
-		log.info("Current subscribers:"+publisher.getNumberOfSubscribers()+" for publisher "+publisher);
+		log.info("Current subscribers:"+publisher.getNumberOfSubscribers()+" for publisher "+publisher+" for:"+this);
 	// Once the handshake is complete, there will be nothing incoming on the
 	// channel as we are only queueing outbound traffic to the subscriber, which is done by the OutgoingMessgequeue.
 	// So, we remove the handler
 	ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
 	// Set this context ready to receive the message type specified
 	synchronized(ctx.getMessageTypes()) {
-			    	ctx.getMessageTypes().add(incomingConnectionHeader.getField(ConnectionHeaderFields.TYPE));
+		ctx.getMessageTypes().add(incomingConnectionHeader.getField(ConnectionHeaderFields.TYPE));
 	}
 	// The handshake is complete and the only task is to set the context ready, which will allow
 	// the outbound queue to start sending messages.
 	ctx.setReady(true);
 			    
 	if( DEBUG ) {
-		log.info("Subscriber complete for ChannelHandlerContext:"+ctx+" subscribers="+publisher.getNumberOfSubscribers());
+		log.info("Subscriber complete for ChannelHandlerContext:"+ctx+" subscribers="+publisher.getNumberOfSubscribers()+" for:"+this);
 	}
 	
   }
@@ -137,21 +150,21 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
 @Override
 public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 	if( DEBUG )
-	log.info(" Handler added for ChannelHandlerContext:"+ctx);
+	log.info(" Handler added for ChannelHandlerContext:"+ctx+" for:"+this);
 	
 }
 
 @Override
 public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
 	if(DEBUG)
-	log.info("Handler removed for ChannelHandlerContext:"+ctx);
+	log.info("Handler removed for ChannelHandlerContext:"+ctx+" for:"+this);
 	
 }
 
 @Override
 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 	if(DEBUG)
-	log.info("Channel inactive for ChannelHandlerContext:"+ctx);
+	log.info("Channel inactive for ChannelHandlerContext:"+ctx+" for:"+this);
 	
 }
 
@@ -159,13 +172,13 @@ public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 @Override
 public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
 	if(DEBUG)
-	log.info("Channel read complete for ChannelHandlerContext:"+ctx);
+	log.info("Channel read complete for ChannelHandlerContext:"+ctx+" for:"+this);
 	
 }
 
 @Override
 public void exceptionCaught(ChannelHandlerContext ctx, Throwable msg)throws Exception {
-	log.error("Handshake notified of err! should not occur!");
+	log.error("Handshake notified of err:"+msg+" ChannelHandlerContext:"+ctx+" for:"+this);
 	
 }
 
@@ -173,7 +186,7 @@ public void exceptionCaught(ChannelHandlerContext ctx, Throwable msg)throws Exce
 public void userEventTriggered(ChannelHandlerContext ctx, Object event)
 		throws Exception {
 	if(DEBUG)
-	log.info("User event triggered for ChannelHandlerContext:"+ctx+" event:"+event);
+	log.info("User event:"+event+" triggered for ChannelHandlerContext:"+ctx+" for:"+this);
 	
 }
 

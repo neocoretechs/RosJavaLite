@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutorService;
  * 
  */
 public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHandler {
-  protected static boolean DEBUG = false;
+  protected static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(BaseClientHandshakeHandler.class);
   private final ClientHandshake clientHandshake;
   private final ListenerGroup<ClientHandshakeListener> clientHandshakeListeners;
@@ -46,13 +46,13 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
   public void channelActive(final ChannelHandlerContext ctx) throws Exception {
 	//final ByteBuffer bb = MessageBuffers.dynamicBuffer();
 	if( DEBUG ) {
-		log.info("Preparing OutgoingConnectionHeader:"+clientHandshake.getOutgoingConnectionHeader());
+		log.info("BaseClientHandshakeHandler channelActive for ChannelHandlerContext:"+ctx+" for:"+this+" Preparing OutgoingConnectionHeader:"+clientHandshake.getOutgoingConnectionHeader());
 	}
 	
 	ctx.write(clientHandshake.getOutgoingConnectionHeader());
 	
 	if( DEBUG )
-		log.info("BaseClientHandshakeHandler channelActive "+ctx+" OutgoingConnectionHeader reply to master complete");	
+		log.info("BaseClientHandshakeHandler channelActive for ChannelHandlerContext "+ctx+" OutgoingConnectionHeader reply to master complete for:"+this);	
 	/*
 	Utility.serialize(clientHandshake.getOutgoingConnectionHeader(), bb);
 	
@@ -73,7 +73,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
   
   @Override
   public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-  	log.info("Channel inactive"+ctx);
+  	log.info("Channel inactive ChannelHandlerContext:"+ctx+" for:"+this);
   }
 
   @Override
@@ -92,7 +92,7 @@ public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHan
   @Override
   public void channelReadComplete(ChannelHandlerContext arg0) throws Exception {
   	if( DEBUG )
-  		log.info("SubscriberHandshakeHandler.channelReadComplete:"+arg0);
+  		log.info("SubscriberHandshakeHandler.channelReadComplete:"+arg0+" for:"+this);
   	
   }
   /**

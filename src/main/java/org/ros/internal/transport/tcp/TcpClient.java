@@ -26,8 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @author jg
  */
 public class TcpClient {
-
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(TcpClient.class);
 
   private static final int DEFAULT_CONNECTION_TIMEOUT_DURATION = 5;
@@ -38,9 +37,7 @@ public class TcpClient {
   private final List<NamedChannelHandler> namedChannelHandlers;
   
   private Socket channel;
-  
   private /*Asynchronous*/ChannelGroup channelGroup;
-  
   private ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   
   public TcpClient( /*Asynchronous*/ChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
@@ -70,7 +67,7 @@ public class TcpClient {
   
   public Socket connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	 if (DEBUG) {
-	   log.info("TcpClient attempting connection "+connectionName+" to socket: " + socketAddress);
+	   log.info("TcpClient attempting connection:"+connectionName+" to socket:" + socketAddress);
 	 }
 	//channel = /*Asynchronous*/SocketChannel.open(/*channelGroup*/);
 	  channel = new Socket();
@@ -81,23 +78,24 @@ public class TcpClient {
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, false);
 	ctx = new ChannelHandlerContextImpl(channelGroup, channel);
-    TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(ctx.getChannelGroup(), namedChannelHandlers);
+    // connect outbound to pub
+    ctx.connect(socketAddress);
+    //
+    TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(channelGroup, namedChannelHandlers);
     // add handler pipeline factory to stack
     factoryStack.addLast(tcpClientPipelineFactory);
     // load the handlers from the pipeline factories
     // inject calls initChannel on each ChannelInitializer in the factoryStack
     factoryStack.inject(ctx);
     // notify new handlers all loaded
-    ctx.pipeline().fireChannelRegistered(); 
+    //ctx.pipeline().fireChannelRegistered(); 
     // connect outbound to pub
-    ctx.connect(socketAddress);
-  
+    //ctx.connect(socketAddress);
     AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
-    channelGroup.getExecutorService().execute(uworker); 
+    channelGroup.getExecutorService().execute(uworker);
     // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
     ctx.pipeline().fireChannelActive();
-	// recall we keep the list of contexts in TcpClientManager
-    
+	// recall we keep the list of contexts in TcpClientManager  
     if (DEBUG) {
         log.info("TcpClient Connected with ChannelHandlerContext "+ctx);
     }

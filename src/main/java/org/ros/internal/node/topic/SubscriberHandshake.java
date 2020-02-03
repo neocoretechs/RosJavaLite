@@ -16,7 +16,7 @@ import org.ros.internal.transport.ConnectionHeaderFields;
  */
 public class SubscriberHandshake extends BaseClientHandshake {
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(SubscriberHandshake.class);
 
   public SubscriberHandshake(ConnectionHeader outgoingConnectionHeader) {
