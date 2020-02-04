@@ -68,7 +68,7 @@ public class AdvertiseAddress implements Serializable {
   }
 
   public AdvertiseAddress(InetAddress host, int port) {
-	this.host = host.getCanonicalHostName();
+	this.host = host.getHostName();
 	this.port = port;
   }
 

@@ -65,7 +65,7 @@ public class SubscriberFactory {
         return (DefaultSubscriber<T>) topicParticipantManager.getSubscriber(topicName);
       } else {
         DefaultSubscriber<T> subscriber =
-            DefaultSubscriber.newDefault(nodeIdentifier, topicDeclaration, executorService);
+            DefaultSubscriber.newDefault(nodeIdentifier, topicDeclaration, topicParticipantManager, executorService);
         subscriber.addSubscriberListener(new DefaultSubscriberListener<T>() {
           @Override
           public void onNewPublisher(Subscriber<T> subscriber, PublisherIdentifier publisherIdentifier) {

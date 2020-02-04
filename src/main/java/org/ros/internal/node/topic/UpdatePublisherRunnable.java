@@ -20,7 +20,7 @@ import org.ros.node.topic.Subscriber;
  * @author jg
  */
 class UpdatePublisherRunnable<MessageType> implements Runnable {
-  private static boolean DEBUG = false;
+  private static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(UpdatePublisherRunnable.class);
 
   private final DefaultSubscriber<MessageType> subscriber;
@@ -48,24 +48,24 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
     try {
     	if(DEBUG)
     		log.info("Attempting to create SlaveClient:"+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
-      slaveClient = new SlaveClient(nodeIdentifier.getName(), publisherIdentifier.getNodeUri());
+    	slaveClient = new SlaveClient(nodeIdentifier.getName(), publisherIdentifier.getNodeUri());
       	if(DEBUG) {
       		log.info("SlaveClient created "+nodeIdentifier.getName()+" pub:"+publisherIdentifier.getNodeUri());
       		log.info("Requesting topic name "+subscriber.getTopicName());
       	}
-      Response<ProtocolDescription> response =
+      	Response<ProtocolDescription> response =
           slaveClient.requestTopic(subscriber.getTopicName(), ProtocolNames.SUPPORTED);
-      // If null there is no publisher for the requested topic
-      if( response != null ) {
+      	// If null there is no publisher for the requested topic
+      	if( response != null ) {
     	  ProtocolDescription selected = response.getResult();
     	  if (ProtocolNames.SUPPORTED.contains(selected.getName())) {
     		  subscriber.addPublisher(publisherIdentifier, selected.getAddress());
     	  } else {
     		  log.error("Publisher returned unsupported protocol selection: " + response);
     	  }
-      } else {
+      	} else {
     	  log.error("There are NO publishers available for topic "+subscriber.getTopicName());
-      }
+      	}
     } catch (Exception e) {
       // TODO(damonkohler): Retry logic is needed at the RPC layer.
       log.error(e);

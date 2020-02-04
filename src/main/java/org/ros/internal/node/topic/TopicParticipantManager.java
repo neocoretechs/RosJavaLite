@@ -37,13 +37,13 @@ public class TopicParticipantManager {
    * A mapping from {@link Subscriber} to its connected
    * {@link PublisherIdentifier}s.
    */
-  private final HashMap<DefaultSubscriber<?>, List<PublisherIdentifier>> subscriberConnections;
+  private final Map<DefaultSubscriber<?>, List<PublisherIdentifier>> subscriberConnections;
 
   /**
    * A mapping from {@link Publisher} to its connected
    * {@link SubscriberIdentifier}s.
    */
-  private final HashMap<DefaultPublisher<?>,List<SubscriberIdentifier>> publisherConnections;
+  private final Map<DefaultPublisher<?>,List<SubscriberIdentifier>> publisherConnections;
 
   // TODO(damonkohler): Change to ListenerGroup.
   private TopicParticipantManagerListener listener;
@@ -51,8 +51,8 @@ public class TopicParticipantManager {
   public TopicParticipantManager() {
     publishers = new ConcurrentHashMap<GraphName, DefaultPublisher<?>>();
     subscribers = new ConcurrentHashMap<GraphName, DefaultSubscriber<?>>();
-    subscriberConnections = new HashMap<DefaultSubscriber<?>, List<PublisherIdentifier>>();
-    publisherConnections = new HashMap<DefaultPublisher<?>, List<SubscriberIdentifier>>();
+    subscriberConnections = new ConcurrentHashMap<DefaultSubscriber<?>, List<PublisherIdentifier>>();
+    publisherConnections = new ConcurrentHashMap<DefaultPublisher<?>, List<SubscriberIdentifier>>();
   }
 
   public void setListener(TopicParticipantManagerListener listener) {

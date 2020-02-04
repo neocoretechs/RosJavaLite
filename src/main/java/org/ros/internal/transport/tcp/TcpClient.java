@@ -94,7 +94,7 @@ public class TcpClient {
     AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
     channelGroup.getExecutorService().execute(uworker);
     // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
-    ctx.pipeline().fireChannelActive();
+    //ctx.pipeline().fireChannelActive();
 	// recall we keep the list of contexts in TcpClientManager  
     if (DEBUG) {
         log.info("TcpClient Connected with ChannelHandlerContext "+ctx);

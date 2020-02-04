@@ -35,7 +35,9 @@ import java.util.concurrent.ScheduledExecutorService;
  * A remote client can request connections, get collections of publishers and subscriber and information
  * about the state of the bus including connections between publishers and subscribers. TcpRosServer is
  * the class that does most of the work and is wrapped by this class, which is here to provide the subset of
- * remotely invokable methods.
+ * remotely invokable methods via reflection using the ServerInvokeMethod class.
+ * @see ServerInvokeMethod
+ * @see TcpRosServer
  * @author jg
  */
 public class SlaveServer extends RpcServer {
@@ -111,7 +113,7 @@ public class SlaveServer extends RpcServer {
    * The fourth element is the protocol<br/>
    * The fifth element is the topic name.<br/>
    * @param callerId
-   * @return
+   * @return A List of Objects representing the above, packaged thusly to enable remote serialization delivery.
    */
   public List<Object> getBusInfo(String callerId) {
     List<Object> busInfo = new ArrayList<Object>();
@@ -183,10 +185,13 @@ public class SlaveServer extends RpcServer {
     return parameterManager.updateParameter(parameterName, parameterValue);
   }
   /**
-   * 
+   * If there is a subscriber subscribed to this topicName, call updatePublishers on the subscriber
+   * using the collection of publisherUris. DefaultSubscriber class creates an 
+   * UpdatePublisherRunnable thread which creates a SlaveClient of type SlaveRpcEndpointImpl to
+   * contact the publisher.
    * @param callerId
    * @param topicName
-   * @param publisherUris
+   * @param publisherUris collection of InetSocketAddress of remote publishers to be updated. 
    */
   public void publisherUpdate(String callerId, String topicName, Collection<InetSocketAddress> publisherUris) {
     GraphName graphName = GraphName.of(topicName);
@@ -199,7 +204,7 @@ public class SlaveServer extends RpcServer {
       if(DEBUG) {
     	  log.info("Updating subscriber:"+subscriber);
     	  for(InetSocketAddress i: publisherUris)
-    		  log.info("Publisher:"+i);
+    		  log.info("PUBLISHER:"+i+" for:"+this);
       }
     }
   }

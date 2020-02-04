@@ -27,7 +27,15 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Manages topic, and service registrations of a {@link SlaveServer} with the
- * {@link MasterServer}.
+ * {@link MasterServer}.<br/>
+ * The primary activity here is to respond to events that occur when a publisher or subscriber is added
+ * or removed. The fact that it is constructed with a MasterClient and an ExecutorService is a clue.
+ * For instance, in the onSubscriberAdded event handler method, we contact the remote master to
+ * register the subscriber. To do this we call updatePublishers on the subscriber
+ * using the collection of publisherUris returned in the response to masterClient.<br/>
+ * Passed DefaultSubscriber class creates an UpdatePublisherRunnable thread 
+ * which creates a SlaveClient of type SlaveRpcEndpointImpl to
+ * contact the publishers. If successful, call signalOnMasterRegistrationSuccess for the subscriber.
  * 
  * @author jg
  */
@@ -170,7 +178,12 @@ public class Registrar implements TopicParticipantManagerListener, ServiceManage
       });
     }
   }
-
+  /**
+   * Contact the remote master to register the subscriber. Call updatePublishers on the subscriber
+   * using the collection of publisherUris returned in the response. Passed DefaultSubscriber class creates an 
+   * UpdatePublisherRunnable thread which creates a SlaveClient of type SlaveRpcEndpointImpl to
+   * contact the publishers. If successful, signalOnMasterRegistrationSuccess for the subscriber.
+   */
   @Override
   public void onSubscriberAdded(final DefaultSubscriber<?> subscriber) {
     if (DEBUG) {

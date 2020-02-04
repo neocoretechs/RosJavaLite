@@ -2,7 +2,6 @@ package org.ros.internal.node.topic;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.ros.concurrent.ListenerGroup;
 import org.ros.concurrent.SignalRunnable;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -24,13 +23,18 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Default implementation of a {@link Subscriber}.
+ * Default implementation of a {@link Subscriber}.<br/>
+ * Primary players are knownPublishers, which is a Set of PublisherIdentifiers,<br/>
+ * and TcpClientManager, which has the NamedChannelHandlers.<br/>
+ * Here, we also maintain the incomingMessageQueue, which contains MessageListeners of the type this
+ * class is parameterized with.<br/>
+ * 
  * 
  * @author jg
  */
 public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Subscriber<T> {
-
-  private static final Log log = LogFactory.getLog(DefaultSubscriber.class);
+	private static boolean DEBUG = true;
+	private static final Log log = LogFactory.getLog(DefaultSubscriber.class);
 
   /**
    * The maximum delay before shutdown will begin even if all
@@ -43,8 +47,9 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
   private final NodeIdentifier nodeIdentifier;
   private final ScheduledExecutorService executorService;
   private final IncomingMessageQueue<T> incomingMessageQueue;
-  private final Set<PublisherIdentifier> knownPublishers;
+ // private final Set<PublisherIdentifier> knownPublishers;
   private final TcpClientManager tcpClientManager;
+  private final TopicParticipantManager topicParticipantManager;
   private final Object mutex;
 
   /**
@@ -52,18 +57,25 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
    */
   private final ListenerGroup<SubscriberListener<T>> subscriberListeners;
 
+  //public static <S> DefaultSubscriber<S> newDefault(NodeIdentifier nodeIdentifier,
+  //    TopicDeclaration description, ScheduledExecutorService executorService) throws IOException {
+  //  return new DefaultSubscriber<S>(nodeIdentifier, description, executorService);
+  //}
   public static <S> DefaultSubscriber<S> newDefault(NodeIdentifier nodeIdentifier,
-      TopicDeclaration description, ScheduledExecutorService executorService) throws IOException {
-    return new DefaultSubscriber<S>(nodeIdentifier, description, executorService);
+			TopicDeclaration description,
+			TopicParticipantManager topicParticipantManager,
+			ScheduledExecutorService executorService) throws IOException {
+	  return new DefaultSubscriber<S>(nodeIdentifier, description, topicParticipantManager, executorService);
   }
-
-  private DefaultSubscriber(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration, ScheduledExecutorService executorService) throws IOException {
+  private DefaultSubscriber(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration, 
+		  TopicParticipantManager topicParticipantManager, ScheduledExecutorService executorService) throws IOException {
     super(topicDeclaration);
     this.nodeIdentifier = nodeIdentifier;
     this.executorService = executorService;
     incomingMessageQueue = new IncomingMessageQueue<T>(executorService);
-    knownPublishers = new HashSet<PublisherIdentifier>();
+    //knownPublishers = new HashSet<PublisherIdentifier>();
     tcpClientManager = TcpClientManager.getInstance(executorService);
+    this.topicParticipantManager = topicParticipantManager;
     mutex = new Object();
     SubscriberHandshakeHandler<T> subscriberHandshakeHandler =
         new SubscriberHandshakeHandler<T>(toDeclaration().toConnectionHeader(),
@@ -73,22 +85,26 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
     subscriberListeners.add(new DefaultSubscriberListener<T>() {
       @Override
       public void onMasterRegistrationSuccess(Subscriber<T> registrant) {
-        log.info("Subscriber registered: " + DefaultSubscriber.this);
+    	  if(DEBUG)
+    		  log.info("Subscriber registered: " + DefaultSubscriber.this);
       }
 
       @Override
       public void onMasterRegistrationFailure(Subscriber<T> registrant) {
-        log.info("Subscriber registration failed: " + DefaultSubscriber.this);
+    	  if(DEBUG)
+    		  log.info("Subscriber registration failed: " + DefaultSubscriber.this);
       }
 
       @Override
       public void onMasterUnregistrationSuccess(Subscriber<T> registrant) {
-        log.info("Subscriber unregistered: " + DefaultSubscriber.this);
+    	  if(DEBUG)
+    		  log.info("Subscriber unregistered: " + DefaultSubscriber.this);
       }
 
       @Override
       public void onMasterUnregistrationFailure(Subscriber<T> registrant) {
-        log.info("Subscriber unregistration failed: " + DefaultSubscriber.this);
+    	  if(DEBUG)
+    		  log.info("Subscriber unregistration failed: " + DefaultSubscriber.this);
       }
     });
   }
@@ -119,27 +135,44 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
   public void addMessageListener(MessageListener<T> messageListener) {
     addMessageListener(messageListener, 1);
   }
-
-
+  /**
+   * When the SlaveClient requests a topic from the publisher in UpdatePublisherRunnable, as
+   * happens when the method updatePublishers is called here, this method is called back on reply from master.
+   * TcpClientManager calls connect to the passed InetSocketAddress. After that, all the SubscriberListeners are
+   * signaled with the new Publisher.
+   * @param publisherIdentifier
+   * @param address
+   * @throws Exception
+   */
   public void addPublisher(PublisherIdentifier publisherIdentifier, InetSocketAddress address) throws Exception {
     synchronized (mutex) {
       // TODO(damonkohler): If the connection is dropped, knownPublishers should
       // be updated.
-      if (knownPublishers.contains(publisherIdentifier)) {
-        return;
-      }
-	  tcpClientManager.connect(toString(), address);
+      //if (knownPublishers.contains(publisherIdentifier)) {
+      //  return;
+      //}
+    	Collection<PublisherIdentifier> pubs = topicParticipantManager.getSubscriberConnections(this);
+    	if(pubs != null && pubs.contains(publisherIdentifier)) {
+    		log.info("Defaultsubscriber addPublisher topicParticipantManager CONTAINS "+publisherIdentifier+" at "+address);
+    	} else {
+      		log.info("Defaultsubscriber addPublisher topicParticipantManager DOES NOT CONTAIN "+publisherIdentifier+" at "+address);
+      		topicParticipantManager.addSubscriberConnection(this, publisherIdentifier);
+    	}
+    	tcpClientManager.connect(toString(), address);
       // TODO(damonkohler): knownPublishers is duplicate information that is
       // already available to the TopicParticipantManager.
-      knownPublishers.add(publisherIdentifier);
+      //knownPublishers.add(publisherIdentifier);
       signalOnNewPublisher(publisherIdentifier);
     }
   }
 
   /**
    * Updates the list of {@link Publisher}s for the topic that this
-   * {@link Subscriber} is interested in.
-   * 
+   * {@link Subscriber} is interested in.<p/>
+   * Creates UpdatePublisherRunnable of this classes generic type for each PublisherIdentifier.
+   * Using executorService, spin the runnable which creates SlaveClient of type SlaveRpcEndpoint.
+   * This is invoked from client Registrar when the onSubscriberAdded event occurs, and
+   * from the SlaveServer when publisherUpdate is called.<br/>
    * @param publisherIdentifiers
    *          {@link Collection} of {@link PublisherIdentifier}s for the
    *          subscribed topic
@@ -279,4 +312,5 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
   public String toString() {
     return "Subscriber<" + getTopicDeclaration() + ">";
   }
+
 }
