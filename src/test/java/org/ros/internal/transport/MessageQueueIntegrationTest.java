@@ -154,9 +154,9 @@ public class MessageQueueIntegrationTest {
         new IncomingMessageQueue<std_msgs.String>(executorService);
     secondIncomingMessageQueue =
         new IncomingMessageQueue<std_msgs.String>(executorService);
-    firstTcpClientManager = TcpClientManager.getInstance(executorService);
+    firstTcpClientManager = new TcpClientManager/*.getInstance*/(executorService);
     firstTcpClientManager.addNamedChannelHandler(firstIncomingMessageQueue.getMessageReceiver());
-    secondTcpClientManager = TcpClientManager.getInstance(executorService);
+    secondTcpClientManager = new TcpClientManager/*.getInstance*/(executorService);
     secondTcpClientManager.addNamedChannelHandler(secondIncomingMessageQueue.getMessageReceiver());
 	} catch(Exception e) { throw new RosRuntimeException(e); }
   }

@@ -6,15 +6,10 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 
 /**
  * TcpClientManager manages TCP clients which are the subscriber and service clients that communicate with
@@ -32,20 +27,20 @@ public class TcpClientManager {
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
   
-  private static ConcurrentHashMap<ExecutorService, TcpClientManager> executors = new ConcurrentHashMap<ExecutorService, TcpClientManager>(1024);
+  //private static ConcurrentHashMap<ExecutorService, TcpClientManager> executors = new ConcurrentHashMap<ExecutorService, TcpClientManager>(1024);
 
-  public static TcpClientManager getInstance(ExecutorService exc) {
-	  synchronized(TcpClientManager.class) {
-		  TcpClientManager tcm = executors.get(exc);
-		  if( tcm == null ) {
-			  tcm =  new TcpClientManager(exc);
-			  executors.put(exc,  tcm);
-		  }
-		  return tcm;
-	  }
-  }
+  //public static TcpClientManager getInstance(ExecutorService exc) {
+	//  synchronized(TcpClientManager.class) {
+	//	  TcpClientManager tcm = executors.get(exc);
+	//	  if( tcm == null ) {
+	//		  tcm =  new TcpClientManager(exc);
+	//		  executors.put(exc,  tcm);
+	//	  }
+	//	  return tcm;
+	 // }
+  //}
   
-  private TcpClientManager(ExecutorService executor) {
+  public TcpClientManager(ExecutorService executor) {
     this.channelGroup = new ChannelGroupImpl(executor);/*AsynchronousChannelGroup.withThreadPool(executor);*/
     this.tcpClients = new ArrayList<TcpClient>();
     this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();

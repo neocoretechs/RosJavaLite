@@ -74,7 +74,7 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
     this.executorService = executorService;
     incomingMessageQueue = new IncomingMessageQueue<T>(executorService);
     //knownPublishers = new HashSet<PublisherIdentifier>();
-    tcpClientManager = TcpClientManager.getInstance(executorService);
+    tcpClientManager = new TcpClientManager/*.getInstance*/(executorService);
     this.topicParticipantManager = topicParticipantManager;
     mutex = new Object();
     SubscriberHandshakeHandler<T> subscriberHandshakeHandler =

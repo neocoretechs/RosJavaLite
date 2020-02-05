@@ -17,19 +17,19 @@ import org.ros.internal.transport.ChannelHandlerContext;
  *
  */
 public class ChannelInitializerFactoryStack {
-	private static boolean DEBUG = false;
+	private static boolean DEBUG = true;
 	private static final Log log = LogFactory.getLog(ChannelInitializerFactoryStack.class);
 	
 	private LinkedBlockingDeque<ChannelInitializer> queue = new LinkedBlockingDeque<ChannelInitializer>();
 	
 	public void addFirst(ChannelInitializer ch) {
 		if(DEBUG)
-			log.info("Adding First ChannelInitializer "+ch+" queue size="+queue.size());
+			log.info("Adding First ChannelInitializer:"+ch+" queue size="+queue.size());
 		queue.addFirst(ch);
 	}
 	public void addLast(ChannelInitializer ch) {
 		if(DEBUG)
-			log.info("Adding Last ChannelInitializer "+ch+" queue size="+queue.size());
+			log.info("Adding Last ChannelInitializer:"+ch+" queue size="+queue.size());
 		queue.addLast(ch);
 	}
 	/**
@@ -40,12 +40,12 @@ public class ChannelInitializerFactoryStack {
 	 */
 	public void inject(ChannelHandlerContext ctx) throws Exception {
 		if(DEBUG)
-			log.info("Injecting ChannelHandlerContext "+ctx+" queue size="+queue.size());
+			log.info("Injecting ChannelHandlerContext:"+ctx+" queue size="+queue.size());
 		Iterator<ChannelInitializer> it = queue.iterator();
 		while(it.hasNext()) {
 			ChannelInitializer ch = it.next();
 			if(DEBUG)
-				log.info("ChannelInitializer.initChannel "+ch);
+				log.info("ChannelInitializer initChannel for ChannelHandlerContext:"+ctx+" ChannelInitializer:"+ch);
 			ch.initChannel(ctx);
 		}
 	}

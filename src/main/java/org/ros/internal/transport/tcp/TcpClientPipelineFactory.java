@@ -12,7 +12,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  * @author jg
  */
 public class TcpClientPipelineFactory extends ChannelInitializer {
-  public static boolean DEBUG = false;
+  public static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(TcpClientPipelineFactory.class);
   public static final String LENGTH_FIELD_BASED_FRAME_DECODER = "LengthFieldBasedFrameDecoder";
   public static final String LENGTH_FIELD_PREPENDER = "LengthFieldPrepender";

@@ -56,18 +56,25 @@ public class TcpClient {
   }
 
   public void addNamedChannelHandler(NamedChannelHandler namedChannelHandler) {
-    namedChannelHandlers.add(namedChannelHandler);
+	  if (DEBUG) {
+	        log.info("TcpClient:"+this+" adding NamedChannelHandler:"+namedChannelHandler);
+	  }
+	  namedChannelHandlers.add(namedChannelHandler);
   }
 
   public void addAllNamedChannelHandlers(List<NamedChannelHandler> namedChannelHandlers) {
-    this.namedChannelHandlers.addAll(namedChannelHandlers);
+	  if (DEBUG) {
+	        for(NamedChannelHandler n: namedChannelHandlers)
+	  	        log.info("TcpClient:"+this+" will add NamedChannelHandler:"+n);
+	  }
+	  this.namedChannelHandlers.addAll(namedChannelHandlers);
   }
 
   public ChannelHandlerContext getContext() { return ctx; }
   
   public Socket connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	 if (DEBUG) {
-	   log.info("TcpClient attempting connection:"+connectionName+" to socket:" + socketAddress);
+	   log.info("TcpClient:"+this+" attempting connection:"+connectionName+" to socket:" + socketAddress);
 	 }
 	//channel = /*Asynchronous*/SocketChannel.open(/*channelGroup*/);
 	  channel = new Socket();
@@ -94,10 +101,10 @@ public class TcpClient {
     AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
     channelGroup.getExecutorService().execute(uworker);
     // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
-    //ctx.pipeline().fireChannelActive();
+    ctx.pipeline().fireChannelActive();
 	// recall we keep the list of contexts in TcpClientManager  
     if (DEBUG) {
-        log.info("TcpClient Connected with ChannelHandlerContext "+ctx);
+        log.info("TcpClient:"+this+" Connected with ChannelHandlerContext "+ctx);
     }
     //} else {
       // We expect the first connection to succeed. If not, fail fast.
