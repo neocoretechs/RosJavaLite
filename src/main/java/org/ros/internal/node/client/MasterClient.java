@@ -214,9 +214,9 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
    * @return the {@link URI} of the {@link ServiceServer} with the given name.
    *         {@link ServiceServer} as a result
    */
-  public Response<URI> lookupService(GraphName callerName, String serviceName) {
+  public Response<InetSocketAddress> lookupService(GraphName callerName, String serviceName) {
     return Response.fromListCheckedFailure(
-        rpcEndpoint.lookupService(callerName.toString(), serviceName), new UriResultFactory());
+        rpcEndpoint.lookupService(callerName.toString(), serviceName), new InetSocketAddressResultFactory());
   }
 
   /**

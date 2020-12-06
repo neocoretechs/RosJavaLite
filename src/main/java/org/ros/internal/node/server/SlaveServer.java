@@ -46,6 +46,7 @@ public class SlaveServer extends RpcServer {
   private final GraphName nodeName;
   private final MasterClient masterClient;
   private final TopicParticipantManager topicParticipantManager;
+  private final ServiceManager serviceManager;
   private final ParameterManager parameterManager;
   private final TcpRosServer tcpRosServer;
   private ServerInvokeMethod invokableMethods;
@@ -59,6 +60,7 @@ public class SlaveServer extends RpcServer {
     this.nodeName = nodeName;
     this.masterClient = master;
     this.topicParticipantManager = topicParticipantManager;
+    this.serviceManager = serviceManager;
     this.parameterManager = parameterManager;
     try {
 		invokableMethods = new ServerInvokeMethod(this.getClass().getName(), 0);

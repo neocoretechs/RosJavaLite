@@ -300,7 +300,7 @@ public class DefaultNode implements ConnectedNode {
 
   @Override
   public InetSocketAddress lookupServiceUri(GraphName serviceName) {
-    Response<URI> response =
+    Response<InetSocketAddress> response =
         masterClient.lookupService(slaveServer.toNodeIdentifier().getName(),
             resolveName(serviceName).toString());
     if (response.getStatusCode() == StatusCode.SUCCESS) {

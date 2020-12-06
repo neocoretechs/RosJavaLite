@@ -79,8 +79,8 @@ public class MasterStateClient {
    *          the name of the {@link ServiceServer} to look up
    * @return the {@link URI} of the {@link ServiceServer} with the given name
    */
-  public URI lookupService(String serviceName) {
-    Response<URI> result = masterClient.lookupService(caller.getName(), serviceName);
+  public InetSocketAddress lookupService(String serviceName) {
+    Response<InetSocketAddress> result = masterClient.lookupService(caller.getName(), serviceName);
     return result.getResult();
   }
 
