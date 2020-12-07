@@ -62,7 +62,7 @@ public class MasterStateClient {
    * @return the {@link URI} of the {@link Node} with the given name
    */
   public URI lookupNode(String nodeName) {
-    Response<URI> response = masterClient.lookupNode(caller.getName(), nodeName);
+    Response<InetSocketAddress> response = masterClient.lookupNode(caller.getName(), nodeName);
     return response.getResult();
   }
 

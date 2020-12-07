@@ -54,7 +54,7 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     ByteBuffer resbuf = messageBufferPool.acquire();
     Utility.serialize(response,  resbuf);
     try {
-		ctx.write(resbuf);
+		ctx.write(resbuf.array());
 	} catch (IOException e) {
 		throw new RosRuntimeException(e);
 	}
@@ -67,7 +67,7 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     response.setMessage(encodedMessage);
     Utility.serialize(response,  responseBuffer);
     try {
-		ctx.write(responseBuffer);
+		ctx.write(responseBuffer.array());
 	} catch (IOException e) {
 		throw new RosRuntimeException(e);
 	}

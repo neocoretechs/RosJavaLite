@@ -1,37 +1,22 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.response;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import org.ros.exception.RosRuntimeException;
-
+import java.net.InetSocketAddress;
+//import java.net.URI;    
 /**
- * @author damonkohler@google.com (Damon Kohler)
+ * @author Jonathan Groff (C) NeocoreTechs 2020
  */
-public class UriResultFactory implements ResultFactory<URI> {
+public class UriResultFactory implements ResultFactory<InetSocketAddress> {
 
   @Override
-  public URI newFromValue(Object value) {
-    try {
-      return new URI((String) value);
-    } catch (URISyntaxException e) {
-      throw new RosRuntimeException(e);
-    }
+  public InetSocketAddress newFromValue(Object value) {
+    	int strt = ((String)value).indexOf("/");
+    	int end = ((String)value).indexOf(":");
+    	if(strt == -1 || end == -1) {
+    		System.out.println("Format of address of descritor incorrect, got "+value+", expected <hostname>/<n.n.n.n:port>");
+    		return null;
+    	}
+    	String host = ((String)value).substring(strt+1, end);
+    	Integer port = Integer.parseInt(((String)value).substring(end+1));
+      return new InetSocketAddress(host, port);
   }
 }

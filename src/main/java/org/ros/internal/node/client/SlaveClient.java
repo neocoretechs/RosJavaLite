@@ -44,7 +44,7 @@ public class SlaveClient extends Client<SlaveRpcEndpoint> {
     throw new UnsupportedOperationException();
   }
 
-  public Response<URI> getMasterUri() {
+  public Response<InetSocketAddress> getMasterUri() {
     return Response.fromListChecked(rpcEndpoint.getMasterUri(nodeName.toString()), new UriResultFactory());
   }
 

@@ -191,7 +191,7 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
    *          the name of the {@link SlaveServer} to lookup
    * @return the {@link URI} of the {@link SlaveServer} with the given name
    */
-  public Response<URI> lookupNode(GraphName slaveName, String nodeName) {
+  public Response<InetSocketAddress> lookupNode(GraphName slaveName, String nodeName) {
     return Response.fromListChecked(rpcEndpoint.lookupNode(slaveName.toString(), nodeName),
         new UriResultFactory());
   }
@@ -216,7 +216,7 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
    */
   public Response<InetSocketAddress> lookupService(GraphName callerName, String serviceName) {
     return Response.fromListCheckedFailure(
-        rpcEndpoint.lookupService(callerName.toString(), serviceName), new InetSocketAddressResultFactory());
+        rpcEndpoint.lookupService(callerName.toString(), serviceName), new UriResultFactory());
   }
 
   /**

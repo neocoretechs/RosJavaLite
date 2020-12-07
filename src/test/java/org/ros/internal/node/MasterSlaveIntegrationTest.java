@@ -37,6 +37,7 @@ import org.ros.namespace.GraphName;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
@@ -98,7 +99,7 @@ public class MasterSlaveIntegrationTest {
 
   @Test
   public void testGetMasterUri() {
-    Response<URI> response = slaveClient.getMasterUri();
+    Response<InetSocketAddress> response = slaveClient.getMasterUri();
     assertEquals(masterServer.getUri(), response.getResult());
   }
 
