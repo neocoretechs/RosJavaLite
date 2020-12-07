@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.internal.node.service.DefaultServiceServer;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.DefaultPublisher;
 import org.ros.internal.node.topic.TopicParticipantManager;
@@ -51,6 +52,14 @@ public class TcpServerPipelineFactory extends ChannelInitializer {
 		}
 		for(DefaultPublisher<?> p : pubs) {
 			log.info("PUBLISHER:"+p);
+		}
+		log.info("TcpServerPipelineFactory ServiceManager:"+serviceManager);
+		Collection<DefaultServiceServer<?,?>> srvrs = serviceManager.getServers();
+		if( srvrs.isEmpty()) {
+			log.info("NO SERVICES IN TopicParticipantManager "+topicParticipantManager);
+		}
+		for(DefaultServiceServer<?,?> s : srvrs) {
+			log.info("SERVICE:"+s);
 		}
 	}
   }

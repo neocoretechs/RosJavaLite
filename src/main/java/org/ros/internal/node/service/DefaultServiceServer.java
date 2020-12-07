@@ -34,7 +34,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class DefaultServiceServer<T, S> implements ServiceServer<T, S> {
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(DefaultPublisher.class);
 
   private final ServiceDeclaration serviceDeclaration;
@@ -54,6 +54,9 @@ public class DefaultServiceServer<T, S> implements ServiceServer<T, S> {
     this.messageFactory = messageFactory;
     this.scheduledExecutorService = scheduledExecutorService;
     listenerGroup = new ListenerGroup<ServiceServerListener<T, S>>(scheduledExecutorService);
+    if(DEBUG)
+    	log.info("DefaultServiceServer contructed with service declaration:"+serviceDeclaration+" serviceResponseBuilder:"+serviceResponseBuilder+
+    			"Advertise address:"+advertiseAddress+" Message factory:"+messageFactory+" Executor:"+scheduledExecutorService+" Listener Group:"+listenerGroup);
     listenerGroup.add(new DefaultServiceServerListener<T, S>() {
       @Override
       public void onMasterRegistrationSuccess(ServiceServer<T, S> registrant) {

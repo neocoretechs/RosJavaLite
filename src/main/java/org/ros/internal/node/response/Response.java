@@ -53,7 +53,7 @@ public class Response<T> {
    */
   public static <T> Response<T> fromListCheckedFailure(List<Object> response,
       ResultFactory<T> resultFactory) throws RemoteException {
-    StatusCode statusCode;
+    StatusCode statusCode = StatusCode.SUCCESS;
     String message;
     try {
       statusCode = StatusCode.fromInt((Integer) response.get(0));
@@ -63,13 +63,15 @@ public class Response<T> {
       }
 
     } catch (ClassCastException e) {
-      throw new RosRuntimeException(
-          "Remote side did not return correct type (status code/message).", e);
+      throw new RemoteException(StatusCode.FAILURE,
+          "Remote side did not return correct type headers in response. Expected StatusCode.class, got "+response.get(0).getClass()+
+          " and message of type String but got "+response.get(1).getClass()+" for values "+response.get(0)+" and "+response.get(1));
     }
     try {
       return new Response<T>(statusCode, message, resultFactory.newFromValue(response.get(2)));
     } catch (ClassCastException e) {
-      throw new RosRuntimeException("Remote side did not return correct value type.", e);
+      throw new RemoteException(StatusCode.FAILURE,"Remote side did not return correct value type in response. Got "+ response.get(2).getClass()+
+      " from value "+ response.get(2)+" expected "+((T)resultFactory).getClass());
     }
   }
 
@@ -98,16 +100,18 @@ public class Response<T> {
       statusCode = StatusCode.fromInt((Integer) response.get(0));
       message = (String) response.get(1);
       if (statusCode != StatusCode.SUCCESS) {
-   
         throw new RemoteException(statusCode, message);
       }
     } catch (ClassCastException e) {
-      throw new RosRuntimeException("Remote side did not return correct type (status code/message).", e);
+        throw new RemoteException(StatusCode.FAILURE,
+                "Remote side did not return correct type headers in response. Expected StatusCode.class, got "+response.get(0).getClass()+
+                " and message of type String but got "+response.get(1).getClass()+" for values "+response.get(0)+" and "+response.get(1));
     }
     try {
       return new Response<T>(statusCode, message, resultFactory.newFromValue(response.get(2)));
     } catch (ClassCastException e) {
-      throw new RosRuntimeException("Remote side did not return correct value type.", e);
+        throw new RemoteException(StatusCode.FAILURE,"Remote side did not return correct value type in response. Got "+ response.get(2).getClass()+
+        	      " from value "+ response.get(2)+" expected "+((T)resultFactory).getClass());
     }
   }
 
@@ -142,12 +146,15 @@ public class Response<T> {
         throw new RemoteException(statusCode, message);
       }
     } catch (ClassCastException e) {
-      throw new RosRuntimeException("Remote side did not return correct type (status code/message).", e);
+        throw new RemoteException(StatusCode.FAILURE,
+                "Remote side did not return correct type headers in response. Expected StatusCode.class, got "+response.get(0).getClass()+
+                " and message of type String but got "+response.get(1).getClass()+" for values "+response.get(0)+" and "+response.get(1));
     }
     try {
       return new Response<T>(statusCode, message, resultFactory.newFromValue(response.get(2)));
     } catch (ClassCastException e) {
-      throw new RosRuntimeException("Remote side did not return correct value type.", e);
+        throw new RemoteException(StatusCode.FAILURE,"Remote side did not return correct value type in response. Got "+ response.get(2).getClass()+
+        	      " from value "+ response.get(2)+" expected "+((T)resultFactory).getClass());
     }
   }
 

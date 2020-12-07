@@ -190,7 +190,7 @@ public interface MasterRpcEndpoint extends RpcEndpoint {
    *          ROS caller ID
    * @param service
    *          Fully-qualified name of service
-   * @return service URL is provides address and port of the service. Fails if
+   * @return service socket address that provides address and port of the service. Fails if
    *         there is no provider.
    */
   List<Object> lookupService(String callerId, String service);
