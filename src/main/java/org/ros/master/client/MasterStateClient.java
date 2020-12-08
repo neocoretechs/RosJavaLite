@@ -59,15 +59,15 @@ public class MasterStateClient {
   /**
    * @param nodeName
    *          the name of the {@link Node} to lookup
-   * @return the {@link URI} of the {@link Node} with the given name
+   * @return the {@link InetSocketAddress} of the {@link Node} with the given name
    */
-  public URI lookupNode(String nodeName) {
+  public InetSocketAddress lookupNode(String nodeName) {
     Response<InetSocketAddress> response = masterClient.lookupNode(caller.getName(), nodeName);
     return response.getResult();
   }
 
   /**
-   * @return the {@link URI} of the {@link MasterServer}
+   * @return the {@link InetSocketAddress0} of the {@link MasterServer}
    */
   public InetSocketAddress getUri() {
     Response<InetSocketAddress> response = masterClient.getUri(caller.getName());
@@ -77,7 +77,7 @@ public class MasterStateClient {
   /**
    * @param serviceName
    *          the name of the {@link ServiceServer} to look up
-   * @return the {@link URI} of the {@link ServiceServer} with the given name
+   * @return the {@link InetSocketAddress} of the {@link ServiceServer} with the given name
    */
   public InetSocketAddress lookupService(String serviceName) {
     Response<InetSocketAddress> result = masterClient.lookupService(caller.getName(), serviceName);

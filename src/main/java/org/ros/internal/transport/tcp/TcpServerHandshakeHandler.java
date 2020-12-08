@@ -76,6 +76,7 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     GraphName serviceName = GraphName.of(incomingHeader.getField(ConnectionHeaderFields.SERVICE));
     assert(serviceManager.hasServer(serviceName));
     DefaultServiceServer<?, ?> serviceServer = serviceManager.getServer(serviceName);
+    // finishHandshake previously returned ByteBuffer, now returns ConnectionHeader
     ctx.write(serviceServer.finishHandshake(incomingHeader));
     String probe = incomingHeader.getField(ConnectionHeaderFields.PROBE);
     if (probe != null && probe.equals("1")) {

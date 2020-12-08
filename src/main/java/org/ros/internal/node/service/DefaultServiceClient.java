@@ -1,9 +1,8 @@
 package org.ros.internal.node.service;
 
-
-import org.ros.exception.RosRuntimeException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.internal.message.MessageBufferPool;
-import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ClientHandshakeListener;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
@@ -14,9 +13,10 @@ import org.ros.namespace.GraphName;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
 
+//import rosgraph_msgs.Log;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
@@ -29,7 +29,8 @@ import java.util.concurrent.TimeUnit;
  * @author jg
  */
 public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
-
+  private static final boolean DEBUG = true;
+  private final Log log = LogFactory.getLog(this.getClass());
   private final class HandshakeLatch implements ClientHandshakeListener {
 
     private CountDownLatch latch;
@@ -112,14 +113,20 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
     try {
 		tcpClient = tcpClientManager.connect(toString(), inetSocketAddress);
 	} catch (IOException e1) {
-		throw new RosRuntimeException("TcpClient failed to connect to remote "+toString()+" "+inetSocketAddress, e1);
+		log.error(this.toString()+" failed to connect to server at:"+inetSocketAddress+
+				" using context:"+tcpClient.getContext()+" due to IOException:"+e1.getMessage());
+		throw new Exception(this.toString()+" failed to connect to server at address:"+inetSocketAddress, e1);
 	}
     try {
       if (!handshakeLatch.await(1, TimeUnit.SECONDS)) {
-        throw new RosRuntimeException(handshakeLatch.getErrorMessage());
+  		log.error(this.toString()+" failed to connect to server at:"+inetSocketAddress+
+				" using context:"+tcpClient.getContext()+" due to IOException:"+handshakeLatch.getErrorMessage());
+        throw new Exception("Handshake Latch:"+handshakeLatch.toString()+" TIMED OUT with error message:"+handshakeLatch.getErrorMessage());
       }
     } catch (InterruptedException e) {
-      throw new RosRuntimeException("Handshake timed out.");
+ 		log.error(this.toString()+" failed to connect to server at:"+inetSocketAddress+
+				" using context:"+tcpClient.getContext()+" due to IOException:"+handshakeLatch.getErrorMessage());
+      throw new Exception("Handshake Latch:"+handshakeLatch.toString()+" INTERRUPTED with error message:"+handshakeLatch.getErrorMessage());
     }
   }
 
@@ -138,7 +145,8 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
     try {
 		tcpClient.getContext().write(request);
 	} catch (IOException e) {
-		
+		log.error(this.toString()+" failed on call to server with request:"+request+
+				" using context:"+tcpClient.getContext()+" due to IOException:"+e.getMessage());
 		e.printStackTrace();
 	}
     //messageBufferPool.release(buffer);
@@ -151,7 +159,7 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
 
   @Override
   public String toString() {
-    return "ServiceClient<" + serviceDeclaration + ">";
+    return "DefaultServiceClient<" + serviceDeclaration + ">";
   }
 
   @Override

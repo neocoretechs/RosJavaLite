@@ -80,7 +80,7 @@ public class DefaultServiceServer<T, S> implements ServiceServer<T, S> {
     });
   }
 
-  public ByteBuffer finishHandshake(ConnectionHeader incomingConnectionHeader) {
+  public ConnectionHeader finishHandshake(ConnectionHeader incomingConnectionHeader) {
     if (DEBUG) {
       log.info("Client handshake header: " + incomingConnectionHeader);
     }
@@ -93,9 +93,9 @@ public class DefaultServiceServer<T, S> implements ServiceServer<T, S> {
     if (DEBUG) {
       log.info("Server handshake header: " + connectionHeader);
     }
-    ByteBuffer headbuf = MessageBuffers.dynamicBuffer();
-    Utility.serialize(connectionHeader, headbuf);
-    return headbuf;
+    //ByteBuffer headbuf = MessageBuffers.dynamicBuffer();
+    //Utility.serialize(connectionHeader, headbuf);
+    return connectionHeader;
   }
 
   @Override
