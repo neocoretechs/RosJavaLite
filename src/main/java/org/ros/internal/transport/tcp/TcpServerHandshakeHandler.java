@@ -78,14 +78,28 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
     DefaultServiceServer<?, ?> serviceServer = serviceManager.getServer(serviceName);
     // finishHandshake previously returned ByteBuffer, now returns ConnectionHeader
     ctx.write(serviceServer.finishHandshake(incomingHeader));
+	if( DEBUG ) {
+		log.info("Service server "+serviceServer+" ChannelHandlerContext:"+ctx+" for:"+this);
+	}
     String probe = incomingHeader.getField(ConnectionHeaderFields.PROBE);
     if (probe != null && probe.equals("1")) {
       ctx.close();
     } else {
       //ctx.pipeline().remove(TcpServerPipelineFactory.LENGTH_FIELD_PREPENDER);
+      // Once the handshake is complete, remove the handshake handler and replace it with the service request handler
       ctx.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
       //pipeline.addLast("ServiceResponseEncoder", new ServiceResponseEncoder());
       ctx.pipeline().addLast("ServiceRequestHandler", serviceServer.newRequestHandler());
+  	  // Set this context ready to receive the message type specified
+  	  synchronized(ctx.getMessageTypes()) {
+		ctx.getMessageTypes().add(incomingHeader.getField(ConnectionHeaderFields.TYPE));
+	  }
+	  // The handshake is complete and the only task is to set the context ready, which will allow
+	  // the outbound queue to start sending messages.
+	  ctx.setReady(true);
+	  if( DEBUG ) {
+		log.info("Service description complete for:"+serviceServer+", ChannelHandlerContext:"+ctx+" for:"+this);
+	  }
     }
   }
   /**
