@@ -50,7 +50,7 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
   private void handleSuccess(final ChannelHandlerContext ctx, ServiceServerResponse response, ByteBuffer responseBuffer) {
     response.setErrorCode(1);
     response.setMessageLength(responseBuffer.limit());
-    response.setMessage(responseBuffer);
+    response.setMessageBytes(responseBuffer.array());
     ByteBuffer resbuf = messageBufferPool.acquire();
     Utility.serialize(response,  resbuf);
     try {
@@ -65,6 +65,7 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     ByteBuffer encodedMessage = Charset.forName("US-ASCII").encode(message);
     response.setMessageLength(encodedMessage.limit());
     response.setMessage(encodedMessage);
+    response.setMessageBytes(encodedMessage.array());
     Utility.serialize(response,  responseBuffer);
     try {
 		ctx.write(responseBuffer.array());

@@ -14,9 +14,10 @@ import java.nio.ByteBuffer;
 */
 class ServiceServerResponse implements Serializable {
   private static final long serialVersionUID = -5429450419100506243L;
-  private ByteBuffer message;
+  private transient ByteBuffer message;
   private int errorCode;
   private int messageLength;
+  private byte[] messageBytes;
 
   public ServiceServerResponse() {}
   
@@ -43,4 +44,9 @@ class ServiceServerResponse implements Serializable {
   public int getMessageLength() {
     return messageLength;
   }
+  
+  public byte[] getMessageBytes() { return messageBytes; }
+	
+  public void setMessageBytes(byte[] b) { messageBytes = b; }
+		 
 }
