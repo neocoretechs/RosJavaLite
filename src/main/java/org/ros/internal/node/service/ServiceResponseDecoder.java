@@ -15,11 +15,12 @@ import org.ros.internal.transport.ChannelHandlerContext;
  * 
  * @author jg
  */
-class ServiceResponseDecoder<ResponseType>  {
+class ServiceResponseDecoder  {
 
-  private static final int ERROR_CODE = 0;
-  private static final int MESSAGE_LENGTH = 1;
-  private static final int MESSAGE = 2;
+  private final static int ERROR_CODE = 0;// = ServiceResponseDecoderState.ERROR_CODE.ordinal(); 
+  private final static int MESSAGE_LENGTH = 1;// = ServiceResponseDecoderState.MESSAGE_LENGTH.ordinal(); 
+  private final static int MESSAGE = 2;// = ServiceResponseDecoderState.MESSAGE.ordinal();
+  
   private ServiceServerResponse response;
 
   public ServiceResponseDecoder() {
@@ -28,11 +29,10 @@ class ServiceResponseDecoder<ResponseType>  {
 
   //@SuppressWarnings("fallthrough")
   //@Override
-  protected void decode(ChannelHandlerContext ctx, ByteBuffer buffer, List<Object> rstate) throws Exception {
-	 int code =  buffer.getInt();
-    switch (code) {
+  protected void decode(int code, ChannelHandlerContext ctx, ByteBuffer buffer, List<Object> rstate) throws Exception {
+    switch (code) { 
       case ERROR_CODE:
-        response.setErrorCode(buffer.get());
+        response.setErrorCode(buffer.getInt());
         //checkpoint(ServiceResponseDecoderState.MESSAGE_LENGTH);
       case MESSAGE_LENGTH:
         response.setMessageLength(buffer.getInt());
