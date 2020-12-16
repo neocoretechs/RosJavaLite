@@ -8,6 +8,10 @@ import org.apache.commons.logging.LogFactory;
 //import org.jboss.netty.channel.SimpleChannelHandler;
 import org.ros.exception.RemoteException;
 import org.ros.internal.message.MessageBuffers;
+import org.ros.internal.message.service.ServiceDefinitionResourceProvider;
+import org.ros.internal.message.service.ServiceRequestMessageFactory;
+import org.ros.internal.message.service.ServiceResponseMessageFactory;
+import org.ros.internal.node.response.Response;
 import org.ros.internal.node.response.StatusCode;
 import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandler;
@@ -23,6 +27,13 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * A handler for service responses.<p/>
+ * This handler lives on the pipe line and can be retrieved as follows:
+ * ChannelHandler ch = ctx.pipeline().get("ResponseHandler");
+ * {@code ServiceResponseHandler<ResponseType> srh = (ServiceResponseHandler<ResponseType>)ch;}
+ * It arrives there by a successful handshake via the {@code ServiceClientHandshakeHandler.onSuccess()}
+ * which is called with the ConnectionHeader and ChannelHandlerContext as parameters.<p/>
+ * The ctx.pipeLine() method retrieves the pipe line and and addList is invoked using the literal "ResponseHandler"
+ * as the key and a new instance of ServiceResponseHandler<S> is created to use as value.<p/>
  * The handler revolves around the encoder and the decoder much like the pub/sub model.
  * The encoder and decoder work with the channel handler context and the event model to deliver
  * requests and responses on and off the bus.
@@ -96,35 +107,33 @@ class ServiceResponseHandler<ResponseType> implements ChannelHandler {
 	 */
   @Override
   public Object channelRead(ChannelHandlerContext ctx, Object e) throws Exception {
-	log.info("ServiceResponseHandler channelRead for ChannelHandlerContext:"+ctx+" using Object:"+e);
     final ServiceResponseListener<ResponseType> listener = responseListeners.poll();
     assert(listener != null) : "No listener for incoming service response.";
     final ByteBuffer buffer = ByteBuffer.wrap((byte[]) e);
+    ServiceServerResponse response = (ServiceServerResponse) Utility.deserialize(buffer);
+	log.info("ServiceResponseHandler channelRead for ChannelHandlerContext:"+ctx+" with ServiceServerResponse:"+response);
     final ServiceResponseDecoder decoder = new ServiceResponseDecoder();
-    final List<Object> rstate = new ArrayList<Object>();
-    ServiceServerResponse response = new ServiceServerResponse();
+    //final List<Object> rstate = new ArrayList<Object>();
     executorService.execute(new Runnable() {
       @Override
       public void run() {
     	    try {
-				decoder.decode(ServiceResponseDecoderState.ERROR_CODE.ordinal(), ctx, buffer, rstate);
-				decoder.decode(ServiceResponseDecoderState.MESSAGE_LENGTH.ordinal(), ctx, buffer, rstate);
-				decoder.decode(ServiceResponseDecoderState.MESSAGE.ordinal(), ctx, buffer, rstate);
-				ServiceServerResponse sresponse = (ServiceServerResponse) rstate.get(0);
-			    if (sresponse.getErrorCode() != ServiceResponseDecoderState.ERROR_CODE.ordinal()) {
-					sresponse = (ServiceServerResponse) rstate.get(2);
+				//decoder.decode(ServiceResponseDecoderState.ERROR_CODE.ordinal(), ctx, buffer, rstate);
+				//decoder.decode(ServiceResponseDecoderState.MESSAGE_LENGTH.ordinal(), ctx, buffer, rstate);
+				//decoder.decode(ServiceResponseDecoderState.MESSAGE.ordinal(), ctx, buffer, rstate);
+				//ServiceServerResponse sresponse = (ServiceServerResponse) rstate.get(0);
+			    if (response.getErrorCode() != ServiceResponseDecoderState.ERROR_CODE.ordinal()) {
 					// TODO UDP transport?
 					//sresponse = (ServiceServerResponse) rstate.get(1);
 					//int messageLength = sresponse.getMessageLength();
-			        listener.onSuccess((ResponseType) sresponse);
+					//Response.fromListChecked(sresponse, resultFactory)
+					Object o = Utility.deserialize(ByteBuffer.wrap(response.getMessageBytes()));
+					log.info("About to fire successful call with response from service. Class:"+o.getClass()+" payload:"+o);
+			        listener.onSuccess( (ResponseType) o);
 			    } else {
-			    	sresponse = (ServiceServerResponse) rstate.get(2);
-			        String message = Charset.forName("US-ASCII").decode(sresponse.getMessage()).toString();
+			        String message = Charset.forName("US-ASCII").decode(response.getMessage()).toString();
 			        listener.onFailure(new RemoteException(StatusCode.ERROR, message));
 			    }
-			    response.setErrorCode(sresponse.getErrorCode());
-			    response.setMessageLength(sresponse.getMessageLength());
-			    response.setMessage(sresponse.getMessage());
 			} catch (Exception e1) {
 				log.error("Error:"+e1+" decoding ServiceResponse for context:"+ctx+" using proposed ServiceResponse:"+e);
 				e1.printStackTrace();
@@ -133,7 +142,8 @@ class ServiceResponseHandler<ResponseType> implements ChannelHandler {
     });
     return response;
   }
-
+  
+  
 @Override
 public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 	// TODO Auto-generated method stub

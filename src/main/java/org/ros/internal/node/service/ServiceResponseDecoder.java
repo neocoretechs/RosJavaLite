@@ -33,15 +33,36 @@ class ServiceResponseDecoder  {
     switch (code) { 
       case ERROR_CODE:
         response.setErrorCode(buffer.getInt());
+        try {
+        	if(rstate.size() > 0)
+        		rstate.add(0, response);
+        	else
+        		rstate.add(response);
+        	return;
+        } finally {
+        	reset();
+        }
         //checkpoint(ServiceResponseDecoderState.MESSAGE_LENGTH);
       case MESSAGE_LENGTH:
         response.setMessageLength(buffer.getInt());
+        try {
+        	if(rstate.size() > 1)
+        		rstate.add(1, response);
+        	else
+        		rstate.add(response);
+        	return;
+        } finally {
+            reset();
+        }
        // checkpoint(ServiceResponseDecoderState.MESSAGE);
       case MESSAGE:
         response.setMessage(buffer);
         try {
-          //return response;
-          rstate.add(response);
+        	if(rstate.size() > 2)
+        		rstate.add(2, response);
+        	else
+        		rstate.add(response);
+          return;
         } finally {
           reset();
         }

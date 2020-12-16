@@ -1,5 +1,6 @@
 package org.ros.internal.node.service;
 
+import org.apache.commons.logging.LogFactory;
 //import org.jboss.netty.buffer.ChannelBuffer;
 //import org.jboss.netty.buffer.ChannelBuffers;
 //import org.jboss.netty.channel.ChannelHandlerContext;
@@ -7,12 +8,15 @@ package org.ros.internal.node.service;
 //import org.jboss.netty.channel.SimpleChannelHandler;
 import org.ros.exception.RosRuntimeException;
 import org.ros.exception.ServiceException;
-import org.ros.internal.message.MessageBufferPool;
+import org.ros.internal.message.MessageBuffers;
+//import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.system.Utility;
 import org.ros.internal.transport.ChannelHandler;
 import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.message.MessageFactory;
 import org.ros.node.service.ServiceResponseBuilder;
+
+import rosgraph_msgs.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -23,13 +27,14 @@ import java.util.concurrent.ExecutorService;
  * @author jg
  */
 class ServiceRequestHandler<T, S> implements ChannelHandler {
-
+  private static final org.apache.commons.logging.Log log = LogFactory.getLog(ServiceRequestHandler.class);
   private final ServiceDeclaration serviceDeclaration;
   private final ServiceResponseBuilder<T, S> responseBuilder;
  
   private final MessageFactory messageFactory;
   private final ExecutorService executorService;
-  private final MessageBufferPool messageBufferPool;
+  //private final ByteBuffer messageBuffer = MessageBuffers.dynamicBuffer();
+  //private final MessageBufferPool messageBufferPool;
 
   public ServiceRequestHandler(ServiceDeclaration serviceDeclaration,
       ServiceResponseBuilder<T, S> responseBuilder, MessageFactory messageFactory,
@@ -38,26 +43,35 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     this.responseBuilder = responseBuilder;
     this.messageFactory = messageFactory;
     this.executorService = executorService;
-    messageBufferPool = new MessageBufferPool();
+   // messageBufferPool = new MessageBufferPool();
   }
 
-  private void handleRequest(T request, ByteBuffer responseBuffer) throws ServiceException {
+  private S handleRequest(T request) throws ServiceException {
     S response = messageFactory.newFromType(serviceDeclaration.getType());
     responseBuilder.build(request, response);
-    Utility.serialize(response, responseBuffer);
+    return response;
   }
 
-  private void handleSuccess(final ChannelHandlerContext ctx, ServiceServerResponse response, ByteBuffer responseBuffer) {
+  private void handleSuccess(final ChannelHandlerContext ctx, S result, ServiceServerResponse response, ByteBuffer responseBuffer) {
     response.setErrorCode(1);
-    response.setMessageLength(responseBuffer.limit());
-    response.setMessageBytes(responseBuffer.array());
-    ByteBuffer resbuf = messageBufferPool.acquire();
-    Utility.serialize(response,  resbuf);
+    ByteBuffer resbuf = MessageBuffers.dynamicBuffer(); // allocate for serialized result of service method
+    Utility.serialize(result, resbuf);
+    byte[] b = new byte[resbuf.limit()];
+    resbuf.get(b);
+    response.setMessageBytes(b);
+    response.setMessageLength(response.getMessageBytes().length);
+    responseBuffer.putInt(response.getErrorCode());
+    responseBuffer.putInt(response.getMessageLength());
+    log.info("Response to be serialized:"+response);
+    Utility.serialize(response,  responseBuffer);
+    //log.info("ServiceRequestHandler serializing message buffer "+responseBuffer+
+    //		" with payload "+response.getMessageBytes().length);
     try {
-		ctx.write(resbuf.array());
+		ctx.write(responseBuffer.array());
 	} catch (IOException e) {
 		throw new RosRuntimeException(e);
 	}
+    MessageBuffers.returnBuffer(resbuf);
   }
 
   private void handleError(final ChannelHandlerContext ctx, ServiceServerResponse response, String message, ByteBuffer responseBuffer) {
@@ -66,6 +80,8 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
     response.setMessageLength(encodedMessage.limit());
     response.setMessage(encodedMessage);
     response.setMessageBytes(encodedMessage.array());
+    responseBuffer.putInt(response.getErrorCode());
+    responseBuffer.putInt(response.getMessageLength());
     Utility.serialize(response,  responseBuffer);
     try {
 		ctx.write(responseBuffer.array());
@@ -84,19 +100,21 @@ class ServiceRequestHandler<T, S> implements ChannelHandler {
       @Override
       public void run() {
         ServiceServerResponse response = new ServiceServerResponse();
-        ByteBuffer responseBuffer = messageBufferPool.acquire();
+        ByteBuffer responseBuffer = MessageBuffers.dynamicBuffer();
         boolean success;
+        S result = null;
         try {
-          handleRequest(requestBuffer, responseBuffer);
+          result = handleRequest(requestBuffer);
           success = true;
         } catch (ServiceException ex) {
           handleError(ctx, response, ex.getMessage(), responseBuffer);
           success = false;
         }
         if (success) {
-          handleSuccess(ctx, response, responseBuffer);
+          handleSuccess(ctx, result, response, responseBuffer);
         }
-        messageBufferPool.release(responseBuffer);
+        //messageBufferPool.release(responseBuffer);
+        MessageBuffers.returnBuffer(responseBuffer);
       }
     });
     return requestBuffer;

@@ -48,5 +48,17 @@ class ServiceServerResponse implements Serializable {
   public byte[] getMessageBytes() { return messageBytes; }
 	
   public void setMessageBytes(byte[] b) { messageBytes = b; }
+  
+  public String toString() {
+	  StringBuilder sb = new StringBuilder();
+	  sb.append(this.getClass().getName());
+	  sb.append(" Error Code:");
+	  sb.append(errorCode);
+	  sb.append(" Message Length:");
+	  sb.append(messageLength);
+	  sb.append(" Message size:");
+	  sb.append(messageBytes.length);
+	  return sb.toString();
+  }
 		 
 }

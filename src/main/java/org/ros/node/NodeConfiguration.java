@@ -51,7 +51,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author ethan.rublee@gmail.com (Ethan Rublee)
  * @author kwc@willowgarage.com (Ken Conley)
  * @author damonkohler@google.com (Damon Kohler)
- * @author jg
+ * @author groffj@neocoretechs.com (Jonathan Neville Groff)
  */
 public class NodeConfiguration {
 
@@ -61,7 +61,7 @@ public class NodeConfiguration {
   public static final InetSocketAddress DEFAULT_MASTER_URI;
 
   static {
-    DEFAULT_MASTER_URI = new InetSocketAddress("172.16.0.101", 8090);
+    DEFAULT_MASTER_URI = new InetSocketAddress("127.0.0.1", 8090);
   }
 
   private NameResolver parentResolver;

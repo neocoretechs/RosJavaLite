@@ -2,7 +2,7 @@ package org.ros.internal.node.service;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.message.MessageBufferPool;
+//import org.ros.internal.message.MessageBufferPool;
 import org.ros.internal.transport.ClientHandshakeListener;
 import org.ros.internal.transport.ConnectionHeader;
 import org.ros.internal.transport.ConnectionHeaderFields;
@@ -70,7 +70,7 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
   private final ServiceDeclaration serviceDeclaration;
   
   private final MessageFactory messageFactory;
-  private final MessageBufferPool messageBufferPool;
+  //private final MessageBufferPool messageBufferPool;
   private final Queue<ServiceResponseListener<S>> responseListeners;
   private final ConnectionHeader connectionHeader;
   private final TcpClientManager tcpClientManager;
@@ -89,7 +89,7 @@ public class DefaultServiceClient<T, S> implements ServiceClient<T, S> {
       MessageFactory messageFactory, ScheduledExecutorService executorService) throws IOException {
     this.serviceDeclaration = serviceDeclaration;
     this.messageFactory = messageFactory;
-    messageBufferPool = new MessageBufferPool();
+    //messageBufferPool = new MessageBufferPool();
     responseListeners = new LinkedList<ServiceResponseListener<S>>();
     connectionHeader = new ConnectionHeader();
     connectionHeader.addField(ConnectionHeaderFields.CALLER_ID, nodeName.toString());
