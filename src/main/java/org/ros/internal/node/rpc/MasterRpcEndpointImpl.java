@@ -143,14 +143,15 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
 
   @Override
   public List<Object> lookupService(String callerId, String serviceName) {
-	  RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.MasterServer", 
+	RemoteRequestInterface rri = new RemoteRequest("org.ros.internal.node.server.master.MasterServer", 
 			  "lookupService",
 			  GraphName.of(serviceName));
-    InetSocketAddress slaveUri = (InetSocketAddress) remoteMaster.queue(rri);//master.lookupService(GraphName.of(serviceName));
-    if (slaveUri != null) {
+	Object sock = remoteMaster.queue(rri);//master.lookupService(GraphName.of(serviceName)); 
+    if (sock != null && sock instanceof InetSocketAddress) {
+      InetSocketAddress slaveUri = (InetSocketAddress)sock;
       return Response.newSuccess("Success", slaveUri.toString()).toList();
     }
-    return Response.newError("No such service.", null).toList();
+    return Response.newError("No such service.", callerId+" "+serviceName).toList();
   }
 
   @Override
