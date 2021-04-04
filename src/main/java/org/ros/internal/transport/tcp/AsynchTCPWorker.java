@@ -1,6 +1,7 @@
 package org.ros.internal.transport.tcp;
 
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,11 +34,15 @@ public class AsynchTCPWorker implements Runnable {
 	public void run() {
 			try {
 				while(shouldRun) {
-					Object reso = ctx.read();
-					//if( DEBUG )
-					//		log.info("AsynchTCPWorker COMPLETED READ for ChannelHandlerContext "+ctx+"  Result:"+reso);
-					ctx.pipeline().fireChannelRead(reso);
-					ctx.pipeline().fireChannelReadComplete();
+					try {
+						Object reso = ctx.read();
+						//if( DEBUG )
+						//		log.info("AsynchTCPWorker COMPLETED READ for ChannelHandlerContext "+ctx+"  Result:"+reso);
+						ctx.pipeline().fireChannelRead(reso);
+						ctx.pipeline().fireChannelReadComplete();
+					} catch(StreamCorruptedException sce) {
+						log.info("Stream was corrupted on read:"+sce);
+					}
 				} // shouldRun		
 			} catch(Exception se) {
 					log.error("AsynchTCPWorker terminating, ChannelHandlerContext "+ctx+" read failure due to ",se);

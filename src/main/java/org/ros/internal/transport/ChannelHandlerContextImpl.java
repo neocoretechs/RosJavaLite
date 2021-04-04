@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.StreamCorruptedException;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.channels.CompletionHandler;
@@ -43,6 +44,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	Set<String> outboundMessageTypes;
 	InputStream is = null;
 	OutputStream os = null;
+	ObjectInputStream ois = null;
 
 	public ChannelHandlerContextImpl(/*Asynchronous*/ChannelGroup channelGroup2, /*Asynchronous*/Socket channel2) {
 		channelGroup = channelGroup2;
@@ -114,11 +116,20 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	@Override
 	public Object read() throws IOException {
 		is = channel.getInputStream();
-		ObjectInputStream ois = new ObjectInputStream(is);
+		//ObjectInputStream ois = new ObjectInputStream(is);
+		ois = new ObjectInputStream(is);
 		try {
 			return ois.readObject();
 		} catch (ClassNotFoundException e) {
 			throw new IOException(e);
+		} catch(StreamCorruptedException sce) {
+			is = channel.getInputStream();
+			ois = new ObjectInputStream(is);
+			try {
+				return ois.readObject();
+			} catch (ClassNotFoundException cnf) {
+				throw new IOException(cnf);
+			}
 		}
 	}
 

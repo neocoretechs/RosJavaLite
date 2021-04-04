@@ -1,24 +1,7 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.parameter;
 
 import org.ros.exception.ParameterClassCastException;
 import org.ros.exception.ParameterNotFoundException;
-import org.ros.exception.RosRuntimeException;
 import org.ros.internal.node.client.ParameterClient;
 import org.ros.internal.node.response.Response;
 import org.ros.internal.node.response.StatusCode;
@@ -32,15 +15,12 @@ import org.ros.node.parameter.ParameterTree;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Provides access to the ROS {@link ParameterServer}.
+ * Provides access to the ROS {@link ParameterServer} form the client side.
  * 
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
+ * @author Jonathan Groff (c) NeoCoreTechs 2021
  */
 public class DefaultParameterTree implements ParameterTree {
 
@@ -88,7 +68,7 @@ public class DefaultParameterTree implements ParameterTree {
   public GraphName search(GraphName name) {
     GraphName resolvedName = resolver.resolve(name);
     Response<GraphName> response = parameterClient.searchParam(resolvedName);
-    if (response.getStatusCode() == StatusCode.SUCCESS) {
+    if (response.isSuccess()) {
       return response.getResult();
     } else {
       return null;
@@ -126,38 +106,40 @@ public class DefaultParameterTree implements ParameterTree {
   public void set(String name, Object value) {
     set(GraphName.of(name), value);
   }
-
   
   private <T> T getInternal(GraphName name, Class<T> type) {
     GraphName resolvedName = resolver.resolve(name);
     Response<Object> response = parameterClient.getParam(resolvedName);
+    //System.out.println(this.getClass().getName()+".getInternal response="+response.getResult().getClass().getName()+" "+response.getResult().toString());
     try {
-      if (response.getStatusCode() == StatusCode.SUCCESS) {
-        return type.cast(response.getResult());
+      if (response.isSuccess() && (response.getResult().getClass() == type)) {
+        return response.getResult();
       }
     } catch (ClassCastException e) {
-      throw new ParameterClassCastException("Cannot cast parameter to: " + type.getName(), e);
+      throw new ParameterClassCastException("Cannot cast parameter to: " + type.getName() +" the response was: "+response.getResult().getClass().getName(), e);
     }
     throw new ParameterNotFoundException("Parameter does not exist: " + name);
   }
 
   @SuppressWarnings("unchecked")
   private <T> T getInternal(GraphName name, T defaultValue) {
+	  
     assert(defaultValue != null);
     GraphName resolvedName = resolver.resolve(name);
     Response<Object> response = parameterClient.getParam(resolvedName);
-    if (response.getStatusCode() == StatusCode.SUCCESS) {
+    Class<T> defaultClass = (Class<T>) defaultValue.getClass();
+    //System.out.println(this.getClass().getName()+".getInternal response="+response.getResult().getClass().getName()+" "+response.getResult().toString());
+    if (response.isSuccess() && (response.getResult().getClass() == defaultClass)) {
       try {
-        return (T) defaultValue.getClass().cast(response.getResult());
+        return response.getResult();
       } catch (ClassCastException e) {
         throw new ParameterClassCastException("Cannot cast parameter to: "
-            + defaultValue.getClass().getName(), e);
+            + defaultValue.getClass().getName()+" the response was: "+response.getResult().getClass().getName(), e);
       }
     } else {
       return defaultValue;
     }
   }
-
 
   public static ParameterTree newFromNodeIdentifier(
 	NodeIdentifier nodeIdentifier, InetSocketAddress remoteUri,
