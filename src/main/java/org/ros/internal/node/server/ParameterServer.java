@@ -1,6 +1,5 @@
 package org.ros.internal.node.server;
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,7 +22,7 @@ import org.ros.namespace.GraphName;
 /**
  * A ROS parameter server.
  * 
- * @author Groff
+ * @author Jonathan Groff (C) NeoCoreTechs 2021
  */
 public class ParameterServer extends RpcServer {
   private static final boolean DEBUG = false;

@@ -1,26 +1,10 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.loader;
 
 import org.ros.CommandLineVariables;
 import org.ros.EnvironmentVariables;
 
 import org.ros.address.InetSocketAddressFactory;
-
+import org.ros.internal.jarclassloader.JarClassLoader;
 import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
 import org.ros.node.NodeConfiguration;
@@ -50,9 +34,7 @@ import java.util.Map;
  * NOTE: If no constructor is detected during loadClass invocation, 
  * A node with a static getInstance() returning a type of NodeMain will be invoked. If neither
  * an InstantiationException is thrown. This is an enhancement to node creation in original RosJava.
- * 
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
+ * @author Jonathan Groff (C) NeoCoreTechs 2021
  */
 public class CommandLineLoader {
 
@@ -64,14 +46,15 @@ public class CommandLineLoader {
   private final Map<GraphName, GraphName> remappings;
 
   private String nodeClassName;
+  
+  private JarClassLoader jcl; // to pull JARs from ParameterTree
 
   /**
    * Create new {@link CommandLineLoader} with specified command-line arguments.
    * Environment variables will be pulled from default {@link System}
    * environment variables.
    * 
-   * @param argv
-   *          command-line arguments
+   * @param argv command-line arguments
    */
   public CommandLineLoader(List<String> argv) {
     this(argv, System.getenv());
@@ -81,10 +64,8 @@ public class CommandLineLoader {
    * Create new {@link CommandLineLoader} with specified command-line arguments
    * and environment variables.
    * 
-   * @param argv
-   *          command-line arguments
-   * @param environment
-   *          environment variables
+   * @param argv command-line arguments
+   * @param environment environment variables
    */
   public CommandLineLoader(List<String> argv, Map<String, String> environment) {
     assert(argv.size() > 0);
@@ -251,16 +232,44 @@ public class CommandLineLoader {
   }
 
   /**
-   * @param name
-   *          the name of the class
+   * Load main node using default classloader
+   * @param name the name of the class extending AbstracNodeMain
    * @return an instance of {@link NodeMain}
    * @throws ClassNotFoundException
    * @throws InstantiationException
    * @throws IllegalAccessException
    */
-  public NodeMain loadClass(String name) throws ClassNotFoundException, InstantiationException,
-      IllegalAccessException {
+  public NodeMain loadClass(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     Class<?> clazz = getClass().getClassLoader().loadClass(name);
+    Method meth = null;
+    if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
+    	try {
+			meth = clazz.getMethod("getInstance",(Class<?>[])null);
+		   	return NodeMain.class.cast(meth.invoke(null, (Object[])null));
+		} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
+			throw new InstantiationException(e.getMessage());
+		}
+    }
+    return NodeMain.class.cast(clazz.newInstance());
+  }
+  
+  public void createJarClassLoader() {
+		jcl = new JarClassLoader();
+  }
+  
+  public JarClassLoader getJarClassLoader() {
+	  return jcl;
+  }
+  /**
+   * Load main node using JarClassLoader and ParmeterTree for provisioning remote nodes 
+   * @param name the name of the class extending AbstractNodeMain
+   * @return an instance of {@link NodeMain}
+   * @throws ClassNotFoundException
+   * @throws InstantiationException
+   * @throws IllegalAccessException
+   */
+  public NodeMain loadClassWithJars(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    Class<?> clazz = jcl.loadClass(name);
     Method meth = null;
     if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
     	try {
