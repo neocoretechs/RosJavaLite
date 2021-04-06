@@ -1,10 +1,13 @@
 package org.ros;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -56,24 +59,27 @@ public class RosRun {
     nodeConfiguration.setCommandLineLoader(loader);
 
     NodeMain nodeMain = null;
+    SlaveServer slaveServer = null;
+	MasterClient masterClient = null;
+	ParameterTree parameterTree = null;
     try {
     	Map<String,String> remaps = loader.getSpecialRemappings();
-    	// determine if directive to load external JARS exists __jarclasses:=/directory/to/jarfiles
+    	// determine if directive to write loaded external JARS exists __jarclasses:=/directory/to/jarfiles
     	if( remaps.containsKey("__jarclasses") ) {
-    		//String jarClasses = remaps.get("__jarclasses");
+    		String jarClasses = remaps.get("__jarclasses");
+    		if(!jarClasses.endsWith("/"))
+    			jarClasses += "/";
     		loader.createJarClassLoader();
     	    TopicParticipantManager topicParticipantManager = new TopicParticipantManager();
     	    ServiceManager serviceManager = new ServiceManager();
     		ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     		ParameterManager parameterManager = new ParameterManager(executor);
-    		GraphName basename = nodeConfiguration.getNodeName();
+     		//GraphName basename = nodeConfiguration.getNodeName();
+     		//log.info("Bringing up nodeName:"+basename);
     		NameResolver parentResolver = nodeConfiguration.getParentResolver();
-    		GraphName nodeName = parentResolver.getNamespace().join(basename);
+    		GraphName nodeName = parentResolver.getNamespace();//.join(basename);
     		NameResolver resolver = new NodeNameResolver(nodeName, parentResolver);
-    		ParameterTree parameterTree = null;
-    		SlaveServer slaveServer;
     	    InetSocketAddress masterUri = nodeConfiguration.getMasterUri();
-    	    MasterClient masterClient;
     	    try {
     			masterClient = new MasterClient(masterUri, 60000, 60000);
     		} catch (IOException e1) {
@@ -103,22 +109,36 @@ public class RosRun {
     			log.error("Cannot construct ParameterTree for JAR provisioning due to "+e,e);
     		}
        		Map<String,Object> emptyMap = new HashMap<String,Object>();
+       		String jarFileName;
        		if(parameterTree != null) {
-       			Map<String,Object> jars = (Map<String, Object>) parameterTree.get(GraphName.of("jars/*"), emptyMap );
-       			//loader.getJarClassLoader().loadFromTree(..)
+       			Map<String,Object> jars = (Map<String, Object>) parameterTree.get(GraphName.of(RosCore.jarParent), emptyMap );
+       			Iterator<Entry<String, Object>> it = jars.entrySet().iterator();
+       			while(it.hasNext()) {
+       				Entry<String,Object> jarName = it.next();
+       				jarFileName = jarClasses+jarName.getKey().replace("_", ".");
+       				log.info(jarFileName+" retrieved for provisioning..");
+       				FileOutputStream fos = new FileOutputStream(jarFileName);
+       				fos.write((byte[]) jarName.getValue());
+       				fos.flush();
+       				fos.close();
+       				log.info("Wrote "+jarName.getKey()+" "+((byte[])jarName.getValue()).length+" bytes.");
+       				loader.getJarClassLoader().loadJarFromJarfile("file:/"+jarFileName);
+       			}
+       			log.info("Proceeding to load "+nodeClassName+" using ParameterTree JAR provisioning.");
        			nodeMain = loader.loadClassWithJars(nodeClassName);
        		} else {
+       			log.info("Acquisition of JARs from ParameterTree was unsuccessful, using standard classloader");
        			nodeMain = loader.loadClass(nodeClassName);
-       		}  		
+       		}		
     	} else {
     		nodeMain = loader.loadClass(nodeClassName);
     	}
-    } catch (ClassNotFoundException e) {
-      throw new RosRuntimeException("Unable to locate node: " + nodeClassName, e);
-    } catch (InstantiationException e) {
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
       throw new RosRuntimeException("Unable to instantiate node: " + nodeClassName, e);
-    } catch (IllegalAccessException e) {
-      throw new RosRuntimeException("Unable to instantiate node: " + nodeClassName, e);
+    } finally {
+    	if( slaveServer != null ) {
+    		slaveServer.shutdown();
+    	}		
     }
 
     assert(nodeMain != null);

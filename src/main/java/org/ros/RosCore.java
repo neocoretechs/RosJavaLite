@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros;
 
 import org.apache.commons.logging.Log;
@@ -23,28 +7,40 @@ import org.ros.address.BindAddress;
 import org.ros.internal.node.server.ParameterServer;
 import org.ros.internal.node.server.master.MasterServer;
 import org.ros.internal.transport.tcp.TcpRosServer;
+import org.ros.namespace.GraphName;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
-// TODO(damonkohler): Add /rosout node.
 /**
  * {@link RosCore} is a collection of nodes and programs that are pre-requisites
  * of a ROS-based system. You must have a {@link RosCore}
  * running in order for ROS nodes to communicate.
  * The light weight implementation will not interop with standard ROS
  * nodes, the XML RPC has been eliminated in favor of lightweight java serialization protocol.
+ * An added capability is the provisioning of remote nodes with JAR files to simplify deployment of
+ * numerous remote nodes via the parameter server and the ParameterTree.<p/>
+ * Add the -Djars.provision=/path/to/jars on the command line to enable JAR provisioning through the ParameterTree.<br/>
+ * On the RosRun remote node add __jarclasses:=/directory/to/jarfiles as a remapped property to designate
+ * the directory to write the localized JARs to.<p/> 
+ * TODO: Add /rosout node.
  * @see <a href="http://www.ros.org/wiki/roscore">roscore documentation</a>
  * 
- * @author damonkohler@google.com (Damon Kohler)
- * @author jg
+ * @author Jonathan Groff (c) NeoCoreTechs 2021
  */
 public class RosCore {
   private static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(RosCore.class);
   private MasterServer masterServer = null;
   private ParameterServer parameterServer = null;
+  private static final String propsEntry = "jars.provision";
+  public static final String jarGraph = "/java/";
+  public static final String jarParent = "/java";
 
   public static RosCore newPublic(String host, int port) {
     return new RosCore(BindAddress.newPublic(port), new AdvertiseAddress(host, port));
@@ -75,8 +71,50 @@ public class RosCore {
   public void start() {
     masterServer.start();
     parameterServer.start();
+    // see if we are going to load JARs for provisioning remote nodes.
+	String jarsDir = System.getProperty(propsEntry);
+	if(jarsDir != null) {
+		log.info("> Processing top level JARs directory:"+jarsDir+" for remote node provisioning via ParameterTree");
+		try {
+			processFilesForFolder(new File(jarsDir));
+		} catch (IOException e) {
+			log.error("Was unable to process JARs provisioning directory:"+jarsDir+" due to "+e);
+		}
+	}
   }
 
+  private void processFilesForFolder(final File folder) throws IOException {
+		for (final File fileEntry : folder.listFiles()) {
+			if (fileEntry.isDirectory()) {
+				log.info(">> Processing JAR subdirectory:"+fileEntry.getName());
+				processFilesForFolder(fileEntry);
+			} else {
+				log.info(">>> Reading JAR "+fileEntry.getName());
+				// form valid global graph name
+				String graphJar = jarGraph+fileEntry.getName().replace('.', '_').replace('-','x');
+				parameterServer.set(GraphName.of(graphJar), readFile(fileEntry));
+			}
+		}
+  }
+  
+  private static byte[] readFile(File file) throws IOException {
+		// Open file
+		RandomAccessFile f = new RandomAccessFile(file, "r");
+		try {
+			// Get and check length
+			long longlength = f.length();
+			int length = (int) longlength;
+			if (length != longlength)
+				throw new IOException("File size >= 2 GB");
+			// Read file and return data
+			byte[] data = new byte[length];
+			f.readFully(data);
+			return data;
+		} finally {
+			f.close();
+		}
+  }
+  
   public InetSocketAddress getUri() {
     return masterServer.getUri();
   }

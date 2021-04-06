@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 
@@ -172,7 +173,64 @@ import java.util.jar.Manifest;
 	                shutdown();
 	            }
 	        });
-}
+	    }
+	    
+	    /**
+	     * Loads a Jar from the specified JAR file.           
+	     *  Protocol 'file' - application launched from exploded dir or JAR 
+	     *  Decoding required for 'space char' in URL: 
+	     *  URL.getFile() returns "/C:/my%20dir/MyApp.jar" for "/C:/my dir/MyApp.jar" 
+	     * @param jarFile
+	     */
+	    public void loadJarFromJarfile(String sUrlTopJar) {
+	    	JarFileInfo jarFileInfo;
+	        // Prepare common for Protocol 'file' - application launched from exploded dir or JAR 
+            // Decoding required for 'space char' in URL: 
+            // URL.getFile() returns "/C:/my%20dir/MyApp.jar" for "/C:/my dir/MyApp.jar"
+	    	URL urlTopJar = null;
+            try {
+    	        urlTopJar = new URL(sUrlTopJar);
+                sUrlTopJar = URLDecoder.decode(urlTopJar.getFile(), "UTF-8");
+            } catch (UnsupportedEncodingException | MalformedURLException e) {
+            	System.out.printf( "Failure to decode URL: %s %s%n", urlTopJar, e.toString());
+                return;
+            }
+            Certificate[] certs = null;
+	    	CodeSource cs = new CodeSource(urlTopJar, certs);
+	        ProtectionDomain pdTop = new ProtectionDomain(cs, null,this,null);
+            File fileJar = new File(sUrlTopJar);
+	                 
+            // Application is loaded from directory: 
+            if (fileJar.isDirectory()) {
+            	System.out.printf("Loading from exploded directory: %s%n", sUrlTopJar);
+                return; // JarClassLoader completed its job
+            }
+            
+            // Application is loaded from a JAR:
+            try {
+                jarFileInfo = new JarFileInfo(new JarFile(fileJar), fileJar.getName(), null, pdTop, null);
+                System.out.printf("Loading from top JAR: '%s' PROTOCOL: '%s'%n", sUrlTopJar, "file");
+            } catch (IOException e) { 
+            	System.out.printf("Not a JAR: %s %s%n", sUrlTopJar, e.toString());
+                return;
+            }    
+        // FINALLY LOAD TOP JAR:
+        try {
+            loadJar(jarFileInfo); // start recursive JAR loading
+        } catch (IOException e) {
+        	System.out.printf("Not valid URL: %s %s%n", urlTopJar, e.toString());
+            return;
+        }
+        
+        checkShading();
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                shutdown();
+            }
+        });
+	
+	    }
+	    
 	    /**
 	     * Loads specified JAR.
 	     *
