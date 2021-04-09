@@ -38,7 +38,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * remotely invokable methods via reflection using the ServerInvokeMethod class.
  * @see ServerInvokeMethod
  * @see TcpRosServer
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class SlaveServer extends RpcServer {
   private static boolean DEBUG = true;
@@ -72,7 +72,7 @@ public class SlaveServer extends RpcServer {
     if(DEBUG) {
     	log.info("ADDRESSES SlaveServer ctor:"+nodeName+" TCPBind:"+tcpRosBindAddress+", TCPRosAdv:"+tcpRosAdvertiseAddress+", RPCBind:"+rpcBindAddress+", RPCAdv:"+rpcAdvertiseAddress);
     	log.info("MANAGERS SlaveServer ctor:"+nodeName+" MasterClient:"+master+" TopicParticipantManager:"+topicParticipantManager+
-    			" ServiceManager:"+serviceManager+" ParameterManager:"+parameterManager+" SchedulaedExecutorService:"+executorService);
+    			" ServiceManager:"+serviceManager+" ParameterManager:"+parameterManager+" ScheduledExecutorService:"+executorService);
     }
   }
 
@@ -92,15 +92,15 @@ public class SlaveServer extends RpcServer {
    * correct information when topics are requested.
    */
   public void start() {
+	tcpRosServer.start();
     super.start();
-    tcpRosServer.start();
   }
 
   // TODO(damonkohler): This should also shut down the Node.
   @Override
   public void shutdown() throws IOException {
+	tcpRosServer.shutdown();
     super.shutdown();
-    tcpRosServer.shutdown();
   }
 
   public List<Object> getBusStats(String callerId) {

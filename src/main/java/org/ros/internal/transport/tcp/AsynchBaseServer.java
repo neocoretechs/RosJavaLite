@@ -10,9 +10,11 @@ import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ChannelHandlerContextImpl;
 
 /**
- * Functionally this class Extends AsynchTCPServer, takes connections and spins the worker thread to handle each one 
- * @author jg Copyright (C) NeoCoreTechs 2016
- *
+ * Functionally, this class Extends AsynchTCPServer, takes connections and spins the worker thread to handle each
+ * incoming connection.<p/>
+ * The critical ChannelhandlerContext is created here after the server socket accepts a connection.<p/>
+ * After the ChannelHandlerContext is creates, an AsynchTcpWorker is constructed using that context.<p/> 
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2016,2021
  */
 public final class AsynchBaseServer extends AsynchTCPServer {
 	private static boolean DEBUG = true;
@@ -34,7 +36,6 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 			throw new IOException("Server address not defined, can not start Base Server");
 		startServer(channelGroup, address);
 	}
-
 	
 	public void run() {
 		while(!shouldStop) {
@@ -81,6 +82,16 @@ public final class AsynchBaseServer extends AsynchTCPServer {
 		return WORKBOOTPORT;
 	}
 
+	/**
+	 * Calls a shutdown of the AsynchTCPWorker, then a shutdown of the AsynchTCPServer superclass.
+	 * Invoking TcpRosServer shutdown calls this method before its shutdown is performed.
+	 */
+	public void shutdown() throws IOException {
+		if(uworker != null)
+			uworker.shutdown();
+		super.shutdown();
+	}
+	
 	public String toString() {
 		return "AsynchBaseServer for "+ tcpserver;
 	}

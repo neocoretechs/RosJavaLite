@@ -40,14 +40,13 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  * The TCP server which is used for data communication between publishers and
  * subscribers or between a service and a service client.
- * 
  * <p>
  * This server is used after publishers, subscribers, services and service
  * clients have been told about each other by the master.
  * It creates an AsynchBaseServer which handles the lower level TCP communications
  * while higher level channel abstractions are dealt with here.
  * ChannelHandlerContext is created in AsynchBaseServer and populates ArrayBlockingQueue here.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpRosServer implements Serializable {
   private static final long serialVersionUID = 1298495789043968855L;
@@ -106,11 +105,13 @@ public class TcpRosServer implements Serializable {
   }
 
   /**
-   * Close all incoming connections and the server socket.
-   * only external resources are
-   * the ExecutorService and control of that must remain with the overall
-   * application.
-   * <p>
+   * Close all incoming connections and the server socket.<p/>
+   * Calls shutdown on the AsynchBaseServer. The incoming and outgoing channel group executors 
+   * are shut down first.<p/>
+   * The only external resources are the ExecutorService and control of that must remain with the overall
+   * application. Although the executor services should shut down threads in the servers executed by
+   * the executors in the channel groups, we do explicit shutdowns of the various servers as well.
+   * <p/>
    * Calling this method more than once has no effect.
    * @throws IOException 
    */
@@ -126,6 +127,9 @@ public class TcpRosServer implements Serializable {
     	incomingChannelGroup.shutdown();
     	incomingChannelGroup = null;
     }
+    
+    server.shutdown();
+    
 	if (DEBUG) {
   	      log.info("TcpRosServer shut down for:" + bindAddress + " with advertise address:"+advertiseAddress);
 	}

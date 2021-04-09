@@ -10,8 +10,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
 /**
  * This AsynchTCPWorker is spawned for servicing traffic from connected nodes.
  * It functions as a worker for the {@link TcpRosServer} as well as the {@link TcpClient} to handle read traffic.
- * @author jg
- * Copyright (C) NeoCoreTechs 2016
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2016,2021
  *
  */
 public class AsynchTCPWorker implements Runnable {
@@ -68,6 +67,10 @@ public class AsynchTCPWorker implements Runnable {
 				waitHalt.wait();
 			} catch (InterruptedException ie) {}
 		}
+	}
+
+	public void shutdown() {
+		close();	
 	}
 
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * Starts the TCP request processor that maintains master/slave communications at top level registration.
  * Constructs a BaseServer.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public abstract class RpcServer {
 

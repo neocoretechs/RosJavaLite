@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarException;
@@ -61,7 +62,9 @@ import java.util.jar.Manifest;
 *</code>
 */
 	public class JarClassLoader extends ClassLoader {
-
+		private static boolean DEBUG = true;
+		private static boolean DEBUGLOADCLASS = false;
+		private static ConcurrentHashMap<String,Class> cache = new ConcurrentHashMap<String,Class>();
 
 	    /**
 	     * Sub directory name for temporary files.
@@ -132,7 +135,9 @@ import java.util.jar.Manifest;
 	            // Decoding required for 'space char' in URL: 
 	            //    URL.getFile() returns "/C:/my%20dir/MyApp.jar" for "/C:/my dir/MyApp.jar" 
 	            try {
+	      	        System.out.printf("%s.JarClassLoader(%s) Calling with:%s%n", this.getClass().getName(), parent, sUrlTopJar);
 	                sUrlTopJar = URLDecoder.decode(urlTopJar.getFile(), "UTF-8");
+	      	        System.out.printf("%s.JarClassLoader(%s) Decoded to :%s%n", this.getClass().getName(), parent, sUrlTopJar);
 	            } catch (UnsupportedEncodingException e) {
 	            	System.out.printf( "Failure to decode URL: %s %s%n", urlTopJar, e.toString());
 	                return;
@@ -190,14 +195,18 @@ import java.util.jar.Manifest;
 	    	URL urlTopJar = null;
             try {
     	        urlTopJar = new URL(sUrlTopJar);
+      	        System.out.printf("%s.loadJarFromJarFile(%s) Calling with:%s%n", this.getClass().getName(), sUrlTopJar, urlTopJar);
                 sUrlTopJar = URLDecoder.decode(urlTopJar.getFile(), "UTF-8");
+                System.out.printf("%s.loadJarFromJarFile(%s) Decoded to:%s%n", this.getClass().getName(), sUrlTopJar, urlTopJar);
             } catch (UnsupportedEncodingException | MalformedURLException e) {
             	System.out.printf( "Failure to decode URL: %s %s%n", urlTopJar, e.toString());
                 return;
             }
-            Certificate[] certs = null;
-	    	CodeSource cs = new CodeSource(urlTopJar, certs);
-	        ProtectionDomain pdTop = new ProtectionDomain(cs, null,this,null);
+            //Certificate[] certs = null;
+	    	//CodeSource cs = new CodeSource(urlTopJar, certs);
+	        //ProtectionDomain pdTop = new ProtectionDomain(cs, null,this,null);
+            ProtectionDomain pdTop = getClass().getProtectionDomain();
+            
             File fileJar = new File(sUrlTopJar);
 	                 
             // Application is loaded from directory: 
@@ -386,8 +395,8 @@ import java.util.jar.Manifest;
 	                if (jar == null) {
 	                    hm.put(sEntry, jarFileInfo);
 	                } else {
-	                	 System.out.printf("ENTRY %s IN %s SHADES %s%n",
-	                            sEntry, jar.simpleName, jarFileInfo.simpleName);
+	                	 //System.out.printf("ENTRY %s IN %s SHADES %s%n",
+	                            //sEntry, jar.simpleName, jarFileInfo.simpleName);
 	                }
 	            }
 	        }
@@ -545,24 +554,32 @@ import java.util.jar.Manifest;
 	     * {@link http://java.sun.com/developer/Books/javaprogramming/JAR/api/example-1dot2/JarClassLoader.java}
 	     */
 	    public void invokeMain(String sClass, String[] args) throws Throwable {
+	    	invokeMethod(sClass, "main", args);
+	    } // invokeMain()
+
+	    public void invokeMethod(String sClass, String sMethod, String[] args) throws Throwable {
 	        Class<?> clazz = loadClass(sClass);
-	        System.out.printf("Launch: %s.main(); Loader: %s%n", sClass, clazz.getClassLoader());
-	        Method method = clazz.getMethod("main", new Class<?>[] { String[].class });
+	        invokeMethod(clazz, sMethod, args);
+	    }
+	    
+	    public void invokeMethod(Class clazz, String sMethod, String[] args) throws Throwable  {
+	        System.out.printf("Launch: %s.%s(); Loader: %s%n", clazz.getSimpleName(), sMethod, clazz.getClassLoader());
+	        Method method = clazz.getMethod(sMethod, new Class<?>[] { String[].class });
 
 	        boolean bValidModifiers = false;
 	        boolean bValidVoid = false;
 
 	        if (method != null) {
 	            method.setAccessible(true); // Disable IllegalAccessException
-	            int nModifiers = method.getModifiers(); // main() must be "public static"
+	            int nModifiers = method.getModifiers(); // method() must be "public static"
 	            bValidModifiers = Modifier.isPublic(nModifiers) &&
 	                              Modifier.isStatic(nModifiers);
-	            Class<?> clazzRet = method.getReturnType(); // main() must be "void"
+	            Class<?> clazzRet = method.getReturnType(); // method() must be "void"
 	            bValidVoid = (clazzRet == void.class);
 	        }
 	        if (method == null  ||  !bValidModifiers  ||  !bValidVoid) {
 	            throw new NoSuchMethodException(
-	                    "The main() method in class \"" + sClass + "\" not found.");
+	                    "The "+sMethod+"() method in class \"" + clazz.toGenericString() + "\" not found.");
 	        }
 
 	        // Invoke method.
@@ -572,14 +589,38 @@ import java.util.jar.Manifest;
 	        } catch (InvocationTargetException e) {
 	            throw e.getTargetException();
 	        }
-	    } // invokeMain()
+	    }
+	    
+	    public Object invokeMethodReturn(Class clazz, String sMethod, Class<?>[] args) throws Throwable  {
+	        System.out.printf("Launch: %s.%s(); Loader: %s%n", clazz.getSimpleName(), sMethod, clazz.getClassLoader());
+	        Method method = clazz.getMethod(sMethod, args);
 
+	        boolean bValidModifiers = false;
+	        if (method != null) {
+	            method.setAccessible(true); // Disable IllegalAccessException
+	            int nModifiers = method.getModifiers(); // method() must be "public static"
+	            bValidModifiers = Modifier.isPublic(nModifiers) &&
+	                              Modifier.isStatic(nModifiers);
+	           // Class<?> clazzRet = method.getReturnType(); // method() must be "void"          
+	        }
+	        if (method == null  ||  !bValidModifiers) {
+	            throw new NoSuchMethodException(
+	                    "The "+sMethod+"() method in class \"" + clazz.toGenericString() + "\" not found.");
+	        }
+
+	        try {
+	            return method.invoke(null, (Object[])args);
+	        } catch (InvocationTargetException e) {
+	            throw e.getTargetException();
+	        }
+	    }
 	    /**
 	     * Class loader JavaDoc encourages overriding findClass(String) in derived
 	     * class rather than overriding this method. This does not work for
 	     * loading classes from a JAR. Default implementation of loadClass() is
 	     * able to load a class from a JAR without calling findClass().
 	     */
+	    /*
 	    @Override
 	    protected synchronized Class<?> loadClass(String sClassName, boolean bResolve)
 	    throws ClassNotFoundException {
@@ -664,7 +705,81 @@ import java.util.jar.Manifest;
 	            }
 	        }
 	    } // loadClass()
-
+	     */
+	    /**
+	     * loadClass will attempt to load the named class, If not found in cache
+	     * or system or user, will attempt to use Hastable of name and bytecodes
+	     * set up from defineClasses.  defineClass will call this on attempting
+	     * to resolve a class, so we have to be ready with the bytes.
+	     * @param name The name of the class to load
+	     * @param resolve true to call resolveClass()
+	     * @return The resolved Class Object
+	     * @throws ClassNotFoundException If we can't load the class from system, or loaded, or cache
+	     */
+	     public synchronized Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
+	     	if(DEBUG)
+	     		System.out.println("DEBUG:"+this+".loadClass("+name+")");
+	         Class c = null;
+	         try {
+	         	 c = Class.forName(name); // can it be loaded by normal means? and initialized?
+	         	 return c;
+	         } catch(Exception e) {
+	         	if(DEBUGLOADCLASS) {
+	         		System.out.println("DEBUG:"+this+".loadClass Class.forName("+name+") exception "+e);
+	         		e.printStackTrace();
+	         	}
+	         } 
+	         try {
+	             c = findSystemClass(name);
+	         } catch (Exception e) {
+	         	if(DEBUGLOADCLASS) {
+	               System.out.println("DEBUG:"+this+".loadClass findSystemClass("+name+") exception "+e);
+	               e.printStackTrace();
+	         	}
+	         }
+	         if (c == null) {
+	             c = cache.get(name);
+	         } else {
+	         	if(DEBUG)
+	         		System.out.println("DEBUG:"+this+".loadClass exit found sys class "+name+" resolve="+resolve);
+	             return c;
+	         }
+	         if (c == null) {
+	             c = findLoadedClass(name);
+	         } else {
+	         	if(DEBUG)
+	         		System.out.println("DBUG:"+this+".loadClass exit cache hit:"+c+" for "+name+" resolve="+resolve);
+	             return c;
+	         }
+	         // this is our last chance, otherwise noClassDefFoundErr and we're screwed
+	         if (c == null) {
+	        	 try {
+	                 c = findJarClass(name);
+	                 if(DEBUG)
+	                 	System.out.println("DEBUG:"+this+" Putting class "+name+" of class "+c+" to cache");
+	                 cache.put(name, c);
+	        	 } catch (JarException e) {
+	                    if (e.getCause() == null) {
+	                    	System.out.printf("Not found %s in JAR by %s: %s%n",
+	                                name, getClass().getName(), e.getMessage());
+	                    } else {
+	                    	System.out.printf("Error loading %s in JAR by %s: %s%n",
+	                                name, getClass().getName(), e.getCause());
+	                    }
+	                    //end of the line
+	                    throw new ClassNotFoundException("The requested class: "+name+" can not be found on any resource path");
+	                }
+	         } else {
+	         	if(DEBUG)
+	                System.out.println("DEBUG:"+this+".loadClass exit found loaded "+name+" resolve="+resolve);
+	             	return c;
+	         }
+	         //if (resolve)
+	             resolveClass(c);
+	             if(DEBUG)
+	         	   System.out.println("DEBUG:"+this+".loadClass exit resolved "+name+" resolve="+resolve);
+	         return c;
+	     }
 	    /**
 	     * @see java.lang.ClassLoader#findResource(java.lang.String)
 	     *

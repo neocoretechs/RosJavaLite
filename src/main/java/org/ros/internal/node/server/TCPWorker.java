@@ -11,9 +11,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * This TCPWorker is spawned for servicing traffic from a master or slave node and invoking methods thereupon.
- * @author jg
- * Copyright (C) NeoCoreTechs 2015
+ * This TCPWorker is spawned for servicing traffic from a master or slave node and invoking methods thereupon.<p/>
+ * Constructed with Socket and RpcServer, creates an ObjectInputStream from datasocket Socket and queues a response
+ * on the Objectoutputstream.
+ * 
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  *
  */
 public class TCPWorker implements Runnable {
@@ -95,6 +97,10 @@ public class TCPWorker implements Runnable {
 				waitHalt.wait();
 			} catch (InterruptedException ie) {}
 		}
+	}
+	
+	public void shutdown() {
+		close();
 	}
 
 }

@@ -1,12 +1,16 @@
 package org.ros.internal.loader;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.CommandLineVariables;
 import org.ros.EnvironmentVariables;
 
 import org.ros.address.InetSocketAddressFactory;
 import org.ros.internal.jarclassloader.JarClassLoader;
+import org.ros.internal.node.DefaultNode;
 import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
+import org.ros.node.AbstractNodeMain;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
 
@@ -37,7 +41,8 @@ import java.util.Map;
  * @author Jonathan Groff (C) NeoCoreTechs 2021
  */
 public class CommandLineLoader {
-
+  private static final boolean DEBUG = false;
+  private static final Log log = LogFactory.getLog(CommandLineLoader.class);
   private final List<String> argv;
   private final List<String> nodeArguments;
   private final List<String> remappingArguments;
@@ -233,7 +238,7 @@ public class CommandLineLoader {
 
   /**
    * Load main node using default classloader
-   * @param name the name of the class extending AbstracNodeMain
+   * @param name the name of the class extending AbstractNodeMain
    * @return an instance of {@link NodeMain}
    * @throws ClassNotFoundException
    * @throws InstantiationException
@@ -270,15 +275,21 @@ public class CommandLineLoader {
    */
   public NodeMain loadClassWithJars(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     Class<?> clazz = jcl.loadClass(name);
-    Method meth = null;
     if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
-    	try {
-			meth = clazz.getMethod("getInstance",(Class<?>[])null);
-		   	return NodeMain.class.cast(meth.invoke(null, (Object[])null));
-		} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
+    	try {	
+		   	return (NodeMain) jcl.invokeMethodReturn(clazz, "getInstance", null);
+		} catch ( Throwable e) {
 			throw new InstantiationException(e.getMessage());
 		}
     }
-    return NodeMain.class.cast(clazz.newInstance());
+    try {
+    return (NodeMain) clazz.newInstance();
+    } catch(ClassCastException cce) {
+    	log.error(cce);
+    	log.error(clazz.getProtectionDomain()+" "+clazz.getProtectionDomain().getClassLoader()+" "+clazz.getTypeName()+" "+clazz.toGenericString()+" "+AbstractNodeMain.class.isInstance(clazz.newInstance()));
+       	log.error(NodeMain.class.getProtectionDomain()+" "+NodeMain.class.getProtectionDomain().getClassLoader()+" "+NodeMain.class.getTypeName()+" "+NodeMain.class.toGenericString()+" "+NodeMain.class.isInstance(clazz.newInstance()));
+       	throw new InstantiationException(cce.getMessage());
+    }
+    
   }
 }

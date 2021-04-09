@@ -1,6 +1,5 @@
 package org.ros.internal.node.server.master;
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
@@ -39,7 +38,7 @@ import java.util.List;
  * 
  * @see <a href="http://www.ros.org/wiki/Master">Master documentation</a>
  * 
- * @author jg
+ * @author Jonathan Groff Copyright(C) NeoCoreTechs 2015,2021
  */
 public class MasterServer extends RpcServer implements MasterRegistrationListener {
 

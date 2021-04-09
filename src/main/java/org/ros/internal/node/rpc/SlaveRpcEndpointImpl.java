@@ -1,6 +1,5 @@
 package org.ros.internal.node.rpc;
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.client.RemoteClient;
@@ -22,11 +21,10 @@ import java.util.List;
 
 import java.util.Set;
 
-
 /**
  * Facility for contacting the remote master and issuing commands via the remote invokable methods.
  * The transport is accomplished via the RemoteRequestinterface implementors.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2020,2021
  */
 public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
 
@@ -34,7 +32,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
   private static final Log log = LogFactory.getLog(SlaveRpcEndpointImpl.class);
 
   //private final SlaveServer slave;
-  private final RemoteClient remoteSlave;
+  private RemoteClient remoteSlave;
 
   public SlaveRpcEndpointImpl(String remoteHost, int remotePort) throws IOException {
     //this.slave = slave;
@@ -74,6 +72,7 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
 			"shutdown"
 			); 
 	//slave.shutdown();
+    remoteSlave.close();
     return Response.newSuccess("Shutdown successful.", remoteSlave.queue(rri)).toList();
   }
 
@@ -176,9 +175,24 @@ public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {
     return response;
   }
 
+  /**
+   * Re-use this slave for connection to something else. Shut down previous remote client
+   * and create a new one with the given parameters.
+   */
   @Override
   public void setConfig(RpcClientConfigImpl config) {
-	
+	remoteSlave.close();
+	try {
+		remoteSlave = new RemoteClient(config.getSeverURL().getHostName(), config.getSeverURL().getPort());
+	} catch (IOException e) {
+		log.fatal("Reconnection to remote slave at "+config.getSeverURL().getHostString()+" FAILED due to:"+e.getMessage());
+		e.printStackTrace();
+	}
+  }
+
+  @Override
+  public void shutDown() {
+	remoteSlave.close();
   }
 
 

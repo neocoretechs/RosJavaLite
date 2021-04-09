@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.client;
 
 import org.ros.exception.RosRuntimeException;
@@ -56,17 +40,14 @@ import java.util.List;
 /**
  * Provides access to the RPC API exposed by a {@link MasterServer}.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class MasterClient extends Client<MasterRpcEndpoint> {
 
   /**
-   * Create a new {@link MasterClient} connected to the specified
-   * {@link MasterServer} URI.
-   * 
-   * @param uri
-   *          the {@link URI} of the {@link MasterServer} to connect to
- * @throws IOException 
+   * Create a new {@link MasterClient} connected to the specified {@link MasterRpcEndpoint} URI.
+   * @param uri The {@link InetSocketAddress} of the {@link MasterServer} to connect to
+   * @throws IOException 
    */
   
   public MasterClient(InetSocketAddress uri, int connTimeout, int replyTimeout) throws IOException {
@@ -76,11 +57,8 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   /**
    * Registers the given {@link ServiceServer}.
    * 
-   * @param slave
-   *          the {@link NodeIdentifier} where the {@link ServiceServer} is
-   *          running
-   * @param service
-   *          the {@link ServiceServer} to register
+   * @param slave The {@link NodeIdentifier} where the {@link ServiceServer} is running.
+   * @param service The {@link ServiceServer} to register
    * @return a void {@link Response}
    */
   public Response<Void> registerService(NodeIdentifier slave, ServiceServer<?, ?> service) {
@@ -95,11 +73,8 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   /**
    * Unregisters the specified {@link ServiceServer}.
    * 
-   * @param slave
-   *          the {@link NodeIdentifier} where the {@link ServiceServer} is
-   *          running
-   * @param service
-   *          the {@link ServiceServer} to unregister
+   * @param slave {@link NodeIdentifier} where the {@link ServiceServer} is running
+   * @param service the {@link ServiceServer} to unregister
    * @return the number of unregistered services
    */
   public Response<Integer> unregisterService(NodeIdentifier slave, ServiceServer<?, ?> service) {
@@ -114,13 +89,9 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
    * will also receive notifications of new {@link Publisher}s via the
    * publisherUpdate API.
    * 
-   * @param slave
-   *          the {@link NodeIdentifier} that the {@link Subscriber} is running
-   *          on
-   * @param subscriber
-   *          the {@link Subscriber} to register
-   * @return a {@link List} or {@link SlaveServer} XML-RPC API URIs for nodes
-   *         currently publishing the specified topic
+   * @param slave The {@link NodeIdentifier} that the {@link Subscriber} is running on
+   * @param subscriber The {@link Subscriber} to register
+   * @return a {@link List} or {@link SlaveServer} XM URIs for nodes currently publishing the specified topic.
    */
   public Response<List<InetAddress>> registerSubscriber(NodeIdentifier slave, Subscriber<?> subscriber) {
     return Response.fromListChecked(
@@ -134,10 +105,8 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   /**
    * Unregisters the specified {@link Subscriber}.
    * 
-   * @param slave
-   *          the {@link NodeIdentifier} where the subscriber is running
-   * @param subscriber
-   *          the {@link Subscriber} to unregister
+   * @param slave The {@link NodeIdentifier} where the subscriber is running
+   * @param subscriber The {@link Subscriber} to unregister
    * @return the number of unregistered {@link Subscriber}s
    */
   public Response<Integer> unregisterSubscriber(NodeIdentifier slave, Subscriber<?> subscriber) {
@@ -149,11 +118,8 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   /**
    * Registers the specified {@link PublisherDeclaration}.
    * 
-   * @param publisherDeclaration
-   *          the {@link PublisherDeclaration} of the {@link Publisher} to
-   *          register
-   * @return a {@link List} of the current {@link SlaveServer} URIs which have
-   *         {@link Subscriber}s for the published {@link TopicSystemState}
+   * @param publisherDeclaration The {@link PublisherDeclaration} of the {@link Publisher} to register
+   * @return a {@link List} of the current {@link SlaveServer} URIs which have {@link Subscriber}s for the published {@link TopicSystemState}
    */
   public Response<List<InetSocketAddress>> registerPublisher(PublisherDeclaration publisherDeclaration) {
     String slaveName = publisherDeclaration.getSlaveName().toString();
@@ -169,9 +135,7 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   /**
    * Unregisters the specified {@link PublisherDeclaration}.
    * 
-   * @param publisherIdentifier
-   *          the {@link PublisherIdentifier} of the {@link Publisher} to
-   *          unregister
+   * @param publisherIdentifier The {@link PublisherIdentifier} of the {@link Publisher} to unregister
    * @return the number of unregistered {@link Publisher}s
    */
   public Response<Integer> unregisterPublisher(PublisherIdentifier publisherIdentifier) {
@@ -185,10 +149,8 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   }
 
   /**
-   * @param slaveName
-   *          the {@link GraphName} of the caller
-   * @param nodeName
-   *          the name of the {@link SlaveServer} to lookup
+   * @param slaveName The {@link GraphName} of the caller
+   * @param nodeName The name of the {@link SlaveServer} to lookup
    * @return the {@link URI} of the {@link SlaveServer} with the given name
    */
   public Response<InetSocketAddress> lookupNode(GraphName slaveName, String nodeName) {
@@ -197,8 +159,7 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   }
 
   /**
-   * @param slaveName
-   *          the {@link NodeIdentifier} of the caller
+   * @param slaveName The {@link NodeIdentifier} of the caller
    * @return the {@link URI} of the {@link MasterServer}
    */
   public Response<InetSocketAddress> getUri(GraphName slaveName) {
@@ -207,12 +168,9 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   }
 
   /**
-   * @param callerName
-   *          the {@link GraphName} of the caller
-   * @param serviceName
-   *          the name of the {@link ServiceServer} to look up
-   * @return the {@link URI} of the {@link ServiceServer} with the given name.
-   *         {@link ServiceServer} as a result
+   * @param callerName The {@link GraphName} of the caller
+   * @param serviceName The name of the {@link ServiceServer} to look up
+   * @return the {@link URI} of the {@link ServiceServer} with the given name. {@link ServiceServer} as a result
    */
   public Response<InetSocketAddress> lookupService(GraphName callerName, String serviceName) {
     return Response.fromListCheckedFailure(
@@ -220,10 +178,8 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   }
 
   /**
-   * @param callerName
-   *          the {@link GraphName} of the caller
-   * @param subgraph
-   *          the subgraph of the topics
+   * @param callerName The {@link GraphName} of the caller
+   * @param subgraph The subgraph of the topics
    * @return the list of published {@link TopicDeclaration}s
    */
   public Response<List<TopicDeclaration>> getPublishedTopics(GraphName callerName, String subgraph) {
@@ -235,8 +191,7 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   /**
    * Get a {@link List} of all {@link TopicSystemState} message types.
    * 
-   * @param callerName
-   *          the {@link GraphName} of the caller
+   * @param callerName The {@link GraphName} of the caller
    * @return a {@link List} of {@link TopicType}s
    */
   public Response<List<TopicType>> getTopicTypes(GraphName callerName) {
@@ -245,12 +200,15 @@ public class MasterClient extends Client<MasterRpcEndpoint> {
   }
 
   /**
-   * @param callerName
-   *          the {@link GraphName} of the caller
+   * @param callerName The {@link GraphName} of the caller
    * @return the current {@link SystemState}
    */
   public Response<SystemState> getSystemState(GraphName callerName) {
     return Response.fromListChecked(rpcEndpoint.getSystemState(callerName.toString()),
         new SystemStateResultFactory());
+  }
+  
+  public void shutdown() {
+	  rpcEndpoint.shutDown();
   }
 }

@@ -21,8 +21,7 @@ import org.ros.internal.node.server.ThreadPoolManager;
  * This class functions as client to the remote node. MasterRpcEndpoint has one of these each for master and parameter server
  * SlaveRpcEndpoint has but one for contacting the remote master and issuing commands via the remote invokable methods.
  * The transport is accomplished via the RemoteRequestinterface implementors.
- * @author jg
- * Copyright (C) NeoCoreTechs 2014,2015
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2014,2015,2021
  */
 public class RemoteClient implements Runnable {
 	private static final boolean DEBUG = false;

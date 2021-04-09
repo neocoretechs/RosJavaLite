@@ -8,8 +8,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * Functionally this class Extends TCPServer, takes connections and spins the worker thread to handle each one 
- * @author jg Copyright (C) NeoCoreTechs 2015
+ * Functionally this class Extends TCPServer, takes connections and spins the worker thread to handle each one.<p/>
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  *
  */
 public final class BaseServer extends TCPServer {
@@ -18,7 +18,7 @@ public final class BaseServer extends TCPServer {
 	public int WORKBOOTPORT = 8090;
 	public InetAddress address = null;
 	private RpcServer rpcserver = null;
-	
+	private TCPWorker uworker = null;	
 	
 	public BaseServer(RpcServer server) throws IOException {
 		super();
@@ -59,8 +59,7 @@ public final class BaseServer extends TCPServer {
                     // wait 1 second before close; close blocks for 1 sec. and data can be sent
                     datasocket.setSoLinger(true, 1);
 					//
-    
-                    TCPWorker uworker = new TCPWorker(datasocket, rpcserver);
+                    uworker = new TCPWorker(datasocket, rpcserver);
                     ThreadPoolManager.getInstance().spin(uworker);
                     
                     if( DEBUG ) {
@@ -72,6 +71,16 @@ public final class BaseServer extends TCPServer {
                }
 		}
 	
+	}
+	
+	/**
+	 * Shut down the TCPWorker, should it have been started. 
+	 * @throws IOException 
+	 */
+	public void shutdown() throws IOException {
+		if(uworker != null)
+			uworker.shutdown();
+		super.shutdown();
 	}
 	
 	public Integer getPort() {

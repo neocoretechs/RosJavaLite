@@ -7,13 +7,13 @@ import org.apache.commons.logging.LogFactory;
 
 /**
 * TCPServer is the superclass of all objects using ServerSockets.
+* @author Jonathan Groff Copyright (C) NeoCoreTechs 2015m2021
 */
 public abstract class TCPServer implements Cloneable, Runnable {
 	private static boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(TCPServer.class);
 	ServerSocket server = null;
-	Socket data = null;
-	boolean shouldStop = false;
+	volatile boolean shouldStop = false;
 	public synchronized void startServer(int port) throws IOException {
 		if( server == null ) {
 			server = new ServerSocket(port);
@@ -43,8 +43,8 @@ public abstract class TCPServer implements Cloneable, Runnable {
 		}
 	}
 
-    public void reInit() throws IOException {
-         	if( data != null ) data.close();
-    }
+	public void shutdown() throws IOException {
+		stopServer();
+	}
 }	
 

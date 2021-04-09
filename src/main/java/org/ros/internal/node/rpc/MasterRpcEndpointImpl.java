@@ -1,5 +1,7 @@
 package org.ros.internal.node.rpc;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.client.RemoteClient;
 import org.ros.internal.node.response.Response;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -16,17 +18,19 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * A combined RPC endpoint for the master and parameter servers.
+ * A combined RPC endpoint for the master and parameter servers.<p/>
+ * Creates a RemoteClient to the master and parameter servers specified in the constructor parameters,
+ * with the parameter server merely being located at master port+1 on the same host.<p/>
  * 
- * @author damonkohler@google.com (Damon Kohler)
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServerRpcEndpoint {
-
+  private static final boolean DEBUG = false;
+  private static final Log log = LogFactory.getLog(MasterRpcEndpointImpl.class);
   //private final MasterServer master;
   //private final ParameterServer parameterServer;
-	private final RemoteClient remoteMaster;
-	private final RemoteClient remoteParameter;
+  private RemoteClient remoteMaster;
+  private RemoteClient remoteParameter;
 	
   public MasterRpcEndpointImpl(String remoteHost, int remotePort) throws IOException {
     //this.master = master;
@@ -259,10 +263,30 @@ public class MasterRpcEndpointImpl implements MasterRpcEndpoint, ParameterServer
     */
     return Response.newSuccess("Success", remoteParameter.queue(rri)).toList();
   }
+  /**
+   * Set for future use where we may need to connect to a higher master, perhaps for failover,
+   * although in practice the master seems robust. The use case would be loss of the entire
+   * node. remoteMaster and remoteParameter are both closed, shutdown awaited, then restarted at
+   * new config parameters. 
+   */
+  @Override
+  public void setConfig(RpcClientConfigImpl config) {
+	remoteMaster.close();
+	remoteParameter.close();
+	try {
+		remoteMaster = new RemoteClient(config.getSeverURL().getHostName(), config.getSeverURL().getPort());
+		remoteParameter = new RemoteClient(config.getSeverURL().getHostName(), config.getSeverURL().getPort()+1);
+	} catch (IOException e) {
+		log.fatal("Reconnection to remote master and parameter servers at "+config.getSeverURL().getHostString()+" FAILED due to:"+e.getMessage());
+		e.printStackTrace();
+	}
 
-@Override
-public void setConfig(RpcClientConfigImpl config) {
-	// TODO Auto-generated method stub	
-}
+  }
+
+  @Override
+  public void shutDown() {
+		remoteMaster.close();
+		remoteParameter.close();
+  }
 
 }

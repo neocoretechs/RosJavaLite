@@ -14,8 +14,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
-* AsynchTCPServer is the superclass of all objects using AsynchServerSockets.
-* @author jg
+* AsynchTCPServer is the superclass of all objects using AsynchServerSockets.<p/>
+* Extended by AsynchBaseServer which takes a TcpRosServer and does a ServerSocket.accept<p/>
+* @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
 */
 public abstract class AsynchTCPServer implements Cloneable, Runnable {
 	private static boolean DEBUG = false;
@@ -25,9 +26,15 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 	//AsynchronousSocketChannel data = null;
 	ServerSocket server = null;
 	ChannelGroup channelGroup;
-	Socket data = null;
-	volatile boolean shouldStop = false;
 
+	volatile boolean shouldStop = false;
+	/**
+	 * Construct a ServerSocket bound to the specified port using the supplied channel group.<p/>
+	 * The primary purpose of the channel group is to provide the executor to start the server.
+	 * @param group
+	 * @param port
+	 * @throws IOException
+	 */
 	public synchronized void startServer(ChannelGroup group, int port) throws IOException {	
 		if( server == null ) {
 			if( DEBUG )
@@ -50,7 +57,8 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 			group.getExecutorService().execute(this);
 		}
 	}
-	public synchronized void stopServer() throws IOException {
+	
+	public synchronized void shutdown() throws IOException {
 		if( server != null ) {
 			shouldStop = true;
 			server.close();
@@ -58,8 +66,6 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 		}
 	}
 
-    public void reInit() throws IOException {
-         	if( data != null ) data.close();
-    }
+
 }	
 
