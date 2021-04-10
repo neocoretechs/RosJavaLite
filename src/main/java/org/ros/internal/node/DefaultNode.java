@@ -109,6 +109,35 @@ public class DefaultNode implements ConnectedNode {
     this.nodeListeners.addAll(nodeListeners);
     this.scheduledExecutorService = scheduledExecutorService;
     masterUri = nodeConfiguration.getMasterUri();
+    NodeIdentifier nodeIdentifier = null;
+	masterClient = nodeConfiguration.getMasterClient();
+	topicParticipantManager = nodeConfiguration.getTopicParticipantManager();
+    serviceManager = nodeConfiguration.getServiceManager();
+    try {
+    	slaveServer = nodeConfiguration.getSlaveServer();
+    	parameterManager = nodeConfiguration.getParameterManager();
+    	GraphName basename = nodeConfiguration.getNodeName();
+    	nodeName = nodeConfiguration.getParentResolver().getNamespace().join(basename);
+    	nodeConfiguration.setNodeName(nodeName);
+    	resolver = new NodeNameResolver(nodeName, nodeConfiguration.getParentResolver());
+    	// assign the slaveServer a nodename, now that we have one
+    	nodeConfiguration.getSlaveServer().setNodeName(nodeName);
+    	nodeIdentifier = slaveServer.toNodeIdentifier();
+		parameterTree =
+		    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
+		        resolver, parameterManager);
+		publisherFactory =
+			        new PublisherFactory(nodeIdentifier, topicParticipantManager,
+			            nodeConfiguration.getTopicMessageFactory(), scheduledExecutorService);
+		subscriberFactory =
+			        new SubscriberFactory(nodeIdentifier, topicParticipantManager, scheduledExecutorService);
+		serviceFactory =
+			        new ServiceFactory(nodeName, slaveServer, serviceManager, scheduledExecutorService);
+	} catch (IOException e) {
+		log.error("Cannot construct new node due to "+e,e);
+		throw new RuntimeException(e);
+	}
+    /*
     try {
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 	} catch (IOException e1) {
@@ -147,15 +176,8 @@ public class DefaultNode implements ConnectedNode {
 	} catch (IOException e) {
 		log.error("Cannot construct parameter tree due to "+e,e);
 	}
-
-    publisherFactory =
-        new PublisherFactory(nodeIdentifier, topicParticipantManager,
-            nodeConfiguration.getTopicMessageFactory(), scheduledExecutorService);
-    subscriberFactory =
-        new SubscriberFactory(nodeIdentifier, topicParticipantManager, scheduledExecutorService);
-    serviceFactory =
-        new ServiceFactory(nodeName, slaveServer, serviceManager, scheduledExecutorService);
-
+    */
+  
     registrar = new Registrar(masterClient, scheduledExecutorService);
     topicParticipantManager.setListener(registrar);
     serviceManager.setListener(registrar);

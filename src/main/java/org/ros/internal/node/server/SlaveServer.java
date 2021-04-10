@@ -43,7 +43,7 @@ import java.util.concurrent.ScheduledExecutorService;
 public class SlaveServer extends RpcServer {
   private static boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(SlaveServer.class);
-  private final GraphName nodeName;
+  private GraphName nodeName;
   private final MasterClient masterClient;
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
@@ -255,5 +255,9 @@ public class SlaveServer extends RpcServer {
 	  synchronized(invokableMethods) {
 		  return invokableMethods.invokeMethod(rri, this);
 	  }
+  }
+
+  public void setNodeName(GraphName nodename) {
+	nodeName = nodename;
   }
 }

@@ -1,42 +1,40 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.node;
 
 import org.ros.internal.loader.CommandLineLoader;
 import org.ros.internal.message.definition.MessageDefinitionReflectionProvider;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.AdvertiseAddressFactory;
 import org.ros.address.BindAddress;
 import org.ros.address.PrivateAdvertiseAddressFactory;
 import org.ros.address.PublicAdvertiseAddressFactory;
+import org.ros.concurrent.DefaultScheduledExecutorService;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.message.DefaultMessageFactory;
 import org.ros.internal.message.service.ServiceDescriptionFactory;
 import org.ros.internal.message.service.ServiceRequestMessageFactory;
 import org.ros.internal.message.service.ServiceResponseMessageFactory;
 import org.ros.internal.message.topic.TopicDescriptionFactory;
+import org.ros.internal.node.DefaultNode;
+import org.ros.internal.node.client.MasterClient;
+import org.ros.internal.node.parameter.DefaultParameterTree;
+import org.ros.internal.node.parameter.ParameterManager;
+import org.ros.internal.node.server.NodeIdentifier;
+import org.ros.internal.node.server.SlaveServer;
+import org.ros.internal.node.service.ServiceManager;
+import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.message.MessageDefinitionProvider;
 import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
+import org.ros.namespace.NodeNameResolver;
+import org.ros.node.parameter.ParameterTree;
 import org.ros.time.TimeProvider;
 import org.ros.time.WallTimeProvider;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
@@ -45,16 +43,13 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  * Stores configuration information (e.g. ROS master URI) for {@link Node}s.
  * 
- * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node
- *      documentation</a>
+ * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node documentation</a>
  * 
- * @author ethan.rublee@gmail.com (Ethan Rublee)
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
- * @author groffj@neocoretechs.com (Jonathan Neville Groff)
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class NodeConfiguration {
-
+  private static final boolean DEBUG = false;
+  private static final Log log = LogFactory.getLog(NodeConfiguration.class);
   /**
    * The default master {@link URI}.
    */
@@ -85,10 +80,18 @@ public class NodeConfiguration {
   private TimeProvider timeProvider;
   private CommandLineLoader commandLineLoader = null;
 
-
-/**
-   * @param nodeConfiguration
-   *          the {@link NodeConfiguration} to copy
+  // These follow creation of SlaveServer and access to ParameterTree
+  private SlaveServer slaveServer = null;
+  private MasterClient masterClient = null;
+  private ParameterTree parameterTree = null;
+  private TopicParticipantManager topicParticipantManager;
+  private ServiceManager serviceManager;
+  private ScheduledExecutorService executor;
+  private ParameterManager parameterManager;
+  private NameResolver resolver;
+  private NodeIdentifier nodeIdentifier;
+  /**
+   * @param nodeConfiguration The {@link NodeConfiguration} to copy
    * @return a copy of the supplied {@link NodeConfiguration}
    */
   public static NodeConfiguration copyOf(NodeConfiguration nodeConfiguration) {
@@ -110,20 +113,25 @@ public class NodeConfiguration {
     copy.scheduledExecutorService = nodeConfiguration.scheduledExecutorService;
     copy.timeProvider = nodeConfiguration.timeProvider;
     copy.commandLineLoader = nodeConfiguration.commandLineLoader;
+    // SlaveServer and related
+    copy.slaveServer = nodeConfiguration.slaveServer;
+    copy.masterClient = nodeConfiguration.masterClient;
+    copy.parameterTree = nodeConfiguration.parameterTree;
+    copy.topicParticipantManager = nodeConfiguration.topicParticipantManager;
+    copy.serviceManager = nodeConfiguration.serviceManager;
+    copy.executor = nodeConfiguration.executor;
+    copy.parameterManager = nodeConfiguration.parameterManager;
+    copy.resolver = nodeConfiguration.resolver;
+    copy.nodeIdentifier = nodeConfiguration.nodeIdentifier;
     return copy;
   }
 
   /**
-   * Creates a new {@link NodeConfiguration} for a publicly accessible
-   * {@link Node}.
+   * Creates a new {@link NodeConfiguration} for a publicly accessible {@link Node}.
    * 
-   * @param host
-   *          the host that the {@link Node} will run on
-   * @param defaultMasterUri
-   *          the {@link URI} for the master that the {@link Node} will register
-   *          with
-   * @return a new {@link NodeConfiguration} for a publicly accessible
-   *         {@link Node}
+   * @param hostTthe host that the {@link Node} will run on
+   * @param defaultMasterUri the {@link URI} for the master that the {@link Node} will register with
+   * @return a new {@link NodeConfiguration} for a publicly accessible {@link Node}
    */
   public static NodeConfiguration newPublic(String host, InetSocketAddress defaultMasterUri) {
     NodeConfiguration configuration = new NodeConfiguration();
@@ -140,9 +148,7 @@ public class NodeConfiguration {
    * Creates a new {@link NodeConfiguration} for a {@link Node} that is only
    * accessible on the local host.
    * 
-   * @param masterUri
-   *          the {@link URI} for the master that the {@link Node} will register
-   *          with
+   * @param masterUri the {@link URI} for the master that the {@link Node} will register with
    * @return a new {@link NodeConfiguration} for a private {@link Node}
    */
   public static NodeConfiguration newPrivate(InetSocketAddress masterUri) {
@@ -156,8 +162,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * Creates a new {@link NodeConfiguration} for a {@link Node} that is only
-   * accessible on the local host.
+   * Creates a new {@link NodeConfiguration} for a {@link Node} that is only accessible on the local host.
    * 
    * @return a new {@link NodeConfiguration} for a private {@link Node}
    */
@@ -184,8 +189,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @param resolver
-   *          the {@link NameResolver} for the {@link Node}'s parent namespace
+   * @param resolver the {@link NameResolver} for the {@link Node}'s parent namespace
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setParentResolver(NameResolver resolver) {
@@ -194,16 +198,32 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a
-   *      href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_MASTER_URI">ROS_MASTER_URI
-   *      documentation</a>
-   * @return the {@link URI} of the master that the {@link Node} will register
-   *         with
+   * @see <ahref="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_MASTER_URI">ROS_MASTER_URI documentation</a>
+   * @return the {@link URI} of the master that the {@link Node} will register with
    */
   public InetSocketAddress getMasterUri() {
     return masterUri;
   }
   
+  public SlaveServer newSlaveServer() throws IOException {
+ 	    topicParticipantManager = new TopicParticipantManager();
+	    serviceManager = new ServiceManager();
+		executor = new DefaultScheduledExecutorService();
+		parameterManager = new ParameterManager(executor);
+		nodeName = parentResolver.getNamespace();//.join(basename);
+		resolver = new NodeNameResolver(nodeName, parentResolver);
+		masterClient = new MasterClient(masterUri, 60000, 60000);
+		slaveServer =
+			   new SlaveServer(nodeName, getTcpRosBindAddress(), getTcpRosAdvertiseAddress(),getRpcBindAddress(),getRpcAdvertiseAddress(),
+					   masterClient, topicParticipantManager, serviceManager, parameterManager, executor);
+	    // start TcpRosServer and SlaveServer
+	    slaveServer.start();
+	    nodeIdentifier = slaveServer.toNodeIdentifier();
+		parameterTree =
+			    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
+			        resolver, parameterManager);
+		return slaveServer;
+  }
   /**
    * 
    * @return CommandLineLoader used to initiate node, if used
@@ -216,12 +236,8 @@ public class NodeConfiguration {
 		this.commandLineLoader = commandLineLoader;
   }
   /**
-   * @see <a
-   *      href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_MASTER_URI">ROS_MASTER_URI
-   *      documentation</a>
-   * @param defaultMasterUri
-   *          the {@link URI} of the master that the {@link Node} will register
-   *          with
+   * @see <a href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_MASTER_URI">ROS_MASTER_URI documentation</a>
+   * @param defaultMasterUri the {@link URI} of the master that the {@link Node} will register with
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setMasterUri(InetSocketAddress defaultMasterUri) {
@@ -230,9 +246,17 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a
-   *      href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_ROOT">ROS_ROOT
-   *      documentation</a>
+   * Get the previously created slave server, or start one if its not yet;
+   * @return The SlaveServer
+   */
+  public SlaveServer getSlaveServer() throws IOException {
+	if(slaveServer == null)
+		return newSlaveServer();
+	return slaveServer;
+  }
+
+/**
+   * @see <a href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_ROOT">ROS_ROOT documentation</a>
    * @return the location where the ROS core packages are installed
    */
   public File getRosRoot() {
@@ -240,11 +264,8 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a
-   *      href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_ROOT">ROS_ROOT
-   *      documentation</a>
-   * @param rosRoot
-   *          the location where the ROS core packages are installed
+   * @see <a href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_ROOT">ROS_ROOT documentation</a>
+   * @param rosRoot the location where the ROS core packages are installed
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setRosRoot(File rosRoot) {
@@ -257,11 +278,8 @@ public class NodeConfiguration {
    * packages. If there are multiple packages of the same name, ROS will choose
    * the one that appears in the {@link List} first.
    * 
-   * @see <a
-   *      href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_PACKAGE_PATH">ROS_PACKAGE_PATH
-   *      documentation</a>
-   * @return the {@link List} of paths where the system will look for ROS
-   *         packages
+   * @see <a href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_PACKAGE_PATH">ROS_PACKAGE_PATH documentation</a>
+   * @return the {@link List} of paths where the system will look for ROS packages
    */
   public List<File> getRosPackagePath() {
     return rosPackagePath;
@@ -272,12 +290,8 @@ public class NodeConfiguration {
    * packages. If there are multiple packages of the same name, ROS will choose
    * the one that appears in the {@link List} first.
    * 
-   * @see <a
-   *      href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_PACKAGE_PATH">ROS_PACKAGE_PATH
-   *      documentation</a>
-   * @param rosPackagePath
-   *          the {@link List} of paths where the system will look for ROS
-   *          packages
+   * @see <a href="http://www.ros.org/wiki/ROS/EnvironmentVariables#ROS_PACKAGE_PATH">ROS_PACKAGE_PATH documentation</a>
+   * @param rosPackagePath the {@link List} of paths where the system will look for ROS  packages
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setRosPackagePath(List<File> rosPackagePath) {
@@ -293,8 +307,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @param nodeName
-   *          the name of the {@link Node}
+   * @param nodeName  the name of the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setNodeName(GraphName nodeName) {
@@ -303,8 +316,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @param nodeName
-   *          the name of the {@link Node}
+   * @param nodeName the name of the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setNodeName(String nodeName) {
@@ -314,8 +326,7 @@ public class NodeConfiguration {
   /**
    * Sets the name of the {@link Node} if the name has not already been set.
    * 
-   * @param nodeName
-   *          the name of the {@link Node}
+   * @param nodeName  the name of the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setDefaultNodeName(GraphName nodeName) {
@@ -328,8 +339,7 @@ public class NodeConfiguration {
   /**
    * Sets the name of the {@link Node} if the name has not already been set.
    * 
-   * @param nodeName
-   *          the name of the {@link Node}
+   * @param nodeName the name of the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setDefaultNodeName(String nodeName) {
@@ -338,8 +348,7 @@ public class NodeConfiguration {
 
 
   /**
-   * @param topicMessageFactory
-   *          the {@link MessageFactory} for the {@link Node}
+   * @param topicMessageFactory  the {@link MessageFactory} for the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setTopicMessageFactory(MessageFactory topicMessageFactory) {
@@ -352,8 +361,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @param serviceRequestMessageFactory
-   *          the {@link ServiceRequestMessageFactory} for the {@link Node}
+   * @param serviceRequestMessageFactory the {@link ServiceRequestMessageFactory} for the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setServiceRequestMessageFactory(
@@ -367,8 +375,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @param serviceResponseMessageFactory
-   *          the {@link ServiceResponseMessageFactory} for the {@link Node}
+   * @param serviceResponseMessageFactory  the {@link ServiceResponseMessageFactory} for the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setServiceResponseMessageFactory(
@@ -382,8 +389,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @param topicDescriptionFactory
-   *          the {@link TopicDescriptionFactory} for the {@link Node}
+   * @param topicDescriptionFactory the {@link TopicDescriptionFactory} for the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setTopicDescriptionFactory(
@@ -397,8 +403,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @param serviceDescriptionFactory
-   *          the {@link ServiceDescriptionFactory} for the {@link Node}
+   * @param serviceDescriptionFactory the {@link ServiceDescriptionFactory} for the {@link Node}
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setServiceDescriptionFactory(
@@ -423,8 +428,7 @@ public class NodeConfiguration {
   /**
    * @see <a href="http://www.ros.org/wiki/ROS/TCPROS">TCPROS documentation</a>
    * 
-   * @param tcpRosBindAddress
-   *          the {@link BindAddress} for the {@link Node}'s TCPROS server
+   * @param tcpRosBindAddress the {@link BindAddress} for the {@link Node}'s TCPROS server
    */
   public NodeConfiguration setTcpRosBindAddress(BindAddress tcpRosBindAddress) {
     this.tcpRosBindAddress = tcpRosBindAddress;
@@ -434,8 +438,7 @@ public class NodeConfiguration {
   /**
    * @see <a href="http://www.ros.org/wiki/ROS/TCPROS">TCPROS documentation</a>
    * 
-   * @return the {@link AdvertiseAddressFactory} for the {@link Node}'s TCPROS
-   *         server
+   * @return the {@link AdvertiseAddressFactory} for the {@link Node}'s TCPROS server
    */
   public AdvertiseAddressFactory getTcpRosAdvertiseAddressFactory() {
     return tcpRosAdvertiseAddressFactory;
@@ -444,9 +447,7 @@ public class NodeConfiguration {
   /**
    * @see <a href="http://www.ros.org/wiki/ROS/TCPROS">TCPROS documentation</a>
    * 
-   * @param tcpRosAdvertiseAddressFactory
-   *          the {@link AdvertiseAddressFactory} for the {@link Node}'s TCPROS
-   *          server
+   * @param tcpRosAdvertiseAddressFactory the {@link AdvertiseAddressFactory} for the {@link Node}'s TCPROS server
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setTcpRosAdvertiseAddressFactory(AdvertiseAddressFactory tcpRosAdvertiseAddressFactory) {
@@ -455,8 +456,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a href="http://www.ros.org/wiki/ROS/TCPROS">TCPROS documentation</a>
-   * 
+   * @see <a href="http://www.ros.org/wiki/ROS/TCPROS">TCPROS documentation</a> 
    * @return the {@link AdvertiseAddress} for the {@link Node}'s TCPROS server
    */
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
@@ -466,8 +466,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node
-   *      documentation</a>
+   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node documentation</a>
    * 
    * @return the {@link BindAddress} for the {@link Node}'s XML-RPC server
    */
@@ -476,11 +475,9 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node
-   *      documentation</a>
+   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node documentation</a>
    * 
-   * @param RpcBindAddress
-   *          the {@link BindAddress} for the {@link Node}'s RPC server
+   * @param RpcBindAddress  the {@link BindAddress} for the {@link Node}'s RPC server
    */
   public NodeConfiguration setRpcBindAddress(BindAddress rpcBindAddress) {
     this.rpcBindAddress = rpcBindAddress;
@@ -488,8 +485,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node
-   *      documentation</a>
+   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node documentation</a>
    * 
    * @return the {@link AdvertiseAddress} for the {@link Node}'s RPC server
    */
@@ -500,8 +496,7 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node
-   *      documentation</a>
+   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node  documentation</a>
    * 
    * @return the {@link AdvertiseAddressFactory} for the {@link Node}'s RPC
    *         server
@@ -511,12 +506,9 @@ public class NodeConfiguration {
   }
 
   /**
-   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node
-   *      documentation</a>
+   * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node  documentation</a>
    * 
-   * @param rpcAdvertiseAddressFactory
-   *          the {@link AdvertiseAddressFactory} for the {@link Node}'s XML-RPC
-   *          server
+   * @param rpcAdvertiseAddressFactory the {@link AdvertiseAddressFactory} for the {@link Node}'s XML-RPC server
    */
   public NodeConfiguration setRpcAdvertiseAddressFactory(
       AdvertiseAddressFactory rpcAdvertiseAddressFactory) {
@@ -535,11 +527,36 @@ public class NodeConfiguration {
    * Sets the {@link TimeProvider} that {@link Node}s will use. By default, the
    * {@link WallTimeProvider} is used.
    * 
-   * @param timeProvider
-   *          the {@link TimeProvider} that {@link Node}s will use
+   * @param timeProvider the {@link TimeProvider} that {@link Node}s will use
    */
   public NodeConfiguration setTimeProvider(TimeProvider timeProvider) {
     this.timeProvider = timeProvider;
     return this;
+  }
+
+  /**
+   * @return the parameterTree
+   * @throws IOException If slave server to parameter tree has not been started and it failed to start.
+   */
+  public ParameterTree getParameterTree() throws IOException {
+	  if(slaveServer == null)
+		  newSlaveServer();
+	return parameterTree;
+  }
+
+  public MasterClient getMasterClient() {
+	return masterClient;
+  }
+
+  public TopicParticipantManager getTopicParticipantManager() {
+	return topicParticipantManager;
+  }
+
+  public ServiceManager getServiceManager() {
+	return serviceManager;
+  }
+
+  public ParameterManager getParameterManager() {
+	return parameterManager;
   }
 }

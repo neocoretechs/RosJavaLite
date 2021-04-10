@@ -31,6 +31,7 @@ import org.ros.internal.node.client.MasterClient;
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.server.NodeIdentifier;
+import org.ros.internal.node.server.ParameterServer;
 import org.ros.internal.node.server.SlaveServer;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
@@ -68,47 +69,12 @@ public class RosRun {
         // see if we are going to load JARs for provisioning remote nodes.
     	String jarsDir = System.getProperty(RosCore.propsEntry);
     	if(jarsDir != null) {
-    		   SlaveServer slaveServer = null;
-    			MasterClient masterClient = null;
-    			ParameterTree parameterTree = null;
     		if(!jarsDir.endsWith("/"))
     			jarsDir += "/";
     		loader.createJarClassLoader();
-    	    TopicParticipantManager topicParticipantManager = new TopicParticipantManager();
-    	    ServiceManager serviceManager = new ServiceManager();
-    		ScheduledExecutorService executor = new DefaultScheduledExecutorService();
-    		ParameterManager parameterManager = new ParameterManager(executor);
-     		//GraphName basename = nodeConfiguration.getNodeName();
-     		//log.info("Bringing up nodeName:"+basename);
-    		NameResolver parentResolver = nodeConfiguration.getParentResolver();
-    		GraphName nodeName = parentResolver.getNamespace();//.join(basename);
-    		NameResolver resolver = new NodeNameResolver(nodeName, parentResolver);
-    	    InetSocketAddress masterUri = nodeConfiguration.getMasterUri();
-    	    try {
-    			masterClient = new MasterClient(masterUri, 60000, 60000);
-    		} catch (IOException e1) {
-    			log.error("Unknown host for master client:"+masterUri+" attempting to access ParameterTree for JAR provisioning",e1);
-    			//e1.printStackTrace();
-    			throw new RosRuntimeException(e1);
-    		}
-    	    try {
-    			slaveServer =
-    			    new SlaveServer(nodeName, nodeConfiguration.getTcpRosBindAddress(),
-    			        nodeConfiguration.getTcpRosAdvertiseAddress(),
-    			        nodeConfiguration.getRpcBindAddress(),
-    			        nodeConfiguration.getRpcAdvertiseAddress(), masterClient, topicParticipantManager,
-    			        serviceManager, parameterManager, executor);
-    		} catch (IOException e) {
-    			log.error("Cannot configure slave server to access ParmeterTree JAR provisioning due to "+e,e);
-    			throw new RosRuntimeException(e);
-    		}
-    	    // start TcpRosServer and SlaveServer
-    	    slaveServer.start();
-    	    NodeIdentifier nodeIdentifier = slaveServer.toNodeIdentifier();
-    	    try {
-    			parameterTree =
-    			    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
-    			        resolver, parameterManager);
+    		ParameterTree parameterTree = null;
+    		try {
+    			parameterTree = nodeConfiguration.getParameterTree();			
     		} catch (IOException e) {
     			log.error("Cannot construct ParameterTree for JAR provisioning due to "+e,e);
     		}
@@ -134,14 +100,6 @@ public class RosRun {
        			log.info("Acquisition of JARs from ParameterTree was unsuccessful, using standard classloader");
        			nodeMain = loader.loadClass(nodeClassName);
        		}
-       	   if( slaveServer != null ) {
-       		slaveServer.shutdown();
-       		slaveServer = null;
-       	   }
-       	   if(masterClient != null) {
-       		masterClient.shutdown();
-       		masterClient = null;
-       	   }
     	} else {
     		nodeMain = loader.loadClass(nodeClassName);
     	}
