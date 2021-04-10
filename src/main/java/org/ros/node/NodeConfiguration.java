@@ -140,6 +140,11 @@ public class NodeConfiguration {
     configuration.setTcpRosBindAddress(BindAddress.newPublic());
     configuration.setTcpRosAdvertiseAddressFactory(new PublicAdvertiseAddressFactory(host));
     configuration.setMasterUri(defaultMasterUri);
+    try {
+    	configuration.getSlaveServer();
+ 	} catch (IOException e) {
+ 		throw new RuntimeException("Can not start SlaveServer for new public node configuration due to "+e);
+ 	}
     return configuration;
   }
 
@@ -158,10 +163,16 @@ public class NodeConfiguration {
     configuration.setTcpRosBindAddress(BindAddress.newPrivate());
     configuration.setTcpRosAdvertiseAddressFactory(new PrivateAdvertiseAddressFactory());
     configuration.setMasterUri(masterUri);
+    try {
+		configuration.getSlaveServer();
+	} catch (IOException e) {
+		throw new RuntimeException("Can not start SlaveServer for new private node configuration due to "+e);
+	}
     return configuration;
   }
 
-  /**
+
+/**
    * Creates a new {@link NodeConfiguration} for a {@link Node} that is only accessible on the local host.
    * 
    * @return a new {@link NodeConfiguration} for a private {@link Node}
@@ -223,6 +234,10 @@ public class NodeConfiguration {
 			    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
 			        resolver, parameterManager);
 		return slaveServer;
+  }
+  
+  private void setSlaveServer(SlaveServer slaveserver) {
+	  slaveServer = slaveserver;
   }
   /**
    * 
@@ -312,6 +327,8 @@ public class NodeConfiguration {
    */
   public NodeConfiguration setNodeName(GraphName nodeName) {
     this.nodeName = nodeName;
+    if(slaveServer != null)
+    	slaveServer.setNodeName(nodeName);
     return this;
   }
 
@@ -320,6 +337,8 @@ public class NodeConfiguration {
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setNodeName(String nodeName) {
+	if(slaveServer != null)
+	   slaveServer.setNodeName(GraphName.of(nodeName));
     return setNodeName(GraphName.of(nodeName));
   }
 

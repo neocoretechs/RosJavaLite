@@ -59,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * The default implementation of a {@link Node}.
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  * 
  */
 public class DefaultNode implements ConnectedNode {
@@ -93,14 +94,10 @@ public class DefaultNode implements ConnectedNode {
   private TimeProvider timeProvider;
 
   /**
-   * {@link DefaultNode}s should only be constructed using the
-   * {@link DefaultNodeFactory}.
+   * {@link DefaultNode}s should only be constructed using the {@link DefaultNodeFactory}.
    * 
-   * @param nodeConfiguration
-   *          the {@link NodeConfiguration} for this {@link Node}, rpc bind/advertise and tcpros bind/advertise from here
-   * @param nodeListeners
-   *          a {@link Collection} of {@link NodeListener}s that will be added
-   *          to this {@link Node} before it starts
+   * @param nodeConfiguration the {@link NodeConfiguration} for this {@link Node}, rpc bind/advertise and tcpros bind/advertise from here
+   * @param nodeListeners a {@link Collection} of {@link NodeListener}s that will be added to this {@link Node} before it starts
    */
   public DefaultNode(NodeConfiguration nodeConfiguration, Collection<NodeListener> nodeListeners,
       ScheduledExecutorService scheduledExecutorService) {
@@ -108,31 +105,31 @@ public class DefaultNode implements ConnectedNode {
     this.nodeListeners = new ListenerGroup<NodeListener>(scheduledExecutorService);
     this.nodeListeners.addAll(nodeListeners);
     this.scheduledExecutorService = scheduledExecutorService;
-    masterUri = nodeConfiguration.getMasterUri();
+    this.masterUri = nodeConfiguration.getMasterUri();
     NodeIdentifier nodeIdentifier = null;
-	masterClient = nodeConfiguration.getMasterClient();
-	topicParticipantManager = nodeConfiguration.getTopicParticipantManager();
-    serviceManager = nodeConfiguration.getServiceManager();
+	this.masterClient = nodeConfiguration.getMasterClient();
+	this.topicParticipantManager = nodeConfiguration.getTopicParticipantManager();
+    this.serviceManager = nodeConfiguration.getServiceManager();
     try {
-    	slaveServer = nodeConfiguration.getSlaveServer();
-    	parameterManager = nodeConfiguration.getParameterManager();
+    	this.slaveServer = nodeConfiguration.getSlaveServer();
+    	this.parameterManager = nodeConfiguration.getParameterManager();
     	GraphName basename = nodeConfiguration.getNodeName();
-    	nodeName = nodeConfiguration.getParentResolver().getNamespace().join(basename);
-    	nodeConfiguration.setNodeName(nodeName);
-    	resolver = new NodeNameResolver(nodeName, nodeConfiguration.getParentResolver());
+    	this.nodeName = nodeConfiguration.getParentResolver().getNamespace().join(basename);
+    	this.nodeConfiguration.setNodeName(nodeName);
+    	this.resolver = new NodeNameResolver(nodeName, nodeConfiguration.getParentResolver());
     	// assign the slaveServer a nodename, now that we have one
-    	nodeConfiguration.getSlaveServer().setNodeName(nodeName);
-    	nodeIdentifier = slaveServer.toNodeIdentifier();
-		parameterTree =
+    	this.nodeConfiguration.getSlaveServer().setNodeName(nodeName);
+    	nodeIdentifier = this.slaveServer.toNodeIdentifier();
+		this.parameterTree =
 		    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
-		        resolver, parameterManager);
-		publisherFactory =
-			        new PublisherFactory(nodeIdentifier, topicParticipantManager,
-			            nodeConfiguration.getTopicMessageFactory(), scheduledExecutorService);
-		subscriberFactory =
-			        new SubscriberFactory(nodeIdentifier, topicParticipantManager, scheduledExecutorService);
-		serviceFactory =
-			        new ServiceFactory(nodeName, slaveServer, serviceManager, scheduledExecutorService);
+		        this.resolver, this.parameterManager);
+		this.publisherFactory =
+			        new PublisherFactory(nodeIdentifier, this.topicParticipantManager,
+			            this.nodeConfiguration.getTopicMessageFactory(), this.scheduledExecutorService);
+		this.subscriberFactory =
+			        new SubscriberFactory(nodeIdentifier, this.topicParticipantManager, this.scheduledExecutorService);
+		this.serviceFactory =
+			        new ServiceFactory(this.nodeName, this.slaveServer, this.serviceManager, this.scheduledExecutorService);
 	} catch (IOException e) {
 		log.error("Cannot construct new node due to "+e,e);
 		throw new RuntimeException(e);

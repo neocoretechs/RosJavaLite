@@ -10,7 +10,7 @@ import java.util.concurrent.ScheduledExecutorService;
 /**
  * Constructs {@link DefaultNode}s.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class DefaultNodeFactory implements NodeFactory {
 
