@@ -47,7 +47,7 @@ public class RosCore {
   private static final Log log = LogFactory.getLog(RosCore.class);
   private MasterServer masterServer = null;
   private ParameterServer parameterServer = null;
-  static final String propsEntry = "jars.provision";
+  public static final String propsEntry = "jars.provision";
   public static final String jarGraph = "/java/";
   public static final String jarParent = "/java";
 
