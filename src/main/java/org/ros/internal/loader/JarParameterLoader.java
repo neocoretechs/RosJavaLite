@@ -10,6 +10,7 @@ import org.ros.namespace.NameResolver;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.NodeMain;
+import org.ros.node.parameter.ParameterListener;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.node.topic.Publisher;
 
@@ -24,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * Load an updated JAR file to the ParameterServer for provisioning to remote nodes on startup.
+ * Make sure to use RosRun and not the RosLauncher, since we want to be the provisioner, not the povisionee.
  * 
  * @author Jonathan Groff (C) NeoCoreTechs 2021
  */
@@ -39,7 +41,7 @@ public class JarParameterLoader extends AbstractNodeMain {
 		return instance;
 	}
   private CountDownLatch awaitStart = new CountDownLatch(1);
-  NameResolver resolver = null;
+  private boolean isSet = false;
   String jarName;
   
   @Override
@@ -58,18 +60,10 @@ public class JarParameterLoader extends AbstractNodeMain {
 		log.fatal("Must specify remapped property __jar:=<jarfile> for remote node provisioning via ParameterTree");
 		System.exit(1);
 	}	
-	 // see if we are going to load JARs for provisioning remote nodes.
-	String jarsDir = System.getProperty(RosCore.propsEntry);
-	if(jarsDir == null) {
-		log.fatal("Must specify command line property top level JARs directory: java -D"+RosCore.propsEntry+"=<jar directory> for remote node provisioning via ParameterTree");
-		System.exit(1);
-	}
 		
     ParameterTree param = connectedNode.getParameterTree();
-    NameResolver resolver = connectedNode.getResolver().newChild(RosCore.jarGraph);
-    List<Integer> list = (List<Integer>) param.get(resolver.resolve("java"), new ArrayList());
-    log.info("Found"+list.size()+" elements in remote JAR collection" );
- // tell the waiting constructors that we have registered publishers
+  
+    // tell the waiting constructors that we have registered publishers
  	awaitStart.countDown();
     connectedNode.executeCancellableLoop(new CancellableLoop() {
       @Override
@@ -77,10 +71,16 @@ public class JarParameterLoader extends AbstractNodeMain {
 		try {
 			awaitStart.await();
 		} catch (InterruptedException e) {}
-		File fileEntry = new File(jarsDir + (jarsDir.endsWith("/") ? (jarName) : ("/"+jarName)));
+
+		File fileEntry = new File(jarName);
 		log.info(">>> Reading JAR "+fileEntry.getName());
 		// form valid global graph name
 		String graphJar = RosCore.jarGraph+fileEntry.getName().replace('.', '_').replace('-','x');
+		param.addParameterListener(graphJar, new ParameterListener() {
+			@Override
+			public void onNewValue(Object value) {
+				isSet = true;			
+			}});
 		try {
 			param.set(GraphName.of(graphJar), readFile(fileEntry));
 		} catch (IOException e) {
@@ -88,8 +88,10 @@ public class JarParameterLoader extends AbstractNodeMain {
 			e.printStackTrace();
 			System.exit(1);
 		}
-        Thread.sleep(500);
-        this.cancel();
+        while(!isSet) {
+        	Thread.sleep(100);
+        }
+        System.exit(1);
       }
     });
   }

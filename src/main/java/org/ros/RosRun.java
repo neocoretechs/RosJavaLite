@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
@@ -25,6 +26,7 @@ import org.ros.node.DefaultNodeMainExecutor;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
 import org.ros.node.NodeMainExecutor;
+import org.ros.node.parameter.ParameterListener;
 import org.ros.node.parameter.ParameterTree;
 import org.ros.internal.node.DefaultNode;
 import org.ros.internal.node.client.MasterClient;
@@ -111,4 +113,17 @@ public class RosRun {
     NodeMainExecutor nodeMainExecutor = DefaultNodeMainExecutor.newDefault();
     nodeMainExecutor.execute(nodeMain, nodeConfiguration);
   }
+  /*
+   *    parameterTree.addParameterListener(GraphName.of(RosCore.jarParent), new ParameterListener() {
+   *    	@Override
+   *    	public void onNewValue(Object value) {
+   *    		//Map<String,Object> jar = (Map<String, Object>)value;
+   *    		List<Object> ol = (List<Object>) value;
+   *    		for(int i = 0; i < ol.size(); i++) {
+   *    			Object o = ol.get(i);
+   *    			log.info("param item:"+i+"="+o.getClass()+" "+o.toString());
+   *    		}	       				  			
+   *   		}
+   *   	});
+   */
 }
