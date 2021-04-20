@@ -71,6 +71,9 @@ public abstract class RpcServer {
     server.stopServer();
   }
 
+  public void close(TCPWorker tcpWorker) {
+	server.close(tcpWorker);
+  }
   /**
    * @return the {@link URI} of the server
    */
@@ -106,4 +109,5 @@ public abstract class RpcServer {
   public String toString() {
 	  return "RpcServer at address "+advertiseAddress;
   }
+
 }

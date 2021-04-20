@@ -23,7 +23,6 @@ public class TCPWorker implements Runnable {
 	private static final Log log = LogFactory.getLog(TCPWorker.class);
 	public volatile boolean shouldRun = true;
 	private Socket dataSocket;
-	private Object waitHalt = new Object(); 
 	private RpcServer server; // the server we are servicing
 	
     public TCPWorker(Socket datasocket, RpcServer server) throws IOException {
@@ -62,7 +61,6 @@ public class TCPWorker implements Runnable {
 	 */
 	@Override
 	public void run() {
-
 			try {
 				while(shouldRun) {
 					ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
@@ -72,7 +70,6 @@ public class TCPWorker implements Runnable {
 					Object res = server.invokeMethod(o);
 					queueResponse(res);
 				}
-				dataSocket.close();
 			} catch(Exception se) {
 				if( se instanceof SocketException ) {
 					log.error("Received SocketException, connection reset..");
@@ -80,27 +77,29 @@ public class TCPWorker implements Runnable {
 					log.error("Remote invocation failure ",se);
 				}
 			} finally {
-				try {
-					dataSocket.close();
-				} catch (IOException e) {}
-			}
-			synchronized(waitHalt) {
-				waitHalt.notify();
+				close();
 			}
 
 	}
 	
-	public void close() {
-		synchronized(waitHalt) {
+	private void close() {
+		shouldRun = false;
+		if(dataSocket != null)
 			try {
-				shouldRun = false;
-				waitHalt.wait();
-			} catch (InterruptedException ie) {}
-		}
+				dataSocket.close();
+			} catch (IOException e) {}
+		server.close(this);
 	}
 	
 	public void shutdown() {
-		close();
+		shouldRun = false;
+		if(dataSocket != null)
+			try {
+				dataSocket.close();
+			} catch (IOException e) {}
+		try {
+			server.shutdown();
+		} catch (IOException e) {}
 	}
 
 }

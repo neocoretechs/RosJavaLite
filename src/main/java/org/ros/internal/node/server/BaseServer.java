@@ -3,6 +3,9 @@ package org.ros.internal.node.server;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Enumeration;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +21,7 @@ public final class BaseServer extends TCPServer {
 	public int WORKBOOTPORT = 8090;
 	public InetAddress address = null;
 	private RpcServer rpcserver = null;
-	private TCPWorker uworker = null;	
+	private ConcurrentHashMap<TCPWorker, Future<?>> uworkers = new ConcurrentHashMap<TCPWorker,Future<?>>();
 	
 	public BaseServer(RpcServer server) throws IOException {
 		super();
@@ -59,9 +62,9 @@ public final class BaseServer extends TCPServer {
                     // wait 1 second before close; close blocks for 1 sec. and data can be sent
                     datasocket.setSoLinger(true, 1);
 					//
-                    uworker = new TCPWorker(datasocket, rpcserver);
-                    ThreadPoolManager.getInstance().spin(uworker);
-                    
+                    TCPWorker uworker = new TCPWorker(datasocket, rpcserver);
+                    Future<?> newworker= ThreadPoolManager.getInstance().submit("WORKERS",uworker);
+                    uworkers.put(uworker, newworker);
                     if( DEBUG ) {
                     	log.info("ROS Server node worker starting");
                     }
@@ -78,9 +81,22 @@ public final class BaseServer extends TCPServer {
 	 * @throws IOException 
 	 */
 	public void shutdown() throws IOException {
-		if(uworker != null)
-			uworker.shutdown();
+		Enumeration<TCPWorker> workers = uworkers.keys();
+		while(workers.hasMoreElements()) {
+			close(workers.nextElement());
+		}
+		ThreadPoolManager.getInstance().shutdown("WORKERS");
 		super.shutdown();
+	}
+	
+	/**
+	 * Shut down a specific TCPworker after socket disconnect
+	 * @param tcpworker
+	 */
+	public void close(TCPWorker tcpworker) {
+		tcpworker.shouldRun = false;
+		uworkers.get(tcpworker).cancel(true);
+		uworkers.remove(tcpworker);
 	}
 	
 	public Integer getPort() {

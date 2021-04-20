@@ -19,7 +19,7 @@ public abstract class TCPServer implements Cloneable, Runnable {
 			server = new ServerSocket(port);
 			//runner = new Thread(this);
 			//runner.start();
-			ThreadPoolManager.init(new String[]{"TCPSERVER"}, false);
+			ThreadPoolManager.init(new String[]{"TCPSERVER","WORKERS"}, false);
 			ThreadPoolManager.getInstance().spin(this,"TCPSERVER");
 		}
 	}
@@ -30,7 +30,7 @@ public abstract class TCPServer implements Cloneable, Runnable {
 			server = new ServerSocket(port, 1000, binder);
 			//runner = new Thread(this);
 			//runner.start();
-			ThreadPoolManager.init(new String[]{"TCPSERVER"}, false);
+			ThreadPoolManager.init(new String[]{"TCPSERVER","WORKERS"}, false);
 			ThreadPoolManager.getInstance().spin(this,"TCPSERVER");
 		}
 	}
@@ -40,6 +40,7 @@ public abstract class TCPServer implements Cloneable, Runnable {
 			server.close();
 			server = null;
 			ThreadPoolManager.getInstance().shutdown("TCPSERVER");
+			ThreadPoolManager.getInstance().shutdown("WORKERS");
 		}
 	}
 
