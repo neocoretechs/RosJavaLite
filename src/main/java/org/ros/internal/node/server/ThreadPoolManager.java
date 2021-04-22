@@ -66,6 +66,10 @@ public class ThreadPoolManager {
 	public void waitGroup(String group) {
 		try {
 			ExecutorService w = executor.get(group);
+			if( w == null ) {
+				log.fatal("Group "+group+" is unknown.");
+				return;
+			}
 			synchronized(w) {
 				w.wait();
 			}
@@ -76,6 +80,10 @@ public class ThreadPoolManager {
 	public void waitGroup(String group, long millis) {
 		try {
 			ExecutorService w = executor.get(group);
+			if( w == null ) {
+				log.fatal("Group "+group+" is unknown.");
+				return;
+			}
 			synchronized(w) {
 				w.wait(millis);
 			}
@@ -85,17 +93,31 @@ public class ThreadPoolManager {
 	
 	public void notifyGroup(String group) {
 			ExecutorService w = executor.get(group);
+			if( w == null ) {
+				log.fatal("Group "+group+" is unknown.");
+				return;
+			}
 			synchronized(w) {
 				w.notifyAll();
 			}
 	}
 	
 	public void spin(Runnable r, ThreadGroup group) {
-	    executor.get(group.getName()).execute(r);
+	    ExecutorService w = executor.get(group.getName());
+		if( w == null ) {
+			log.fatal("Group "+group+" is unknown.");
+			return;
+		}
+	    w.execute(r);
 	}
 	
 	public void spin(Runnable r, String group) {
-	    executor.get(group).execute(r);
+	   ExecutorService w =  executor.get(group);
+	   if( w == null ) {
+			log.fatal("Group "+group+" is unknown.");
+			return;
+	   }
+	   w.execute(r);
 	}
 	
 	public void spin(Runnable r) {
@@ -144,7 +166,12 @@ public class ThreadPoolManager {
      */
     public static Future<?> submit(String group, Runnable task)
     {
-        return executor.get(group).submit(task);
+        ExecutorService w = executor.get(group);
+		if( w == null ) {
+			log.fatal("Group "+group+" is unknown.");
+			return null;
+		}
+		return w.submit(task);
     }
 
     /**

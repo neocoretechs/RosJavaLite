@@ -13,7 +13,7 @@ import java.util.List;
  * the class of responses to subscriber which is then stored in the ChannelHandlercontext to filter traffic.
  * Provides master signaling methods.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public abstract class DefaultTopicParticipant implements TopicParticipant {
 

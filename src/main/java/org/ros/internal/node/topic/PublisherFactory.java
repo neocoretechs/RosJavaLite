@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A factory for {@link Publisher} instances.
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class PublisherFactory {
 
@@ -38,13 +39,10 @@ public class PublisherFactory {
    * and reused per topic. When a new {@link Publisher} is generated, it is
    * registered with the master.
    * 
-   * @param <T>
-   *          the message type associated with the {@link Publisher}
-   * @param topicDeclaration
-   *          {@link TopicDeclaration} that is being published
- * @param arrayBlockingQueue 
-   * @param messageSerializer
-   *          the {@link MessageSerializer} used for published messages
+   * @param <T> the message type associated with the {@link Publisher}
+   * @param topicDeclaration {@link TopicDeclaration} that is being published
+   * @param arrayBlockingQueue 
+   * @param messageSerializer the {@link MessageSerializer} used for published messages
    * @return a new or cached {@link Publisher} instance
    * @throws IOException 
    */

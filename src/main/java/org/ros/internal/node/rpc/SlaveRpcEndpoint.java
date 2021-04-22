@@ -2,7 +2,11 @@ package org.ros.internal.node.rpc;
 
 import java.util.List;
 
-
+/**
+ * 
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
+ *
+ */
 public interface SlaveRpcEndpoint extends RpcEndpoint {
 
 	List<Object> getMasterUri(String string);

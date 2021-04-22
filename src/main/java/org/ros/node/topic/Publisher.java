@@ -23,8 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Publishes messages of a given type on a given ROS topic.
  * 
- * @author ethan.rublee@gmail.com (Ethan Rublee)
- * @author damonkohler@google.com (Damon Kohler)
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  * 
  * @param <T>
  *          the {@link Publisher} may only publish messages of this type

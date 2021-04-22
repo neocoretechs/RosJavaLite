@@ -4,7 +4,7 @@ import org.ros.internal.transport.ChannelHandler;
 
 /**
  * Adds a name property to a channelhandler contract
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public interface NamedChannelHandler extends ChannelHandler {
 

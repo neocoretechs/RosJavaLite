@@ -37,18 +37,6 @@ import java.util.jar.Manifest;
 /**
 * <code>
 * <p>
-* Use VM parameters in the command line for logging settings (examples):
-* <ul>
-* <li><code>-DJarClassLoader.logger=[filename]</code> for logging into the file.
-* The default is console.</li>
-* <li><code>-DJarClassLoader.logger.level=INFO</code> for logging level.
-* The default level is ERROR. See also {@link LogLevel}.</li>
-* <li><code>-DJarClassLoader.logger.area=CLASS,RESOURCE</code> for logging area.
-* The default area is ALL. See also {@link LogArea}. Multiple logging areas
-* could be specified with ',' delimiter.</li>
-* </ul>
-*
-* <p>
 * Known issues: some temporary files created by class loader are not deleted
 * on application exit because JVM does not close handles to them.
 * See details in {@link #shutdown()}.
@@ -96,19 +84,15 @@ import java.util.jar.Manifest;
 	     */
 	    public JarClassLoader(ClassLoader parent) {
 	        super(parent);
-	    
-
 	        hmClass = new HashMap<String, Class<?>>();
 	        lstJarFile = new ArrayList<JarFileInfo>();
 	        hsDeleteOnExit = new HashSet<File>();
-
 	        // Prepare common for all protocols 
 	        String sUrlTopJar = null;
 	        ProtectionDomain pdTop = getClass().getProtectionDomain();
 	        CodeSource cs = pdTop.getCodeSource();
 	        URL urlTopJar = cs.getLocation();
-	        String protocol = urlTopJar.getProtocol();
-	        
+	        String protocol = urlTopJar.getProtocol();  
 	        // Work with different cases:
 	        JarFileInfo jarFileInfo = null;
 	        if ("http".equals(protocol) || "https".equals(protocol)) {
@@ -122,7 +106,8 @@ import java.util.jar.Manifest;
 	                JarURLConnection jarCon = (JarURLConnection)urlTopJar.openConnection();
 	                JarFile jarFile = jarCon.getJarFile();
 	                jarFileInfo = new JarFileInfo(jarFile, jarFile.getName(), null, pdTop, null);
-	                System.out.printf("Loading from top JAR: '%s' PROTOCOL: '%s'%n", 
+	                if(DEBUG)
+	                	System.out.printf("Loading from top JAR: '%s' PROTOCOL: '%s'%n", 
 	                        urlTopJar, protocol);
 	            } catch (Exception e) {
 	                // ClassCastException, IOException
@@ -135,9 +120,11 @@ import java.util.jar.Manifest;
 	            // Decoding required for 'space char' in URL: 
 	            //    URL.getFile() returns "/C:/my%20dir/MyApp.jar" for "/C:/my dir/MyApp.jar" 
 	            try {
-	      	        System.out.printf("%s.JarClassLoader(%s) Calling with:%s%n", this.getClass().getName(), parent, sUrlTopJar);
+	            	if(DEBUG)
+	            		System.out.printf("%s.JarClassLoader(%s) Calling with:%s%n", this.getClass().getName(), parent, sUrlTopJar);
 	                sUrlTopJar = URLDecoder.decode(urlTopJar.getFile(), "UTF-8");
-	      	        System.out.printf("%s.JarClassLoader(%s) Decoded to :%s%n", this.getClass().getName(), parent, sUrlTopJar);
+	                if(DEBUG)
+	                	System.out.printf("%s.JarClassLoader(%s) Decoded to :%s%n", this.getClass().getName(), parent, sUrlTopJar);
 	            } catch (UnsupportedEncodingException e) {
 	            	System.out.printf( "Failure to decode URL: %s %s%n", urlTopJar, e.toString());
 	                return;
@@ -146,14 +133,16 @@ import java.util.jar.Manifest;
 	            
 	            // Application is loaded from directory: 
 	            if (fileJar.isDirectory()) {
-	            	System.out.printf("Loading from exploded directory: %s%n", sUrlTopJar);
+	            	if(DEBUG)
+	            		System.out.printf("Loading from exploded directory: %s%n", sUrlTopJar);
 	                return; // JarClassLoader completed its job
 	            }
 	            
 	            // Application is loaded from a JAR:
 	            try {
 	                jarFileInfo = new JarFileInfo(new JarFile(fileJar), fileJar.getName(), null, pdTop, null);
-	                System.out.printf("Loading from top JAR: '%s' PROTOCOL: '%s'%n", sUrlTopJar, protocol);
+	                if(DEBUG)
+	                	System.out.printf("Loading from top JAR: '%s' PROTOCOL: '%s'%n", sUrlTopJar, protocol);
 	            } catch (IOException e) { 
 	            	System.out.printf("Not a JAR: %s %s%n", sUrlTopJar, e.toString());
 	                return;
@@ -195,9 +184,11 @@ import java.util.jar.Manifest;
 	    	URL urlTopJar = null;
             try {
     	        urlTopJar = new URL(sUrlTopJar);
-      	        System.out.printf("%s.loadJarFromJarFile(%s) Calling with:%s%n", this.getClass().getName(), sUrlTopJar, urlTopJar);
+    	        if(DEBUG)
+    	        	System.out.printf("%s.loadJarFromJarFile(%s) Calling with:%s%n", this.getClass().getName(), sUrlTopJar, urlTopJar);
                 sUrlTopJar = URLDecoder.decode(urlTopJar.getFile(), "UTF-8");
-                System.out.printf("%s.loadJarFromJarFile(%s) Decoded to:%s%n", this.getClass().getName(), sUrlTopJar, urlTopJar);
+                if(DEBUG)
+                	System.out.printf("%s.loadJarFromJarFile(%s) Decoded to:%s%n", this.getClass().getName(), sUrlTopJar, urlTopJar);
             } catch (UnsupportedEncodingException | MalformedURLException e) {
             	System.out.printf( "Failure to decode URL: %s %s%n", urlTopJar, e.toString());
                 return;
@@ -211,14 +202,16 @@ import java.util.jar.Manifest;
 	                 
             // Application is loaded from directory: 
             if (fileJar.isDirectory()) {
-            	System.out.printf("Loading from exploded directory: %s%n", sUrlTopJar);
+            	if(DEBUG)
+            		System.out.printf("Loading from exploded directory: %s%n", sUrlTopJar);
                 return; // JarClassLoader completed its job
             }
             
             // Application is loaded from a JAR:
             try {
                 jarFileInfo = new JarFileInfo(new JarFile(fileJar), fileJar.getName(), null, pdTop, null);
-                System.out.printf("Loading from top JAR: '%s' PROTOCOL: '%s'%n", sUrlTopJar, "file");
+                if(DEBUG)
+                	System.out.printf("Loading from top JAR: '%s' PROTOCOL: '%s'%n", sUrlTopJar, "file");
             } catch (IOException e) { 
             	System.out.printf("Not a JAR: %s %s%n", sUrlTopJar, e.toString());
                 return;
@@ -260,7 +253,8 @@ import java.util.jar.Manifest;
 	                if (s.lastIndexOf(EXT_JAR) == s.length() - EXT_JAR.length()) {
 	                    JarEntryInfo inf = new JarEntryInfo(jarFileInfo, je);
 	                    File fileTemp = CreateTempFile.createTempFile(inf);
-	                    System.out.printf("Loading inner JAR %s from temp file %s %n",
+	                    if(DEBUG)
+	                    	System.out.printf("Loading inner JAR %s from temp file %s %n",
 	                            inf.jarEntry, fileTemp);
 	                    // Construct ProtectionDomain for this inner JAR:
 	                    URL url = fileTemp.toURI().toURL();
@@ -332,7 +326,8 @@ import java.util.jar.Manifest;
 	                //   - in the partial name: abc/aNative.dll   <-- do not load this one!
 	                String[] token = sEntry.split("/"); // the last token is library name
 	                if (token.length > 0 && token[token.length - 1].equals(sName)) {
-	                    System.out.printf("Loading native library '%s' found as '%s' in JAR %s%n",
+	                	if(DEBUG)
+	                		System.out.printf("Loading native library '%s' found as '%s' in JAR %s%n",
 	                            sLib, sEntry, jarFileInfo.simpleName);
 	                    return new JarEntryInfo(jarFileInfo, je);
 	                }
@@ -371,7 +366,8 @@ import java.util.jar.Manifest;
 	            throw new JarException(sClassName);
 	        }
 	        hmClass.put(sClassName, c);
-	        System.out.printf( "Loaded %s by %s from JAR %s%n",
+	        if(DEBUG)
+	        	System.out.printf( "Loaded %s by %s from JAR %s%n",
 	                sClassName, getClass().getName(), jarSimpleName);
 	        return c;
 	    } // findJarClass()
@@ -460,7 +456,8 @@ import java.util.jar.Manifest;
 	                    hsDeleteOnExit.add(file);
 	                }
 	            }
-	            System.out.printf( "Deleted %d old temp files listed in %s%n", count, fileCfg.getAbsolutePath());
+	            if(DEBUG)
+	            	System.out.printf( "Deleted %d old temp files listed in %s%n", count, fileCfg.getAbsolutePath());
 	        } catch (IOException e) {
 	            // Ignore. This file may not exist.
 	        } finally {
@@ -479,11 +476,13 @@ import java.util.jar.Manifest;
 	     */
 	    private void persistNewTemp(File fileCfg) {
 	        if (hsDeleteOnExit.size() == 0) {
-	            System.out.printf( "No temp file names to persist on exit.%n");
+	        	if(DEBUG)
+	        		System.out.printf( "No temp file names to persist on exit.%n");
 	            fileCfg.delete(); // do not pollute disk
 	            return;
 	        }
-	        System.out.printf("Persisting %d temp file names into %s%n",
+	        if(DEBUG)
+	        	System.out.printf("Persisting %d temp file names into %s%n",
 	                hsDeleteOnExit.size(), fileCfg.getAbsolutePath());
 	        BufferedWriter writer = null;
 	        try {
@@ -748,7 +747,7 @@ import java.util.jar.Manifest;
 	             c = findLoadedClass(name);
 	         } else {
 	         	if(DEBUG)
-	         		System.out.println("DBUG:"+this+".loadClass exit cache hit:"+c+" for "+name+" resolve="+resolve);
+	         		System.out.println("DEBUG:"+this+".loadClass exit cache hit:"+c+" for "+name+" resolve="+resolve);
 	             return c;
 	         }
 	         // this is our last chance, otherwise noClassDefFoundErr and we're screwed
@@ -788,15 +787,18 @@ import java.util.jar.Manifest;
 	     */
 	    @Override
 	    protected URL findResource(String sName) {
-	    	System.out.printf("findResource: %s%n", sName);
+	    	if(DEBUG)
+	    		System.out.printf("findResource: %s%n", sName);
 	        if (isLaunchedFromJar()) {
 	            JarEntryInfo inf = findJarEntry(normalizeResourceName(sName));
 	            if (inf != null) {
 	                URL url = inf.getURL();
-	                System.out.printf("found resource: %s%n", url);
+	                if(DEBUG)
+	                	System.out.printf("found resource: %s%n", url);
 	                return url;
 	            }
-	            System.out.printf("not found resource: %s%n", sName);
+	            if(DEBUG)
+	            	System.out.printf("not found resource: %s%n", sName);
 	            return null;
 	        }
 	        return super.findResource(sName);
@@ -810,7 +812,8 @@ import java.util.jar.Manifest;
 	     */
 	    @Override
 	    public Enumeration<URL> findResources(String sName) throws IOException {
-	    	System.out.printf("getResources: %s%n", sName);
+	    	if(DEBUG)
+	    		System.out.printf("getResources: %s%n", sName);
 	        if (isLaunchedFromJar()) {
 	            List<JarEntryInfo> lstJarEntry = findJarEntries(normalizeResourceName(sName));
 	            List<URL> lstURL = new ArrayList<URL>();
@@ -832,13 +835,15 @@ import java.util.jar.Manifest;
 	     */
 	    @Override
 	    protected String findLibrary(String sLib) {
-	    	System.out.printf("findLibrary: %s%n", sLib);
+	    	if(DEBUG)
+	    		System.out.printf("findLibrary: %s%n", sLib);
 	        if (isLaunchedFromJar()) {
 	            JarEntryInfo inf = findJarNativeEntry(sLib);
 	            if (inf != null) {
 	                try {
 	                    File file = CreateTempFile.createTempFile(inf);
-	                    System.out.printf( "Loading native library %s%n",inf.jarEntry);
+	                    if(DEBUG)
+	                    	System.out.printf( "Loading native library %s%n",inf.jarEntry);
 	                    hsDeleteOnExit.add(file);
 	                    return file.getAbsolutePath();
 	                } catch (JarException e) {

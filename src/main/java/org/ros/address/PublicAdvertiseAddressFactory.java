@@ -9,7 +9,7 @@ import org.ros.exception.RosRuntimeException;
 
 /**
  * An {@link AdvertiseAddressFactory} which creates public (non-loopback) addresses.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class PublicAdvertiseAddressFactory implements AdvertiseAddressFactory {
 

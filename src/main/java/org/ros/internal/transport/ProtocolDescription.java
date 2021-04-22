@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.transport;
 
 import java.io.Serializable;
@@ -26,8 +10,7 @@ import org.ros.address.AdvertiseAddress;
 /**
  * ProtocolDescription gets shipped around as serialized object passed to configure slaves that span TCP
  * processes to do the OOB data comm. In our RosJavaLite the Serializable wiring is in place here and in subclasses.
- * @author damonkohler@google.com (Damon Kohler)
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class ProtocolDescription implements Serializable {
   private static final long serialVersionUID = -714032869496198686L;

@@ -26,7 +26,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  * serializing them to a bytebuffer for outbound asynch channel transport.
  * Each publisher created generates this writer which addresses all channels in the context array
  * it was created with.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class OutgoingMessageQueue<T> {
 

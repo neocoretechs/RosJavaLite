@@ -13,7 +13,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  * during channel initialization to load the handlers into the pipeline.
  * When a channel is created, the factories are activated and their methods inject the ChannelHandlers
  * into the pipeline for the context of the newly created channel.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  *
  */
 public class ChannelInitializerFactoryStack {

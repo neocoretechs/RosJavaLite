@@ -7,7 +7,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
 
 /**
  * Provides operations on a named channel
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  * 
  */
 public abstract class AbstractNamedChannelHandler implements NamedChannelHandler {

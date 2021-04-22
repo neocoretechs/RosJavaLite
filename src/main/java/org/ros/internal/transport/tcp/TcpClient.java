@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  * These are all populated when the 'connect' method is called.
  * Add the named channel handlers beforehand using the supplied methods and they will
  * be injected into the pipeline of the ChannelHandlerContext when the channel is initialized.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpClient {
   private static final boolean DEBUG = true;

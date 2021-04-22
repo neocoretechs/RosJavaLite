@@ -22,10 +22,9 @@ import java.util.concurrent.ExecutorService;
  * In the AsynchTcpWorker thread that handles the read for each channel, it strobes the pipeline
  * with the read notification and the handler here takes care of the processing.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  * 
- * @param <T>
- *          the {@link Subscriber} may only subscribe to messages of this type
+ * @param <T> the {@link Subscriber} may only subscribe to messages of this type
  */
 class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
   private static boolean DEBUG = true;

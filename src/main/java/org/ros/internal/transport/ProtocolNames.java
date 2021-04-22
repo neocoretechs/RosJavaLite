@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 /**
- * @author Groff
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public final class ProtocolNames implements Serializable {
   private static final long serialVersionUID = -7758680000961964374L;

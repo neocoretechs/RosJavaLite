@@ -16,7 +16,7 @@ import org.ros.internal.transport.ChannelPipeline;
  * One of a family of such pipeline manager injectors. This is roughly modeled after netty v3.x where
  * the pipeline provides the initChannel method with passed context and initialized channel for post initialization
  * user level initializing action.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpServerPipelineFactory extends ChannelInitializer {
   public static boolean DEBUG = true;
@@ -30,8 +30,8 @@ public class TcpServerPipelineFactory extends ChannelInitializer {
 
   public TcpServerPipelineFactory(ChannelGroup incomingChannelGroup,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
-    if( DEBUG )
-    	log.info("TcpServerPipeLineFactory ctor:"+incomingChannelGroup+" "+topicParticipantManager+" "+serviceManager);
+    //if( DEBUG )
+    //	log.info("TcpServerPipeLineFactory ctor:"+incomingChannelGroup+" "+topicParticipantManager+" "+serviceManager);
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
   }

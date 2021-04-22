@@ -28,9 +28,8 @@ import java.util.concurrent.TimeUnit;
  * and TcpClientManager, which has the NamedChannelHandlers.<br/>
  * Here, we also maintain the incomingMessageQueue, which contains MessageListeners of the type this
  * class is parameterized with.<br/>
- * 
- * 
- * @author jg
+ *  
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Subscriber<T> {
 	private static boolean DEBUG = true;

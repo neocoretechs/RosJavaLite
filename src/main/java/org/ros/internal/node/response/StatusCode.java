@@ -1,7 +1,7 @@
 package org.ros.internal.node.response;
 /**
  * Status codes from remote calls.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  *
  */
 public enum StatusCode {

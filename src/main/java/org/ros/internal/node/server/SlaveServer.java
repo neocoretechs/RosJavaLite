@@ -70,9 +70,9 @@ public class SlaveServer extends RpcServer {
     this.tcpRosServer =
         new TcpRosServer(tcpRosBindAddress, tcpRosAdvertiseAddress, topicParticipantManager, serviceManager, executorService);
     if(DEBUG) {
-    	log.info("ADDRESSES SlaveServer ctor:"+nodeName+" TCPBind:"+tcpRosBindAddress+", TCPRosAdv:"+tcpRosAdvertiseAddress+", RPCBind:"+rpcBindAddress+", RPCAdv:"+rpcAdvertiseAddress);
-    	log.info("MANAGERS SlaveServer ctor:"+nodeName+" MasterClient:"+master+" TopicParticipantManager:"+topicParticipantManager+
-    			" ServiceManager:"+serviceManager+" ParameterManager:"+parameterManager+" ScheduledExecutorService:"+executorService);
+    	log.info("SlaveServer constructed:"+nodeName+" TCPBind:"+tcpRosBindAddress+", TCPRosAdv:"+tcpRosAdvertiseAddress+", RPCBind:"+rpcBindAddress+", RPCAdv:"+rpcAdvertiseAddress);
+    	//log.info("MANAGERS SlaveServer ctor:"+nodeName+" MasterClient:"+master+" TopicParticipantManager:"+topicParticipantManager+
+    	//		" ServiceManager:"+serviceManager+" ParameterManager:"+parameterManager+" ScheduledExecutorService:"+executorService);
     }
   }
 
@@ -166,7 +166,7 @@ public class SlaveServer extends RpcServer {
    *         {@link UnsupportedOperationException} otherwise.
    */
   @Override
-  public int getPid() {
+  public long getPid() {
     return Process.getPid();
   }
 

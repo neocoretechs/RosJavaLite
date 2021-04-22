@@ -17,7 +17,7 @@ import org.ros.node.topic.Subscriber;
  * {@link DefaultSubscriber}. It takes care of registration between the {@link Subscriber}
  * and remote {@link Publisher}.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 class UpdatePublisherRunnable<MessageType> implements Runnable {
   private static boolean DEBUG = true;
@@ -29,11 +29,8 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
 
   /**
    * @param subscriber
-   * @param nodeIdentifier
-   *          {@link NodeIdentifier} of the {@link Subscriber}'s
-   *          {@link SlaveServer}
-   * @param publisherIdentifier
-   *          {@link PublisherIdentifier} of the new {@link Publisher}
+   * @param nodeIdentifier {@link NodeIdentifier} of the {@link Subscriber}'s {@link SlaveServer}
+   * @param publisherIdentifier {@link PublisherIdentifier} of the new {@link Publisher}
    */
   public UpdatePublisherRunnable(DefaultSubscriber<MessageType> subscriber,
       NodeIdentifier nodeIdentifier, PublisherIdentifier publisherIdentifier) {
@@ -67,7 +64,7 @@ class UpdatePublisherRunnable<MessageType> implements Runnable {
     	  log.error("There are NO publishers available for topic "+subscriber.getTopicName());
       	}
     } catch (Exception e) {
-      // TODO(damonkohler): Retry logic is needed at the RPC layer.
+      // TODO Retry logic is needed at the RPC layer.
       log.error(e);
       e.printStackTrace();
     }

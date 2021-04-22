@@ -6,7 +6,11 @@ import java.net.URL;
 import java.net.UnknownHostException;
 
 import org.ros.exception.RosRuntimeException;
-
+/**
+ * 
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
+ *
+ */
 public class RpcClientConfigImpl implements RpcClientConfig {
 	private InetSocketAddress serverURL;
 	private int connectionTimeout;

@@ -16,9 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages a collection of {@link Publisher}s and {@link Subscriber}s.
  * 
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class TopicParticipantManager {
 	private static boolean DEBUG = true;

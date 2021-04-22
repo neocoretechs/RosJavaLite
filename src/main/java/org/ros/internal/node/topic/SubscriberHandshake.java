@@ -12,7 +12,7 @@ import org.ros.internal.transport.ConnectionHeaderFields;
  * The subscriber receives the return from the publisher with the available fields and the
  * MD5 checksum to verify the message and complete the handshake.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class SubscriberHandshake extends BaseClientHandshake {
 

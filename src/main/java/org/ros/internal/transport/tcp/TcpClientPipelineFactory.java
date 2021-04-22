@@ -9,7 +9,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
 /**
  * ChannelInitializer responsible for setting the NamedChannelhandlers into the pipeline of
  * a ChannelHandlerContext.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpClientPipelineFactory extends ChannelInitializer {
   public static boolean DEBUG = true;

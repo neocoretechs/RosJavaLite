@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * An RPC endpoint description of a ROS master.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public interface MasterRpcEndpoint extends RpcEndpoint {
 

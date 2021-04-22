@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node.rpc;
 
 import org.ros.internal.node.server.ParameterServer;
@@ -25,17 +9,15 @@ import java.util.List;
 /**
  * RPC endpoint for a parameter server.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public interface ParameterServerRpcEndpoint extends RpcEndpoint {
 
   /**
    * Deletes a parameter.
    * 
-   * @param callerId
-   *          ROS caller ID
-   * @param key
-   *          parameter name
+   * @param callerId ROS caller ID
+   * @param key parameter name
    * @return void
    */
   public List<Object> deleteParam(String callerId, String key);
@@ -70,11 +52,8 @@ public interface ParameterServerRpcEndpoint extends RpcEndpoint {
    * the return value will be a dictionary, where each key is a parameter in
    * that namespace. Sub-namespaces are also represented as dictionaries.
    * 
-   * @param callerId
-   *          ROS caller ID
-   * @param key
-   *          Parameter name. If key is a namespace, getParam() will return a
-   *          parameter tree.
+   * @param callerId ROS caller ID
+   * @param key Parameter name. If key is a namespace, getParam() will return a parameter tree.
    * @return the parameter value
    */
   public List<Object> getParam(String callerId, String key);
@@ -112,10 +91,8 @@ public interface ParameterServerRpcEndpoint extends RpcEndpoint {
    * If code is not 1, parameterValue should be ignored. parameterValue is an
    * empty dictionary if the parameter has not been set yet.
    * 
-   * @param callerId
-   *          ROS caller ID
-   * @param callerApi
-   *          Node API URI of subscriber for paramUpdate callbacks.
+   * @param callerId  ROS caller ID
+   * @param callerApi Node API URI of subscriber for paramUpdate callbacks.
    * @param key
    * @return the parameter value
    */
@@ -129,12 +106,9 @@ public interface ParameterServerRpcEndpoint extends RpcEndpoint {
    * A return value of zero means that the caller was not subscribed to the
    * parameter.
    * 
-   * @param callerId
-   *          ROS caller ID
-   * @param callerApi
-   *          Node API URI of subscriber
-   * @param key
-   *          Parameter name
+   * @param callerId ROS caller ID
+   * @param callerApi Node API URI of subscriber
+   * @param key Parameter name
    * @return the number of parameters that were unsubscribed
    */
   public List<Object> unsubscribeParam(String callerId, String callerApi, String callerPort, String key);
@@ -142,10 +116,8 @@ public interface ParameterServerRpcEndpoint extends RpcEndpoint {
   /**
    * Check if parameter is stored on server.
    * 
-   * @param callerId
-   *          ROS caller ID.
-   * @param key
-   *          Parameter name.
+   * @param callerId ROS caller ID.
+   * @param key Parameter name.
    * @return {@code true} if the parameter exists
    */
   public List<Object> hasParam(String callerId, String key);
@@ -153,8 +125,7 @@ public interface ParameterServerRpcEndpoint extends RpcEndpoint {
   /**
    * Gets the list of all parameter names stored on this server.
    * 
-   * @param callerId
-   *          ROS caller ID.
+   * @param callerId ROS caller ID.
    * @return a {@link Collection} of parameter names
    */
   public List<Object> getParamNames(String callerId);

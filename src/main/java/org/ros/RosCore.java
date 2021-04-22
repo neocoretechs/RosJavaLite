@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * TODO: Add /rosout node.
  * @see <a href="http://www.ros.org/wiki/roscore">roscore documentation</a>
  * 
- * @author Jonathan Groff (c) NeoCoreTechs 2021
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class RosCore {
   private static boolean DEBUG = true;
@@ -97,17 +97,17 @@ public class RosCore {
     // see if we are going to load JARs for provisioning remote nodes.
 	String jarsDir = System.getProperty(propsEntry);
 	if(jarsDir != null) {
-		log.info("> Processing top level JARs directory:"+jarsDir+" for remote node provisioning via ParameterTree");
+		log.info("> Processing top level resource directory:"+jarsDir+" for remote node provisioning via ParameterTree");
 		try {
 			// read exclusion file
 			File exclusion = new File((new File(jarsDir).getAbsolutePath())+("/_exclusion"));
 			String exString = new String(readFile(exclusion));
 			String[] exclusions = exString.split("\\r?\\n");
 			for(String s: exclusions)
-				log.info(s+" will be excluded from JAR provisioning.");
+				log.info(s+" will be excluded from resource provisioning.");
 			processFilesForFolder(new File(jarsDir), exclusions);
 		} catch (IOException e) {
-			log.error("Was unable to process JARs provisioning directory:"+jarsDir+" due to "+e);
+			log.error("Was unable to process resource provisioning directory:"+jarsDir+" due to "+e);
 		}
 	}
   }
@@ -121,11 +121,11 @@ public class RosCore {
 		for (final File fileEntry : folder.listFiles()) {
 			boolean include = true;
 			if(fileEntry.isDirectory()) {
-				log.info(">> Processing JAR subdirectory:"+fileEntry.getName());
+				log.info(">> Processing resource subdirectory:"+fileEntry.getName());
 				// see if this directory is excluded
 				for(String checkDir : exclusions)
 					if(checkDir.equals(fileEntry.getName())) {
-						log.info("Excluding directory "+checkDir+" from JAR provisioning.");
+						log.info("Excluding directory "+checkDir+" from resource provisioning.");
 						include = false;
 						break;
 					}
@@ -135,12 +135,12 @@ public class RosCore {
 				// check against file exclusion
 				for(String checkFile : exclusions)
 					if(checkFile.equals(fileEntry.getName())) {
-						log.info("Excluding file "+checkFile+" from JAR provisioning.");
+						log.info("Excluding file "+checkFile+" from resource provisioning.");
 						include = false;
 						break;
 					}
 				if(include) {
-					log.info(">>> Reading JAR "+fileEntry.getName());
+					log.info(">>> Reading resource: "+fileEntry.getName());
 					// form valid global graph name
 					String graphJar = jarGraph+fileEntry.getName().replace('.', '_').replace('-','x');
 					parameterServer.set(GraphName.of(graphJar), readFile(fileEntry));

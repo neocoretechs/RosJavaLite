@@ -4,7 +4,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * Manipulate groups of channels al la AsynchronousChannelGroup.
  * Primarily contains the ExecutorService by which threads are put to work.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  *
  */
 public class ChannelGroupImpl implements ChannelGroup {

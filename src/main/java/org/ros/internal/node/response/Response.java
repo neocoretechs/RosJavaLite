@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * The response from a remote call.
  * 
- * @author jg Copyright (C) NeoCoreTechs 2018
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2018, 2021
  */
 public class Response<T> {
 

@@ -44,11 +44,8 @@ public abstract class RpcServer {
   /**
    * Start up the remote calling server.
    * 
-   * @param instanceClass
-   *          the class of the remoting server
-   * 
-   * @param instance
-   *          an instance of the remoting server class
+   * @param instanceClass the class of the remoting server
+   * @param instance an instance of the remoting server class
    */
   public void start() {
     try {
@@ -65,7 +62,7 @@ public abstract class RpcServer {
 
   /**
    * Shut the remote call server down.
- * @throws IOException 
+   * @throws IOException 
    */
   public void shutdown() throws IOException {
     server.stopServer();
@@ -99,10 +96,10 @@ public abstract class RpcServer {
   }
 
   /**
-   * @return PID of node process if available, throws
-   *         {@link UnsupportedOperationException} otherwise.
+   * @return PID of node process if available
+   * @throws {@link UnsupportedOperationException} otherwise.
    */
-  public int getPid() {
+  public long getPid() {
     return Process.getPid();
   }
   

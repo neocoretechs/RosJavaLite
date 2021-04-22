@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.node;
 
 import org.apache.commons.logging.Log;
@@ -29,8 +13,32 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A node in the ROS graph.
+ * -----------------------<p/>
+ * An instance of DefaultNode creates ParameterServer, SlaveServer, the Publishers,etc. <p/>
  * 
- * @author khughes@google.com (Keith M. Hughes)
+ * DefaultNodeFactory creates new DefaultNode config listeners executor <p/>
+ * 
+ * DefaultNodeMainExecutor new Default(ScheduledExecutorService) : create new DefaultNodeFactory<p/>
+ * ----------------------<p/>
+ * AsynchTCPServer abstract startServer stopServer : constructs ServerSocket <p/>
+ * 
+ * final AsynchBaseServer extends AsynchTCPServer takes TcpRosServer: does serversocket.accept in run<br/>
+ * ----------------------<p/>
+ * TcpRosServer creates AsynchBaseServer, ChannelHandlerContext and AsynchTcpWorker with context <p/>
+ * 
+ * MasterServer and SlaveServer extend RpcServer and create TcpRosServer<p/>
+ * ----------------------<p/>
+ * abstract RpcServer takes bind and advertise address and creates BaseServer <p/>
+ * ----------------------<p/>
+ * 
+ * final BaseServer takes RpcServer, ServerSocket.accept() then creates TCPWorker <p/>
+ * ----------------------<p/>
+ * 
+ * TCPWorker takes socket and RpcServer and creates the thread which reads ObjectInputStream from 
+ * the socket created from ServerSocket.accept in BaseServer.<p/>
+ * ----------------------<p/>
+ * 
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public interface Node {
 
@@ -43,8 +51,7 @@ public interface Node {
    * Resolve the given name, using ROS conventions, into a full ROS namespace
    * name. Will be relative to the current namespace unless the name is global.
    * 
-   * @param name
-   *          the name to resolve
+   * @param name the name to resolve
    * @return fully resolved ros namespace name
    */
   GraphName resolveName(GraphName name);
@@ -65,8 +72,7 @@ public interface Node {
   InetSocketAddress getUri();
 
   /**
-   * @return {@link URI} of {@link MasterRpcEndpoint} that this node is
-   *         attached to.
+   * @return {@link URI} of {@link MasterRpcEndpoint} that this node is attached to.
    */
   InetSocketAddress getMasterUri();
 
@@ -94,8 +100,7 @@ public interface Node {
   /**
    * Add a new {@link NodeListener} to the {@link Node}.
    * 
-   * @param listener
-   *          the {@link NodeListener} to add
+   * @param listener the {@link NodeListener} to add
    */
   void addListener(NodeListener listener);
 
@@ -113,8 +118,7 @@ public interface Node {
    * Any blocking calls executed in the provided {@link CancellableLoop} can
    * potentially delay {@link Node} shutdown and should be avoided.
    * 
-   * @param cancellableLoop
-   *          the {@link CancellableLoop} to execute
+   * @param cancellableLoop the {@link CancellableLoop} to execute
    */
   void executeCancellableLoop(CancellableLoop cancellableLoop);
 

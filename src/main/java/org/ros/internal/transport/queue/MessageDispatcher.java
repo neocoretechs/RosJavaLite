@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
  * It shares the CircularBlockingDeque with the MessageReceiver.
  * It services the MessageListeners with received messages from the queue.
  * @param <T> the message type
- * @author jg (C) NeoCoreTechs 2017
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017,2021
  */
 public class MessageDispatcher<T> extends CancellableLoop {
 

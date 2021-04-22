@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.address;
 
 import java.io.IOException;
@@ -28,7 +12,7 @@ import org.ros.exception.RosRuntimeException;
  * between an address that should be used for binding a server port and one that
  * should be advertised to external entities.
  * 
- * @author kwc@willowgarage.com (Ken Conley)
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class BindAddress {
 
@@ -40,8 +24,7 @@ public class BindAddress {
 
   /**
    * @param port the port to bind to
-   * @return a {@link BindAddress} instance with specified port that will bind
-   *         to all network interfaces on the host
+   * @return a {@link BindAddress} instance with specified port that will bind to all network interfaces on the host
    */
   public static BindAddress newPublic(int port) {
     return new BindAddress(new InetSocketAddress(InetSocketAddressFactory.newNonLoopback(), port));
@@ -58,8 +41,7 @@ public class BindAddress {
 
   /**
    * @param port the port to bind to
-   * @return a {@link BindAddress} instance with specified port that will bind
-   *         to the loopback interface on the host
+   * @return a {@link BindAddress} instance with specified port that will bind to the loopback interface on the host
    */
   public static BindAddress newPrivate(int port) {
     return new BindAddress(InetSocketAddressFactory.newLoopback(port));

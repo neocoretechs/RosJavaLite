@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
  * A list of subscribers as ChannelHandlerContexts.
  * A DefaultPublisherListener is constructed as a default entry in the list.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publisher<T> {
 

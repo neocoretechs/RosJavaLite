@@ -5,7 +5,7 @@ import org.ros.internal.node.response.StatusCode;
 /**
  * Remote exception indication a remote resource, such as a publisher, was not found and we want
  * to toss a checked exception to handle that.
- * @author jg Copyright (C) NeoCoreTechs 2018
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2018,2021
  */
 public class RemoteNotFoundException extends RosException {
 	private static final long serialVersionUID = 2514173639723076472L;

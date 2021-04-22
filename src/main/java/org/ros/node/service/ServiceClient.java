@@ -8,7 +8,7 @@ import java.net.URI;
 /**
  * Provides a connection to a ROS service.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  * 
  * @param <T>
  *          the {@link ServiceServer} responds to requests of this type

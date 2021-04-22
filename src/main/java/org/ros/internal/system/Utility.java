@@ -16,7 +16,7 @@ import org.ros.internal.message.field.DirectByteArrayOutputStream;
  * We are using java serialization. Traditional ROS uses XML/RPC so in general
  * we are using ROS generated messages, with all the associated ROS fields and formats
  * in a Java serialization context. If we need a ROS gateway the bindings should remain straightforward.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  *
  */
 public class Utility {

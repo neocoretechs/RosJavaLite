@@ -221,7 +221,9 @@ public class NodeConfiguration {
 	    serviceManager = new ServiceManager();
 		executor = new DefaultScheduledExecutorService();
 		parameterManager = new ParameterManager(executor);
+		//GraphName basename = getDefaultNodeName();
 		nodeName = parentResolver.getNamespace();//.join(basename);
+		log.info("newSlaveServer() Setting Node Name:"+nodeName); 
 		resolver = new NodeNameResolver(nodeName, parentResolver);
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 		slaveServer =
@@ -236,9 +238,6 @@ public class NodeConfiguration {
 		return slaveServer;
   }
   
-  private void setSlaveServer(SlaveServer slaveserver) {
-	  slaveServer = slaveserver;
-  }
   /**
    * 
    * @return CommandLineLoader used to initiate node, if used
@@ -329,6 +328,7 @@ public class NodeConfiguration {
     this.nodeName = nodeName;
     if(slaveServer != null)
     	slaveServer.setNodeName(nodeName);
+	log.info("setNodeName(GraphName) Setting Node Name:"+nodeName); 
     return this;
   }
 
@@ -339,6 +339,7 @@ public class NodeConfiguration {
   public NodeConfiguration setNodeName(String nodeName) {
 	if(slaveServer != null)
 	   slaveServer.setNodeName(GraphName.of(nodeName));
+	log.info("setNodeName(String) Setting Node Name:"+nodeName); 
     return setNodeName(GraphName.of(nodeName));
   }
 

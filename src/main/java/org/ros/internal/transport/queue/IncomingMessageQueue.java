@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
  * Created in default subscriber to handle the incoming messages.
  * Creates a MessageReceiver and a MessageDispatcher.
  * The MessageDispatcher is spun up by the ExecutorService.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class IncomingMessageQueue<T> {
 

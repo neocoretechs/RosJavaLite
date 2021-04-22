@@ -8,7 +8,7 @@ import org.ros.internal.transport.ChannelPipeline;
  * Base class to initialize the pipeline for a given context.
  * During bootup, the main initialization calls the initChannel methods for these
  * factories and they in turn register the handlers into the pipeline
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  *
  */
 public abstract class ChannelInitializer {

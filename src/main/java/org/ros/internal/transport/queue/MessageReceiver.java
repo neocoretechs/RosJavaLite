@@ -1,6 +1,5 @@
 package org.ros.internal.transport.queue;
 
-
 import org.ros.concurrent.CircularBlockingDeque;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,8 +12,8 @@ import org.ros.internal.transport.tcp.AbstractNamedChannelHandler;
  * A type of ChannelHandler that takes channelRead events and queues them.
  * Contains the circular blocking deque shared by MessageDispatcher and managed by IncomingMessageQueue.
  * It is placed in the stack after handshake to be activated on read events.
- * @author jg (C) NeoCoretechs 2017
  * @param <T> the message type
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class MessageReceiver<T> extends AbstractNamedChannelHandler {
 

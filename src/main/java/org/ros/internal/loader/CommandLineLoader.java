@@ -124,8 +124,16 @@ public class CommandLineLoader {
    */
   public NodeConfiguration build() {
     parseRemappingArguments();
-    // TODO(damonkohler): Add support for starting up a private node.
-    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getHost(), getMasterUri());
+    NodeConfiguration nodeConfiguration;
+    if (specialRemappings.containsKey(CommandLineVariables.NODE_VISIBILITY)) {
+    	if(specialRemappings.get(CommandLineVariables.NODE_VISIBILITY).equals("private")) {
+    		nodeConfiguration = NodeConfiguration.newPrivate(getMasterUri());
+    	} else {
+    		nodeConfiguration = NodeConfiguration.newPublic(getHost(), getMasterUri());
+    	}
+    } else {
+    	nodeConfiguration = NodeConfiguration.newPublic(getHost(), getMasterUri());
+    }
     nodeConfiguration.setParentResolver(buildParentResolver());
     nodeConfiguration.setRosRoot(getRosRoot());
     nodeConfiguration.setRosPackagePath(getRosPackagePath());

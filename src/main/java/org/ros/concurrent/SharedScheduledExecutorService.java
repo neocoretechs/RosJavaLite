@@ -16,7 +16,7 @@ import java.util.concurrent.TimeoutException;
  * safely injected into instances which should not be in control of the
  * {@link ExecutorService}'s lifecycle.
  * 
- * @author khughes@google.com (Keith M. Hughes)
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class SharedScheduledExecutorService implements ScheduledExecutorService {
 

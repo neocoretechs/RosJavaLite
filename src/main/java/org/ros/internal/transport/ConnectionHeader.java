@@ -12,7 +12,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class ConnectionHeader implements Serializable {
   private static final long serialVersionUID = -7508346673596180951L;

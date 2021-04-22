@@ -23,7 +23,7 @@ import java.util.concurrent.TimeoutException;
  * impossible to create an unlimited number of threads on demand (as explained
  * in the {@link ThreadPoolExecutor} class javadoc.
  * 
- * @author damonkohler@google.com (Damon Kohler)
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class DefaultScheduledExecutorService implements ScheduledExecutorService {
 

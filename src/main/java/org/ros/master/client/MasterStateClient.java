@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2012 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.master.client;
 
 import org.ros.internal.node.client.MasterClient;
@@ -32,8 +16,9 @@ import java.util.List;
 
 /**
  * A remote client for obtaining system information from a master.
+ * In RosJavaLite the Uri fronts an InetSocketAddress as all communication is socket based.
  * 
- * @author Keith M. Hughes
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class MasterStateClient {
 
@@ -43,7 +28,7 @@ public class MasterStateClient {
   private final Node caller;
 
   /**
-   * Client for speaking to the master.
+   * Client for communication with the master.
    */
   private final MasterClient masterClient;
 
@@ -57,8 +42,7 @@ public class MasterStateClient {
 	masterClient = new MasterClient(masterUri, 60000, 60000);
   }
   /**
-   * @param nodeName
-   *          the name of the {@link Node} to lookup
+   * @param nodeName the name of the {@link Node} to lookup
    * @return the {@link InetSocketAddress} of the {@link Node} with the given name
    */
   public InetSocketAddress lookupNode(String nodeName) {
@@ -75,8 +59,7 @@ public class MasterStateClient {
   }
 
   /**
-   * @param serviceName
-   *          the name of the {@link ServiceServer} to look up
+   * @param serviceName the name of the {@link ServiceServer} to look up
    * @return the {@link InetSocketAddress} of the {@link ServiceServer} with the given name
    */
   public InetSocketAddress lookupService(String serviceName) {
@@ -85,8 +68,7 @@ public class MasterStateClient {
   }
 
   /**
-   * @param subgraph
-   *          the subgraph of the topics
+   * @param subgraph the subgraph of the topics
    * @return a {@link List} of {@link TopicDeclaration}s for published topics
    */
   public List<TopicDeclaration> getPublishedTopics(String subgraph) {

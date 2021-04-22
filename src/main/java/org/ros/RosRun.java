@@ -88,12 +88,12 @@ public class RosRun {
        			while(it.hasNext()) {
        				Entry<String,Object> jarName = it.next();
        				jarFileName = jarsDir+jarName.getKey().replace("_", ".");
-       				log.info(jarFileName+" retrieved for provisioning..");
+       				//log.info(jarFileName+" retrieved for provisioning..");
        				FileOutputStream fos = new FileOutputStream(jarFileName);
        				fos.write((byte[]) jarName.getValue());
        				fos.flush();
        				fos.close();
-       				log.info("Wrote "+jarName.getKey()+" "+((byte[])jarName.getValue()).length+" bytes.");
+       				//log.info("Wrote "+jarName.getKey()+" "+((byte[])jarName.getValue()).length+" bytes.");
        				loader.getJarClassLoader().loadJarFromJarfile("file://"+jarFileName);
        			}
        			log.info("Proceeding to load "+nodeClassName+" using ParameterTree JAR provisioning.");

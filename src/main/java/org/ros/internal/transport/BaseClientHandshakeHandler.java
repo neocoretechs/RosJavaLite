@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutorService;
 /**
  * Abstraction of top level ChannelHandler interface.
  * Common functionality for {@link ClientHandshake} handlers.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  * 
  */
 public abstract class BaseClientHandshakeHandler extends AbstractNamedChannelHandler {

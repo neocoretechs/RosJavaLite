@@ -23,7 +23,7 @@ import org.ros.namespace.GraphName;
  * Once an incoming channel read takes place the handshake handler is removed and the traffic
  * handler is placed in the pipeline
  * 
- * @author jg
+ * @author Jonthan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpServerHandshakeHandler implements ChannelHandler {
   private static final boolean DEBUG = true;
@@ -34,9 +34,9 @@ public class TcpServerHandshakeHandler implements ChannelHandler {
   public TcpServerHandshakeHandler(TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
-    if( DEBUG ) {
-		  log.info("TcpServerHandshakeHandler ctor:"+topicParticipantManager+" "+serviceManager+" for:"+this);
-	}
+    //if( DEBUG ) {
+	//	  log.info("TcpServerHandshakeHandler ctor:"+topicParticipantManager+" "+serviceManager+" for:"+this);
+	//}
   }
 
   @Override

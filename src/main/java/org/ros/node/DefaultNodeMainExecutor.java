@@ -15,10 +15,10 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Executes {@link NodeMain}s in a multithreaded environment using the threads
- * provided an ExecutorService.
+ * provided by an ExecutorService.<p/>
  * Methods here to execute: create, start, register, shutdown instances of NodeMain.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2021
  */
 public class DefaultNodeMainExecutor implements NodeMainExecutor {
 
@@ -53,28 +53,23 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
   }
 
   /**
-   * @return an instance of {@link DefaultNodeMainExecutor} that uses a
-   *         {@link ScheduledExecutorService} that is suitable for both
-   *         executing tasks immediately and scheduling tasks to execute in the
-   *         future
+   * @return an instance of {@link DefaultNodeMainExecutor} that uses a {@link ScheduledExecutorService} that is suitable for both
+   * executing tasks immediately and scheduling tasks to execute in the future
    */
   public static NodeMainExecutor newDefault() {
     return newDefault(new DefaultScheduledExecutorService());
   }
 
   /**
-   * @return an instance of {@link DefaultNodeMainExecutor} that uses the
-   *         supplied {@link ExecutorService}
+   * @return an instance of {@link DefaultNodeMainExecutor} that uses the supplied {@link ExecutorService}
    */
   public static NodeMainExecutor newDefault(ScheduledExecutorService executorService) {
     return new DefaultNodeMainExecutor(new DefaultNodeFactory(executorService), executorService);
   }
 
   /**
-   * @param nodeFactory
-   *          {@link NodeFactory} to use for node creation.
-   * @param scheduledExecutorService
-   *          {@link NodeMain}s will be executed using this
+   * @param nodeFactory {@link NodeFactory} to use for node creation.
+   * @param scheduledExecutorService {@link NodeMain}s will be executed using this
    */
   private DefaultNodeMainExecutor(NodeFactory nodeFactory, ScheduledExecutorService scheduledExecutorService) {
     this.nodeFactory = nodeFactory;
@@ -158,8 +153,7 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
   /**
    * Trap and log any exceptions while shutting down the supplied {@link Node}.
    * 
-   * @param node
-   *          the {@link Node} to shut down
+   * @param node the {@link Node} to shut down
    */
   private void safelyShutdownNode(Node node) {
     boolean success = true;
@@ -181,8 +175,7 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
   /**
    * Register a {@link ConnectedNode} with the {@link NodeMainExecutor}.
    * 
-   * @param connectedNode
-   *          the {@link ConnectedNode} to register
+   * @param connectedNode the {@link ConnectedNode} to register
    */
   private void registerNode(ConnectedNode connectedNode) {
     GraphName nodeName = connectedNode.getName();
@@ -206,8 +199,7 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
   /**
    * Unregister a {@link Node} with the {@link NodeMainExecutor}.
    * 
-   * @param node
-   *          the {@link Node} to unregister
+   * @param node the {@link Node} to unregister
    */
   private void unregisterNode(Node node) {
 	  synchronized(connectedNodes) {

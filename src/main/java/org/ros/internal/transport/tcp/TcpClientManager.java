@@ -18,7 +18,7 @@ import org.apache.commons.logging.LogFactory;
  * For each TcpClient constructed there will be an associated ChannelHandlerContext.
  * We maintain a list of the ChannelHandlerContexts here (as TcpClients) such that we may perform the necessary ops on them.
  * This class is set up as a singleton returning instances for each executor.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpClientManager {
   public static boolean DEBUG = false;
