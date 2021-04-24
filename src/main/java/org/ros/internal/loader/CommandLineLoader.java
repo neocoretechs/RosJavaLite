@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Create {@link NodeConfiguration} instances using a ROS command-line and
@@ -52,7 +53,7 @@ public class CommandLineLoader {
 
   private String nodeClassName;
   
-  private JarClassLoader jcl; // to pull JARs from ParameterTree
+  private JarClassLoader jcl = null; // to pull JARs from ParameterTree
 
   /**
    * Create new {@link CommandLineLoader} with specified command-line arguments.
@@ -125,22 +126,24 @@ public class CommandLineLoader {
   public NodeConfiguration build() {
     parseRemappingArguments();
     NodeConfiguration nodeConfiguration;
+    UUID uuid = UUID.randomUUID();
+    String nodeName = uuid.toString().replace('-', 'x');
+    if (specialRemappings.containsKey(CommandLineVariables.NODE_NAME)) {
+        nodeName = specialRemappings.get(CommandLineVariables.NODE_NAME);
+    }
     if (specialRemappings.containsKey(CommandLineVariables.NODE_VISIBILITY)) {
     	if(specialRemappings.get(CommandLineVariables.NODE_VISIBILITY).equals("private")) {
-    		nodeConfiguration = NodeConfiguration.newPrivate(getMasterUri());
+    		nodeConfiguration = NodeConfiguration.newPrivate(nodeName, getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
     	} else {
-    		nodeConfiguration = NodeConfiguration.newPublic(getHost(), getMasterUri());
+    		nodeConfiguration = NodeConfiguration.newPublic(nodeName, getHost(), getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
     	}
     } else {
-    	nodeConfiguration = NodeConfiguration.newPublic(getHost(), getMasterUri());
+    	nodeConfiguration = NodeConfiguration.newPublic(nodeName, getHost(), getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
     }
     nodeConfiguration.setParentResolver(buildParentResolver());
     nodeConfiguration.setRosRoot(getRosRoot());
     nodeConfiguration.setRosPackagePath(getRosPackagePath());
     nodeConfiguration.setMasterUri(getMasterUri());
-    if (specialRemappings.containsKey(CommandLineVariables.NODE_NAME)) {
-      nodeConfiguration.setNodeName(specialRemappings.get(CommandLineVariables.NODE_NAME));
-    }
     nodeConfiguration.setCommandLineLoader(this);
     return nodeConfiguration;
   }
@@ -253,6 +256,8 @@ public class CommandLineLoader {
    * @throws IllegalAccessException
    */
   public NodeMain loadClass(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+	if(jcl != null)
+		return loadClassWithJars(name);
     Class<?> clazz = getClass().getClassLoader().loadClass(name);
     Method meth = null;
     if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
@@ -281,7 +286,7 @@ public class CommandLineLoader {
    * @throws InstantiationException
    * @throws IllegalAccessException
    */
-  public NodeMain loadClassWithJars(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+  private NodeMain loadClassWithJars(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     Class<?> clazz = jcl.loadClass(name);
     if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
     	try {	

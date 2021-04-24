@@ -144,7 +144,7 @@ public class MessageQueueIntegrationTest {
   public void setup() {
 	try {
     executorService = Executors.newCachedThreadPool();
-    MessageDefinitionProvider messageDefinitionProvider = new MessageDefinitionReflectionProvider();
+    MessageDefinitionProvider messageDefinitionProvider = new MessageDefinitionReflectionProvider(Thread.currentThread().getContextClassLoader());
     TopicMessageFactory topicMessageFactory = new TopicMessageFactory(messageDefinitionProvider);
     expectedMessage = topicMessageFactory.newFromType(std_msgs.String._TYPE);
     expectedMessage.setData("Would you like to play a game?");

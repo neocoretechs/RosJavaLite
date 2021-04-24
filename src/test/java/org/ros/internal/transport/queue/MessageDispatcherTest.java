@@ -50,7 +50,7 @@ public class MessageDispatcherTest {
   public void before() {
     executorService = Executors.newCachedThreadPool();
     lazyMessages = new CircularBlockingDeque<std_msgs.Int32>(128);
-    messageFactory = new DefaultMessageFactory(new MessageDefinitionReflectionProvider());
+    messageFactory = new DefaultMessageFactory(new MessageDefinitionReflectionProvider(Thread.currentThread().getContextClassLoader()));
   }
 
   @Test

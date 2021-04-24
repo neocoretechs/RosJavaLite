@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.ros.internal.node;
 
 import static org.junit.Assert.assertEquals;
@@ -52,8 +36,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests for the {@link DefaultNode}.
  * 
- * @author kwc@willowgarage.com (Ken Conley)
- * @author damonkohler@google.com (Damon Kohler)
  * @author jg
  */
 public class DefaultNodeTest extends RosTest {
@@ -65,7 +47,7 @@ public class DefaultNodeTest extends RosTest {
 
   private void checkNodeAddress(final String host) throws InterruptedException {
     final Holder<InetSocketAddress> holder = Holder.newEmpty();
-    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(host,new InetSocketAddress("127.0.0.1",8090) /*rosCore.getUri()*/);
+    NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(host,"defaultNode",new InetSocketAddress("127.0.0.1",8090), Thread.currentThread().getContextClassLoader() /*rosCore.getUri()*/);
     nodeMainExecutor.execute(new AbstractNodeMain() {
       @Override
       public GraphName getDefaultNodeName() {
@@ -200,7 +182,7 @@ public class DefaultNodeTest extends RosTest {
 
     final Holder<ConnectedNode> holder = Holder.newEmpty();
     NodeConfiguration nodeConfiguration =
-        NodeConfiguration.newPublic(masterUri.getHostName(),  masterUri);
+        NodeConfiguration.newPublic(masterUri.getHostName(), "defaultNode", masterUri, Thread.currentThread().getContextClassLoader());
     nodeMainExecutor.execute(new AbstractNodeMain() {
       @Override
       public GraphName getDefaultNodeName() {

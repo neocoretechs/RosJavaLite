@@ -90,12 +90,13 @@ public class NodeConfiguration {
   private ParameterManager parameterManager;
   private NameResolver resolver;
   private NodeIdentifier nodeIdentifier;
+  private ClassLoader classLoader;
   /**
    * @param nodeConfiguration The {@link NodeConfiguration} to copy
    * @return a copy of the supplied {@link NodeConfiguration}
    */
   public static NodeConfiguration copyOf(NodeConfiguration nodeConfiguration) {
-    NodeConfiguration copy = new NodeConfiguration();
+    NodeConfiguration copy = new NodeConfiguration(nodeConfiguration.classLoader);
     copy.parentResolver = nodeConfiguration.parentResolver;
     copy.masterUri = nodeConfiguration.masterUri;
     copy.rosRoot = nodeConfiguration.rosRoot;
@@ -128,13 +129,14 @@ public class NodeConfiguration {
 
   /**
    * Creates a new {@link NodeConfiguration} for a publicly accessible {@link Node}.
-   * 
-   * @param hostTthe host that the {@link Node} will run on
+   * @param nodeName the name of this node once fully constructed
+   * @param host the host that the {@link Node} will run on
    * @param defaultMasterUri the {@link URI} for the master that the {@link Node} will register with
    * @return a new {@link NodeConfiguration} for a publicly accessible {@link Node}
    */
-  public static NodeConfiguration newPublic(String host, InetSocketAddress defaultMasterUri) {
-    NodeConfiguration configuration = new NodeConfiguration();
+  public static NodeConfiguration newPublic(String nodeName, String host, InetSocketAddress defaultMasterUri, ClassLoader classLoader) {
+    NodeConfiguration configuration = new NodeConfiguration(classLoader);
+    configuration.setNodeName(nodeName);
     configuration.setRpcBindAddress(BindAddress.newPublic());
     configuration.setRpcAdvertiseAddressFactory(new PublicAdvertiseAddressFactory(host));
     configuration.setTcpRosBindAddress(BindAddress.newPublic());
@@ -156,8 +158,8 @@ public class NodeConfiguration {
    * @param masterUri the {@link URI} for the master that the {@link Node} will register with
    * @return a new {@link NodeConfiguration} for a private {@link Node}
    */
-  public static NodeConfiguration newPrivate(InetSocketAddress masterUri) {
-    NodeConfiguration configuration = new NodeConfiguration();
+  public static NodeConfiguration newPrivate(InetSocketAddress masterUri, String nodeName, ClassLoader classLoader) {
+    NodeConfiguration configuration = new NodeConfiguration(classLoader);
     configuration.setRpcBindAddress(BindAddress.newPrivate());
     configuration.setRpcAdvertiseAddressFactory(new PrivateAdvertiseAddressFactory());
     configuration.setTcpRosBindAddress(BindAddress.newPrivate());
@@ -172,17 +174,19 @@ public class NodeConfiguration {
   }
 
 
-/**
+  /**
    * Creates a new {@link NodeConfiguration} for a {@link Node} that is only accessible on the local host.
-   * 
+   * @param nodeName the name of this node, once fully constructed
+   * @param inetSocketAddress 
    * @return a new {@link NodeConfiguration} for a private {@link Node}
    */
-  public static NodeConfiguration newPrivate() {
-    return newPrivate(DEFAULT_MASTER_URI);
+  public static NodeConfiguration newPrivate(String nodeName, InetSocketAddress inetSocketAddress, ClassLoader classLoader) {
+    return newPrivate(DEFAULT_MASTER_URI, nodeName, classLoader);
   }
 
-  private NodeConfiguration() {
-    MessageDefinitionProvider messageDefinitionProvider = new MessageDefinitionReflectionProvider();
+  private NodeConfiguration(ClassLoader classLoader) {
+	this.classLoader = classLoader;
+    MessageDefinitionProvider messageDefinitionProvider = new MessageDefinitionReflectionProvider(classLoader);
     setTopicDescriptionFactory(new TopicDescriptionFactory(messageDefinitionProvider));
     setTopicMessageFactory(new DefaultMessageFactory(messageDefinitionProvider));
     setServiceDescriptionFactory(new ServiceDescriptionFactory(messageDefinitionProvider));
@@ -223,7 +227,6 @@ public class NodeConfiguration {
 		parameterManager = new ParameterManager(executor);
 		//GraphName basename = getDefaultNodeName();
 		nodeName = parentResolver.getNamespace();//.join(basename);
-		log.info("newSlaveServer() Setting Node Name:"+nodeName); 
 		resolver = new NodeNameResolver(nodeName, parentResolver);
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 		slaveServer =

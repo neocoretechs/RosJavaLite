@@ -20,6 +20,8 @@ public interface NodeMain extends NodeListener {
   /**
    * @return the name of the {@link Node} that will be used if a name was not specified in the {@link Node}'s associated {@link NodeConfiguration}
    */
-  public GraphName getDefaultNodeName();
+  default GraphName getDefaultNodeName() {
+	return GraphName.of("defaultNode");
+  }
  
 }

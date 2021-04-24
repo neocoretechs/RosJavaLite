@@ -47,7 +47,7 @@ public abstract class RosTest {
     //rosCore.start();
     //assertTrue(rosCore.awaitStart(1, TimeUnit.SECONDS));
     nodeMainExecutor = DefaultNodeMainExecutor.newDefault();
-    nodeConfiguration = NodeConfiguration.newPrivate(new InetSocketAddress("172.16.0.101",8090)/*rosCore.getUri()*/);
+    nodeConfiguration = NodeConfiguration.newPrivate(new InetSocketAddress("172.16.0.101",8090)/*rosCore.getUri()*/, "defaultNode", Thread.currentThread().getContextClassLoader());
   }
 
   @After

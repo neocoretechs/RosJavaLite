@@ -476,14 +476,14 @@ import java.util.jar.Manifest;
 	     */
 	    private void persistNewTemp(File fileCfg) {
 	        if (hsDeleteOnExit.size() == 0) {
-	        	if(DEBUG)
-	        		System.out.printf( "No temp file names to persist on exit.%n");
+	        	//if(DEBUG)
+	        		//System.out.printf( "No temp file names to persist on exit.%n");
 	            fileCfg.delete(); // do not pollute disk
 	            return;
 	        }
-	        if(DEBUG)
-	        	System.out.printf("Persisting %d temp file names into %s%n",
-	                hsDeleteOnExit.size(), fileCfg.getAbsolutePath());
+	        //if(DEBUG)
+	        	//System.out.printf("Persisting %d temp file names into %s%n",
+	                //hsDeleteOnExit.size(), fileCfg.getAbsolutePath());
 	        BufferedWriter writer = null;
 	        try {
 	            writer = new BufferedWriter(new FileWriter(fileCfg));

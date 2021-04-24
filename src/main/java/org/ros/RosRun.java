@@ -97,14 +97,9 @@ public class RosRun {
        				loader.getJarClassLoader().loadJarFromJarfile("file://"+jarFileName);
        			}
        			log.info("Proceeding to load "+nodeClassName+" using ParameterTree JAR provisioning.");
-       			nodeMain = loader.loadClassWithJars(nodeClassName);
-       		} else {
-       			log.info("Acquisition of JARs from ParameterTree was unsuccessful, using standard classloader");
-       			nodeMain = loader.loadClass(nodeClassName);
        		}
-    	} else {
-    		nodeMain = loader.loadClass(nodeClassName);
     	}
+ 		nodeMain = loader.loadClass(nodeClassName);
     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
       throw new RosRuntimeException("Unable to instantiate node: " + nodeClassName, e);
     }
