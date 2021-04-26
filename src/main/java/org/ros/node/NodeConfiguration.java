@@ -160,6 +160,7 @@ public class NodeConfiguration {
    */
   public static NodeConfiguration newPrivate(InetSocketAddress masterUri, String nodeName, ClassLoader classLoader) {
     NodeConfiguration configuration = new NodeConfiguration(classLoader);
+    configuration.setNodeName(nodeName);
     configuration.setRpcBindAddress(BindAddress.newPrivate());
     configuration.setRpcAdvertiseAddressFactory(new PrivateAdvertiseAddressFactory());
     configuration.setTcpRosBindAddress(BindAddress.newPrivate());
@@ -226,7 +227,7 @@ public class NodeConfiguration {
 		executor = new DefaultScheduledExecutorService();
 		parameterManager = new ParameterManager(executor);
 		//GraphName basename = getDefaultNodeName();
-		nodeName = parentResolver.getNamespace();//.join(basename);
+		nodeName = parentResolver.getNamespace().join(nodeName);
 		resolver = new NodeNameResolver(nodeName, parentResolver);
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 		slaveServer =
@@ -353,9 +354,7 @@ public class NodeConfiguration {
    * @return this {@link NodeConfiguration}
    */
   public NodeConfiguration setDefaultNodeName(GraphName nodeName) {
-    if (this.nodeName == null) {
-      setNodeName(nodeName);
-    }
+	setNodeName(nodeName);
     return this;
   }
 

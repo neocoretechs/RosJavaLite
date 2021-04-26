@@ -94,7 +94,7 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
     // NOTE(damonkohler): To avoid a race condition, we have to make our copy
     // of the NodeConfiguration in the current thread.
     final NodeConfiguration nodeConfigurationCopy = NodeConfiguration.copyOf(nodeConfiguration);
-    nodeConfigurationCopy.setDefaultNodeName(nodeMain.getDefaultNodeName());
+    //nodeConfigurationCopy.setDefaultNodeName(nodeMain.getDefaultNodeName());
     assert(nodeConfigurationCopy.getNodeName() != null) : "Node name not specified.";
     if (DEBUG) {
       log.info("Starting node: " + nodeConfigurationCopy.getNodeName());
