@@ -126,8 +126,7 @@ public class CommandLineLoader {
   public NodeConfiguration build() {
     parseRemappingArguments();
     NodeConfiguration nodeConfiguration;
-    UUID uuid = UUID.randomUUID();
-    String nodeName = uuid.toString().replace('-', 'x');
+    String nodeName = GraphName.newAnonymous().toString();
     if (specialRemappings.containsKey(CommandLineVariables.NODE_NAME)) {
         nodeName = specialRemappings.get(CommandLineVariables.NODE_NAME);
     }
