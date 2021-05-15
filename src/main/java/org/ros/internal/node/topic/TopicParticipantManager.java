@@ -8,7 +8,6 @@ import org.ros.node.topic.Subscriber;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,7 +103,16 @@ public class TopicParticipantManager {
       listener.onSubscriberRemoved(subscriber);
     }
   }
-
+  /**
+   * Variation for removal of subscriber during executor service shutdown.<p/>
+   * Dont fire onSubscriberRemoved method of Registrar, which resubmits 
+   * @param subscriber
+   * @param b
+   */
+  public void removeSubscriber(DefaultSubscriber<?> subscriber, boolean b) {
+	  subscribers.remove(subscriber.getTopicName());
+  }
+  
   public void addSubscriberConnection(DefaultSubscriber<?> subscriber, PublisherIdentifier publisherIdentifier) {
 	  if(DEBUG)
 		  log.info("Connecting subscriber:"+subscriber+" to publisher Identifier:"+publisherIdentifier+" for "+this);
@@ -163,4 +171,6 @@ public class TopicParticipantManager {
   public Collection<SubscriberIdentifier> getPublisherConnections(DefaultPublisher<?> publisher) {
     return publisherConnections.get(publisher);
   }
+
+
 }

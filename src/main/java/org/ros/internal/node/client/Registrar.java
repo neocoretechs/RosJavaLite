@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * which creates a SlaveClient of type SlaveRpcEndpointImpl to
  * contact the publishers. If successful, call signalOnMasterRegistrationSuccess for the subscriber.
  * 
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class Registrar implements TopicParticipantManagerListener, ServiceManagerListener {
 
@@ -252,7 +252,15 @@ public class Registrar implements TopicParticipantManagerListener, ServiceManage
       });
     }
   }
-
+  
+  @Override
+  public void onSubscriberRemoved(final DefaultSubscriber<?> subscriber, boolean remove) {
+	   if (DEBUG) {
+		      log.info("Unregistering subscriber for shutdown: " + subscriber);
+	   }
+	   masterClient.unregisterSubscriber(nodeIdentifier, subscriber);
+  }
+  
   @Override
   public void onServiceServerAdded(final DefaultServiceServer<?, ?> serviceServer) {
     if (DEBUG) {

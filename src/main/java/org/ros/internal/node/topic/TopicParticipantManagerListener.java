@@ -37,8 +37,14 @@ public interface TopicParticipantManagerListener {
   /**
    * Called when a {@link Subscriber} is removed.
    * 
-   * @param subscriber
-   *          the {@link Subscriber} that was removed
+   * @param subscriber the {@link Subscriber} that was removed
    */
   void onSubscriberRemoved(DefaultSubscriber<?> subscriber);
+
+  /**
+   * Called when a {@link Subscriber} is removed for shutdown.
+   * 
+   * @param subscriber the {@link Subscriber} that was removed
+   */
+  void onSubscriberRemoved(DefaultSubscriber<?> subscriber, boolean remove);
 }

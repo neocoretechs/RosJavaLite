@@ -58,7 +58,7 @@ public class SubscriberFactory {
           @Override
           public void onShutdown(Subscriber<T> subscriber) {
         	assert(subscriber != null );
-            topicParticipantManager.removeSubscriber((DefaultSubscriber<T>) subscriber);
+            topicParticipantManager.removeSubscriber((DefaultSubscriber<T>) subscriber, true);
           }
         });
         topicParticipantManager.addSubscriber(subscriber);
