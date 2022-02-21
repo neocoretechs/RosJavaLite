@@ -15,8 +15,6 @@ import java.util.concurrent.Executor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.ros.internal.transport.tcp.ChannelGroup;
-
 
 /**
  * A handler context contains all the executor, the channel group, the channel, and the pipeline with the handlers.
@@ -30,27 +28,24 @@ import org.ros.internal.transport.tcp.ChannelGroup;
  * The functions of the system move data through the pipeline, triggering the handlers in the sequence they were
  * added.
  * Traffic is filtered to subscriber channels via the hash set of requested message types
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2017,2022
  *
  */
 public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(ChannelHandlerContextImpl.class);
-	/*Asynchronous*/ChannelGroup channelGroup;
 	/*Asynchronous*/Socket/*Channel*/ channel;
+	private Executor executor;
 	ChannelPipeline pipeline;
 	boolean ready = false;
-	private Object mutex = new Object();
 	Set<String> outboundMessageTypes;
-	InputStream is = null;
-	OutputStream os = null;
-	ObjectInputStream ois = null;
 
-	public ChannelHandlerContextImpl(/*Asynchronous*/ChannelGroup channelGroup2, /*Asynchronous*/Socket channel2) {
-		channelGroup = channelGroup2;
-		channel = channel2;
-		pipeline = new ChannelPipelineImpl(this);
-		outboundMessageTypes = (Set<String>) new HashSet<String>();
+
+	public ChannelHandlerContextImpl(Executor executor, /*Asynchronous*/Socket channel) {
+		this.executor = executor;
+		this.channel = channel;
+		this.pipeline = new ChannelPipelineImpl(this);
+		this.outboundMessageTypes = (Set<String>) new HashSet<String>();
 	}
 	
 	public void setChannel(/*Asynchronous*/Socket/*Channel*/ sock) {
@@ -59,7 +54,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 		
 	@Override
 	public Executor executor() {
-		return channelGroup.getExecutorService();
+		return executor;
 	}
 
 	@Override
@@ -115,52 +110,51 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public Object read() throws IOException {
-		is = channel.getInputStream();
-		//ObjectInputStream ois = new ObjectInputStream(is);
-		ois = new ObjectInputStream(is);
-		try {
-			return ois.readObject();
-		} catch (ClassNotFoundException e) {
-			throw new IOException(e);
-		} catch(StreamCorruptedException sce) {
-			is = channel.getInputStream();
-			ois = new ObjectInputStream(is);
+			InputStream is = channel.getInputStream();
+			ObjectInputStream ois = new ObjectInputStream(is);
 			try {
 				return ois.readObject();
-			} catch (ClassNotFoundException cnf) {
-				throw new IOException(cnf);
+			} catch (ClassNotFoundException e) {
+				throw new IOException(e);
+			} catch(StreamCorruptedException sce) {
+				is = channel.getInputStream();
+				ois = new ObjectInputStream(is);
+				try {
+					return ois.readObject();
+				} catch (ClassNotFoundException cnf) {
+					throw new IOException(cnf);
+				}
 			}
-		}
 	}
 
 	@Override
 	public void write(Object msg) throws IOException {
-		os = channel.getOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(os);
-		oos.writeObject(msg);
-		oos.flush();
+			OutputStream os = channel.getOutputStream();
+			ObjectOutputStream oos = new ObjectOutputStream(os);
+			oos.writeObject(msg);
+			oos.flush();
 	}
 
 	@Override
 	public void write(Object msg, CompletionHandler<Integer, Void> handler) {
-		try {
-			write(msg);
-			handler.completed(0, null);
-		} catch (IOException e) {
-			handler.failed(e, null);
-		}
+			try {
+				write(msg);
+				handler.completed(0, null);
+			} catch (IOException e) {
+				handler.failed(e, null);
+			}
 	}
 
 	@Override
 	public Object read(CompletionHandler<Integer, Void> handler) {
-		try {
-			Object o = read();
-			handler.completed(0, null);
-			return o;
-		} catch (IOException e) {
-			handler.failed(e, null);
-		}
-		return null;
+			try {
+				Object o = read();
+				handler.completed(0, null);
+				return o;
+			} catch (IOException e) {
+				handler.failed(e, null);
+			}
+			return null;
 	}
 
 
@@ -170,18 +164,13 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	}
 
 	@Override
-	public /*Asynchronous*/ChannelGroup getChannelGroup() {
-		return channelGroup;
-	}
-
-	@Override
 	public Socket channel() {
 		return channel;
 	}
 
 	@Override
 	public String toString() {
-		return new String("ChannelHandlerContext:"+channel+" ChannelGroup:"+channelGroup+" ChannelPipeline:"+pipeline+" ready:"+ready);
+		return new String("ChannelHandlerContext:"+channel+" ChannelPipeline:"+pipeline+" ready:"+ready);
 	}
 
 	@Override
@@ -194,13 +183,6 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	 */
 	@Override
 	public void setReady(boolean ready) { this.ready = ready;}
-
-	/**
-	 * Object to synchronize read and write completion for the channel in this context, since we will have
-	 * multiple outbound writers accessing the same channel
-	 */
-	@Override
-	public Object getChannelCompletionMutex() { return mutex; }
 	
 	/**
 	 * Get the type of messages we want to send to the attached subscriber, based on the handshakes

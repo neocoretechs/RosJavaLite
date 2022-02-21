@@ -50,7 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class TcpRosServer implements Serializable {
   private static final long serialVersionUID = 1298495789043968855L;
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(TcpRosServer.class);
 
   private BindAddress bindAddress;
@@ -61,8 +61,7 @@ public class TcpRosServer implements Serializable {
 
   //private transient AsynchronousChannelGroup outgoingChannelGroup; // publisher with connected subscribers
   //private transient AsynchronousChannelGroup incomingChannelGroup; // subscriber connected to publishers
-  private transient ChannelGroup outgoingChannelGroup; // publisher with connected subscribers
-  private transient ChannelGroup incomingChannelGroup; // subscriber connected to publishers
+
   private transient TcpServerPipelineFactory serverPipelineFactory;
   private transient ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   private transient ArrayBlockingQueue<ChannelHandlerContext> contexts;
@@ -85,14 +84,12 @@ public class TcpRosServer implements Serializable {
   public void start() {
     //assert(outgoingChannel == null);
 	  try {
-		  incomingChannelGroup = new ChannelGroupImpl(executorService);//AsynchronousChannelGroup.withThreadPool(executorService);
 		  advertiseAddress.setPort(bindAddress.toInetSocketAddress().getPort());
 		  factoryStack = new ChannelInitializerFactoryStack();
-		  serverPipelineFactory =
-			        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager); 
+		  serverPipelineFactory = new TcpServerPipelineFactory(topicParticipantManager, serviceManager); 
 		  factoryStack.addLast(serverPipelineFactory);	    
 		  server = new AsynchBaseServer(this);
-		  server.startServer(incomingChannelGroup, bindAddress.toInetSocketAddress());
+		  server.startServer(executorService, bindAddress.toInetSocketAddress());
 	      if (DEBUG) {
 		 	     log.info("TcpRosServer starting and Bound to:" + bindAddress + " with advertise address:"+advertiseAddress);
 		  }		  
@@ -106,11 +103,10 @@ public class TcpRosServer implements Serializable {
 
   /**
    * Close all incoming connections and the server socket.<p/>
-   * Calls shutdown on the AsynchBaseServer. The incoming and outgoing channel group executors 
-   * are shut down first.<p/>
+   * Calls shutdown on the AsynchBaseServer. executors are shut down first.<p/>
    * The only external resources are the ExecutorService and control of that must remain with the overall
    * application. Although the executor services should shut down threads in the servers executed by
-   * the executors in the channel groups, we do explicit shutdowns of the various servers as well.
+   * the executors, we do explicit shutdowns of the various servers as well.
    * <p/>
    * Calling this method more than once has no effect.
    * @throws IOException 
@@ -118,14 +114,6 @@ public class TcpRosServer implements Serializable {
   public void shutdown() throws IOException {
     if (DEBUG) {
       log.info("TcpRosServer Shutting down address: " + getAddress());
-    }
-    if (outgoingChannelGroup != null) {
-      outgoingChannelGroup.shutdown();
-      outgoingChannelGroup = null;
-    }
-    if( incomingChannelGroup != null) {
-    	incomingChannelGroup.shutdown();
-    	incomingChannelGroup = null;
     }
     
     server.shutdown();
@@ -160,8 +148,6 @@ public class TcpRosServer implements Serializable {
   public ChannelInitializerFactoryStack getFactoryStack() { return factoryStack; }
   
   public ExecutorService getExecutor() { return executorService; }
-  
-  public /*Asynchronous*/ChannelGroup getChannelGroup() { return incomingChannelGroup; }
 
 
 }

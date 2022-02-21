@@ -79,13 +79,7 @@ public class SlaveServer extends RpcServer {
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
     return tcpRosServer.getAdvertiseAddress();
   }
-  /**
-   * Return the ChannelHandlerContext array of subscribers
-   * @return
-   */
-  public ArrayBlockingQueue<ChannelHandlerContext> getSubscribers() {
-	  return tcpRosServer.getSubscribers();
-  }
+ 
   /**
    * Start the RPC server. This start() routine requires that the
    * {@link TcpRosServer} is initialized first so that the slave server returns

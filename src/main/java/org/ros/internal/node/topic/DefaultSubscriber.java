@@ -157,10 +157,7 @@ public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Sub
       		log.info("Defaultsubscriber addPublisher topicParticipantManager DOES NOT CONTAIN "+publisherIdentifier+" at "+address);
       		topicParticipantManager.addSubscriberConnection(this, publisherIdentifier);
     	}
-    	tcpClientManager.connect(toString(), address);
-      // TODO(damonkohler): knownPublishers is duplicate information that is
-      // already available to the TopicParticipantManager.
-      //knownPublishers.add(publisherIdentifier);
+      tcpClientManager.connect(toString(), address);
       signalOnNewPublisher(publisherIdentifier);
     }
   }

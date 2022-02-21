@@ -41,20 +41,19 @@ public class PublisherFactory {
    * 
    * @param <T> the message type associated with the {@link Publisher}
    * @param topicDeclaration {@link TopicDeclaration} that is being published
-   * @param arrayBlockingQueue 
    * @param messageSerializer the {@link MessageSerializer} used for published messages
    * @return a new or cached {@link Publisher} instance
    * @throws IOException 
    */
   @SuppressWarnings("unchecked")
-  public <T> Publisher<T> newOrExisting(TopicDeclaration topicDeclaration, ArrayBlockingQueue<ChannelHandlerContext> arrayBlockingQueue) throws IOException {
+  public <T> Publisher<T> newOrExisting(TopicDeclaration topicDeclaration) throws IOException {
     GraphName topicName = topicDeclaration.getName();
     synchronized (mutex) {
       if (topicParticipantManager.hasPublisher(topicName)) {
         return (DefaultPublisher<T>) topicParticipantManager.getPublisher(topicName);
       } else {
         DefaultPublisher<T> publisher =
-            new DefaultPublisher<T>(nodeIdentifier, topicDeclaration, messageFactory, executorService, arrayBlockingQueue);
+            new DefaultPublisher<T>(nodeIdentifier, topicDeclaration, messageFactory, executorService);
         publisher.addListener(new DefaultPublisherListener<T>() {
           @Override
           public void onNewSubscriber(Publisher<T> publisher, SubscriberIdentifier subscriberIdentifier) {

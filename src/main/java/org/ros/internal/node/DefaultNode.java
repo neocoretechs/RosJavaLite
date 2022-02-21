@@ -258,7 +258,7 @@ public class DefaultNode implements ConnectedNode {
         TopicDeclaration.newFromTopicName(resolvedTopicName, topicDescription);
     Publisher<T> publisher = null;
     try {
-     publisher = publisherFactory.newOrExisting(topicDeclaration, slaveServer.getSubscribers());
+     publisher = publisherFactory.newOrExisting(topicDeclaration);
     } catch(IOException e) { throw new RosRuntimeException(e); }
     return publisher;
   }

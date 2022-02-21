@@ -59,12 +59,12 @@ public class DefaultPublisher<T> extends DefaultTopicParticipant implements Publ
   private final ArrayBlockingQueue<ChannelHandlerContext> subscribers;
 
   public DefaultPublisher(NodeIdentifier nodeIdentifier, TopicDeclaration topicDeclaration,
-		  MessageFactory messageFactory, ScheduledExecutorService executorService, ArrayBlockingQueue<ChannelHandlerContext> arrayBlockingQueue) throws IOException {
+		  MessageFactory messageFactory, ScheduledExecutorService executorService) throws IOException {
     super(topicDeclaration);
     this.nodeIdentifier = nodeIdentifier;
     this.messageFactory = messageFactory;
-    this.subscribers = arrayBlockingQueue;
-    outgoingMessageQueue = new OutgoingMessageQueue<T>(executorService, arrayBlockingQueue);
+    this.subscribers = new ArrayBlockingQueue<ChannelHandlerContext>(1024);
+    outgoingMessageQueue = new OutgoingMessageQueue<T>(executorService, subscribers);
     if(DEBUG)
     	log.info("DefaultPublisher contructed with "+outgoingMessageQueue.getNumberOfChannels()+" channels.");
     listeners = new ListenerGroup<PublisherListener<T>>(executorService);
@@ -203,7 +203,19 @@ public ConnectionHeader finishHandshake(ConnectionHeader incomingHeader) {
     //outgoingMessageQueue.addChannel(ctx);
     subscribers.add(ctx);
     if (DEBUG) {
-        log.info("Current number of subscribers:"+subscribers.size());
+    	StringBuilder sb = new StringBuilder();
+    	sb.append(subscribers.size());
+        sb.append("Subscribers for publisher ");
+        sb.append(toDeclaration());
+        sb.append(":\r\n");
+        Object[] sa = subscribers.toArray();
+        for(int i = 0; i < subscribers.size(); i++) {
+        	sb.append(i);
+        	sb.append(") ");   	
+        	sb.append(sa[i]);
+            sb.append("\r\n");
+        }
+        log.info(sb.toString());
     }
     signalOnNewSubscriber(subscriberIdentifer);
   }

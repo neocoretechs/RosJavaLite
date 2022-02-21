@@ -1,6 +1,7 @@
 package org.ros.internal.transport.tcp;
 
 import java.util.Collection;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,8 +29,7 @@ public class TcpServerPipelineFactory extends ChannelInitializer {
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
 
-  public TcpServerPipelineFactory(ChannelGroup incomingChannelGroup,
-      TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
+  public TcpServerPipelineFactory(TopicParticipantManager topicParticipantManager, ServiceManager serviceManager) {
     //if( DEBUG )
     //	log.info("TcpServerPipeLineFactory ctor:"+incomingChannelGroup+" "+topicParticipantManager+" "+serviceManager);
     this.topicParticipantManager = topicParticipantManager;

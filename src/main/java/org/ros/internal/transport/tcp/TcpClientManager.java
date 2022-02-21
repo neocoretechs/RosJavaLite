@@ -23,9 +23,9 @@ import org.apache.commons.logging.LogFactory;
 public class TcpClientManager {
   public static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpClientManager.class);
-  private final /*Asynchronous*/ChannelGroup channelGroup;
   private final Collection<TcpClient> tcpClients;
   private final List<NamedChannelHandler> namedChannelHandlers;
+  private final ExecutorService executor;
   
   //private static ConcurrentHashMap<ExecutorService, TcpClientManager> executors = new ConcurrentHashMap<ExecutorService, TcpClientManager>(1024);
 
@@ -41,11 +41,9 @@ public class TcpClientManager {
   //}
   
   public TcpClientManager(ExecutorService executor) {
-    this.channelGroup = new ChannelGroupImpl(executor);/*AsynchronousChannelGroup.withThreadPool(executor);*/
+	this.executor = executor;
     this.tcpClients = new ArrayList<TcpClient>();
     this.namedChannelHandlers = new ArrayList<NamedChannelHandler>();
-    if( DEBUG )
-    	log.info("TcpClientManager:"+executor+" "+channelGroup);
   }
 
   public void addNamedChannelHandler(NamedChannelHandler namedChannelHandler) {
@@ -71,7 +69,7 @@ public class TcpClientManager {
   public TcpClient connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	if( DEBUG )
 	    	log.info("TcpClient connect:"+connectionName+" "+socketAddress);
-    TcpClient tcpClient = new TcpClient(channelGroup, namedChannelHandlers);
+    TcpClient tcpClient = new TcpClient(executor, namedChannelHandlers);
     tcpClient.connect(connectionName, socketAddress);
     tcpClients.add(tcpClient);
     return tcpClient;
@@ -84,7 +82,6 @@ public class TcpClientManager {
   public void shutdown() {
 	if( DEBUG )
 	    	log.info("TcpClient shutdown:");
-    channelGroup.shutdown();
     tcpClients.clear();
     // We don't call channelFactory.releaseExternalResources() or
     // bootstrap.releaseExternalResources() since the only external resource is

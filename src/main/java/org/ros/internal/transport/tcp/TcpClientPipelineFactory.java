@@ -19,13 +19,12 @@ public class TcpClientPipelineFactory extends ChannelInitializer {
   private List<NamedChannelHandler> namedChannelHandlers;
   /**
    * ChannelGroup has shutdown method and access to ExecutorService
-   * @param asynchronousChannelGroup
    * @param namedChannelHandlers
    */
-  public TcpClientPipelineFactory(/*Asynchronous*/ChannelGroup asynchronousChannelGroup, List<NamedChannelHandler> namedChannelHandlers) {
+  public TcpClientPipelineFactory(List<NamedChannelHandler> namedChannelHandlers) {
     this.namedChannelHandlers = namedChannelHandlers;
     if( DEBUG )
-    	log.info("TcpClientPipelineFactory:"+asynchronousChannelGroup+" constructing with "+namedChannelHandlers.size()+" NamedChannelHandler(s).");
+    	log.info("TcpClientPipelineFactory: constructing with "+namedChannelHandlers.size()+" NamedChannelHandler(s).");
   }
 
   @Override

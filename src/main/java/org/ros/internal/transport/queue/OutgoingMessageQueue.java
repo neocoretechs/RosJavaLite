@@ -3,12 +3,9 @@ package org.ros.internal.transport.queue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
-import java.nio.channels.CompletionHandler;
-import java.nio.channels.WritePendingException;
+
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
@@ -30,7 +27,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  */
 public class OutgoingMessageQueue<T> {
 
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(OutgoingMessageQueue.class);
 
   private static final int DEQUE_CAPACITY = 16;
@@ -119,14 +116,14 @@ public class OutgoingMessageQueue<T> {
     } // loop method
   }
 
-  public OutgoingMessageQueue(ExecutorService executorService, ArrayBlockingQueue<ChannelHandlerContext> arrayBlockingQueue) throws IOException {
+  public OutgoingMessageQueue(ExecutorService executorService, ArrayBlockingQueue<ChannelHandlerContext> subscriberQueue) throws IOException {
     deque = new CircularBlockingDeque<T>(DEQUE_CAPACITY);
     writer = new Writer();
     //messageBufferPool = new MessageBufferPool();
     latchedBuffer = MessageBuffers.dynamicBuffer();
     mutex = new Object();
     latchMode = false;
-    channels = arrayBlockingQueue;
+    channels = subscriberQueue;
     executorService.execute(writer);
   }
 

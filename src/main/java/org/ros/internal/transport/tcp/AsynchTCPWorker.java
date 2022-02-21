@@ -14,7 +14,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  *
  */
 public class AsynchTCPWorker implements Runnable {
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final Log log = LogFactory.getLog(AsynchTCPWorker.class);
 	public volatile boolean shouldRun = true;
 	private ChannelHandlerContext ctx;
@@ -40,7 +40,7 @@ public class AsynchTCPWorker implements Runnable {
 						ctx.pipeline().fireChannelRead(reso);
 						ctx.pipeline().fireChannelReadComplete();
 					} catch(StreamCorruptedException sce) {
-						log.info("Stream was corrupted on read:"+sce);
+						log.info("Thread "+Thread.currentThread().getId()+" context:"+ctx+" stream was corrupted on read:"+sce);
 					}
 				} // shouldRun		
 			} catch(Exception se) {

@@ -10,7 +10,6 @@ import java.nio.channels.CompletionHandler;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-import org.ros.internal.transport.tcp.ChannelGroup;
 
 /**
  * This is the ChannelHandlerContext that links the underlying TCP Socket 'channel' to the {@link ChannelPipeline} and the {@link ChannelGroup}
@@ -97,12 +96,6 @@ public interface ChannelHandlerContext {
     ChannelPipeline pipeline();
     
     /**
-     * Return the channel group
-     * 
-     */
-    /*Asynchronous*/ChannelGroup getChannelGroup();
-
-    /**
      * Determine if this channel is ready for processing, it is configured, has a socket
      * and the communication is sound. If the socket breaks this goes false and no writes are
      * performed to this channel
@@ -114,12 +107,6 @@ public interface ChannelHandlerContext {
      * @param ready
      */
     void setReady(boolean ready);
-
-    /**
-     * Get the Object representing a mutex to use for completion of operation if necessary.
-     * @return
-     */
-    Object getChannelCompletionMutex();
     
     /**
      * Each successive handshake completion will add another message type to this synchronized set.

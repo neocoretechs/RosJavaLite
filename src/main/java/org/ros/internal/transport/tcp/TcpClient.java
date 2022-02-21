@@ -15,6 +15,7 @@ import java.nio.channels.Channel;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,11 +38,11 @@ public class TcpClient {
   private final List<NamedChannelHandler> namedChannelHandlers;
   
   private Socket channel;
-  private /*Asynchronous*/ChannelGroup channelGroup;
+  private ExecutorService executor;
   private ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   
-  public TcpClient( /*Asynchronous*/ChannelGroup channelGroup, List<NamedChannelHandler> namedChannelHandlers) {
-	this.channelGroup = channelGroup;
+  public TcpClient( ExecutorService executor, List<NamedChannelHandler> namedChannelHandlers) {
+	this.executor = executor;
 	this.namedChannelHandlers = namedChannelHandlers;
 	this.factoryStack = new ChannelInitializerFactoryStack();
   }
@@ -84,11 +85,11 @@ public class TcpClient {
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
 	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, false);
-	ctx = new ChannelHandlerContextImpl(channelGroup, channel);
+	ctx = new ChannelHandlerContextImpl(executor, channel);
     // connect outbound to pub
     ctx.connect(socketAddress);
     //
-    TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(channelGroup, namedChannelHandlers);
+    TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(namedChannelHandlers);
     // add handler pipeline factory to stack
     factoryStack.addLast(tcpClientPipelineFactory);
     // load the handlers from the pipeline factories
@@ -99,7 +100,7 @@ public class TcpClient {
     // connect outbound to pub
     //ctx.connect(socketAddress);
     AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
-    channelGroup.getExecutorService().execute(uworker);
+    executor.execute(uworker);
     // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
     ctx.pipeline().fireChannelActive();
 	// recall we keep the list of contexts in TcpClientManager  

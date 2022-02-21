@@ -28,8 +28,6 @@ import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
 import org.ros.internal.transport.queue.OutgoingMessageQueue;
-import org.ros.internal.transport.tcp.ChannelGroup;
-import org.ros.internal.transport.tcp.ChannelGroupImpl;
 import org.ros.internal.transport.tcp.ChannelInitializerFactoryStack;
 import org.ros.internal.transport.tcp.NamedChannelHandler;
 import org.ros.internal.transport.tcp.TcpClient;
@@ -182,12 +180,10 @@ public class MessageQueueIntegrationTest {
 	isock = new InetSocketAddress(0);
     TopicParticipantManager topicParticipantManager = new TopicParticipantManager();
     ServiceManager serviceManager = new ServiceManager();
-	/*Asynchronous*/ChannelGroup incomingChannelGroup = null;
-	incomingChannelGroup = new ChannelGroupImpl(executorService);/* AsynchronousChannelGroup.withThreadPool(executorService);*/
 	ChannelInitializerFactoryStack  factoryStack = new ChannelInitializerFactoryStack();
   
     TcpServerPipelineFactory serverPipelineFactory =
-        new TcpServerPipelineFactory(incomingChannelGroup, topicParticipantManager, serviceManager) {
+        new TcpServerPipelineFactory(topicParticipantManager, serviceManager) {
             @Override
             protected void initChannel(ChannelHandlerContext ch) {
                 ch.pipeline().remove(TcpServerPipelineFactory.HANDSHAKE_HANDLER);
@@ -220,7 +216,7 @@ public class MessageQueueIntegrationTest {
 		  log.debug("Accept "+channel);
 	  }
      ChannelHandlerContextImpl ctx = null;
-	ctx = new ChannelHandlerContextImpl(incomingChannelGroup,channel/*.get()*/);
+	ctx = new ChannelHandlerContextImpl(executorService, channel/*.get()*/);
      return ctx;
   }
 
