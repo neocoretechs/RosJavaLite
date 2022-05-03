@@ -27,7 +27,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  */
 public class OutgoingMessageQueue<T> {
 
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(OutgoingMessageQueue.class);
 
   private static final int DEQUE_CAPACITY = 16;
