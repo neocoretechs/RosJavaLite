@@ -1,6 +1,5 @@
 package org.ros.internal.node.server;
 
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,8 +8,6 @@ import java.util.TreeMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.jarclassloader.JarClassLoader;
-
-
 
 /**
 * The remote call mechanism depends on Java reflection to provide access to methods that can be
@@ -26,6 +23,7 @@ import org.ros.internal.jarclassloader.JarClassLoader;
 */
 public class ServerInvokeMethod {
 	private static final boolean DEBUG = false;
+	private static final Log log = LogFactory.getLog(ServerInvokeMethod.class);
     protected int skipArgs;
     int skipArgIndex;
     protected Method[] methods;
@@ -71,7 +69,8 @@ public class ServerInvokeMethod {
     	for(int i = m.length-1; i >= 0 ; i--) {
     		if( m[i].isAnnotationPresent(ServerMethod.class) ) {
     			pkmnap.methodNames.add(m[i].getName());
-    			System.out.println("Method "+m[i].toString());
+    			if(DEBUG)
+    				log.info("Method "+m[i].toString());
     		}
     	}
     	// create arrays
@@ -96,7 +95,7 @@ public class ServerInvokeMethod {
     					ind2 = pkmnap.methodSigs[methCnt].indexOf(",",ind2+1);
     					pkmnap.methodSigs[methCnt] = pkmnap.methodSigs[methCnt].substring(0,ind1+1)+pkmnap.methodSigs[methCnt].substring(ind2+1);
     				} catch(StringIndexOutOfBoundsException sioobe) {
-    					System.out.println("<<Relatrix: The method "+pkmnap.methodSigs[methCnt]+" contains too few arguments (first "+skipArgIndex+" skipped)");
+    					  log.error("<<Relatrix: The method "+pkmnap.methodSigs[methCnt]+" contains too few arguments (first "+skipArgIndex+" skipped)");
     				}
     			}
     			ArrayList<Integer> mPos = methodLookup.get(m[i].getName());
@@ -128,7 +127,7 @@ public class ServerInvokeMethod {
     	//NoSuchMethodException, InvocationTargetException, IllegalAccessException, PowerSpaceException  {               
     	String targetMethod = tmc.getMethodName();
     	if(DEBUG) {
-    		System.out.println("ServerInvoke Target method:"+targetMethod+" remote request:"+tmc+" localObject:"+localObject);
+    		log.info(this.getClass().getName()+" Target method:"+targetMethod+" remote request:"+tmc+" localObject:"+localObject);
     	}
     	//int methodIndex = pkmnap.methodNames.indexOf(targetMethod);
     	ArrayList<Integer> methodIndexList = methodLookup.get(targetMethod);
@@ -145,10 +144,10 @@ public class ServerInvokeMethod {
     			int methodIndex = methodIndexList.get(methodIndexCtr);
     			if (DEBUG) {
     				for(int iparm1 = 0; iparm1 < params.length ; iparm1++) {        
-    					System.out.println("ServerInvoke Target method:"+targetMethod+" Calling param: "+params[iparm1]);
+    					log.info(this.getClass().getName()+" Target method:"+targetMethod+" Calling param: "+params[iparm1]);
     				}
     				for(int iparm2 = skipArgIndex ; iparm2 < pkmnap.methodParams[methodIndex].length; iparm2++) {
-    					System.out.println("ServerInvoke Target method:"+targetMethod+" Method param: "+pkmnap.methodParams[methodIndex][iparm2]);
+    					log.info(this.getClass().getName()+" Target method:"+targetMethod+" Method param: "+pkmnap.methodParams[methodIndex][iparm2]);
     				}
     			}
     			int sumParamRank = 0;
@@ -184,33 +183,33 @@ public class ServerInvokeMethod {
     				if( skipArgs > 0) {
     					Object o1[] = tmc.getParamArray();
     					if(DEBUG) {
-    						System.out.println("ServerInvoke Invoking method:"+methods[methodIndex]+" on object "+localObject+" with params "+Arrays.toString(o1));			
+    						log.info(this.getClass().getName()+" Invoking method:"+methods[methodIndex]+" on object "+localObject+" with params "+Arrays.toString(o1));			
     					}
     					Object or = methods[methodIndex].invoke(localObject, o1);
     					if(or != null) {
     						tmc.setReturnClass(or.getClass().getName());
     						if(DEBUG)
-    							System.out.println("ServerInvoke return from invocation:"+or+" class:"+or.getClass().getName());
+    							log.info(this.getClass().getName()+" return from invocation:"+or+" class:"+or.getClass().getName());
     					} else {
     						tmc.setReturnClass(methods[methodIndex].getReturnType().getName());
     						if(DEBUG)
-    							System.out.println("ServerInvokeJson returned NULL from invocation, setting return class "+methods[methodIndex].getReturnType().getName());
+    							log.info(this.getClass().getName()+" returned NULL from invocation, setting return class "+methods[methodIndex].getReturnType().getName());
     					}
     					return or;					
     				} 
     				// invoke it for return
     				if(DEBUG) {
-    					System.out.println("ServerInvoke Invoking method:"+methods[methodIndex]+" on object "+localObject+" with params "+Arrays.toString(tmc.getParamArray()));
+    					log.info(this.getClass().getName()+" Invoking method:"+methods[methodIndex]+" on object "+localObject+" with params "+Arrays.toString(tmc.getParamArray()));
     				}
     				Object or = methods[methodIndex].invoke(localObject, tmc.getParamArray());
     				if(or != null) {
     					tmc.setReturnClass(or.getClass().getName());
     					if(DEBUG)
-    						System.out.println("ServerInvoke return from invocation:"+or+" class:"+or.getClass().getName());
+    						log.info(this.getClass().getName()+" return from invocation:"+or+" class:"+or.getClass().getName());
     				} else {
     					tmc.setReturnClass(methods[methodIndex].getReturnType().getName());
     					if(DEBUG)
-    						System.out.println("ServerInvokeJson returned NULL from invocation, setting return class "+methods[methodIndex].getReturnType().getName());
+    						log.info(this.getClass().getName()+" returned NULL from invocation, setting return class "+methods[methodIndex].getReturnType().getName());
     				}
 					return or;		
     			}

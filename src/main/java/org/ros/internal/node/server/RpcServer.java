@@ -26,10 +26,12 @@ public abstract class RpcServer {
   private static final Log log = LogFactory.getLog(RpcServer.class);
 
   private final AdvertiseAddress advertiseAddress;
+  protected final BindAddress bindAddress;
   private final CountDownLatch startLatch = new CountDownLatch(1);
   private BaseServer server;
 
   public RpcServer(BindAddress bindAddress, AdvertiseAddress advertiseAddress) throws IOException {
+	this.bindAddress = bindAddress;
     this.advertiseAddress = advertiseAddress;
   }
 

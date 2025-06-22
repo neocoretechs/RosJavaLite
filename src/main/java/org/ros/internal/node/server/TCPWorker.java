@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 /**
  * This TCPWorker is spawned for servicing traffic from a master or slave node and invoking methods thereupon.<p/>
  * Constructed with Socket and RpcServer, creates an ObjectInputStream from datasocket Socket and queues a response
- * on the Objectoutputstream.
+ * on the ObjectOutputStream.
  * 
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  *

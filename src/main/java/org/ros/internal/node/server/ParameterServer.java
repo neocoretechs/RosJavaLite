@@ -65,6 +65,7 @@ public class ParameterServer extends RpcServer {
     //	log.info("Returning graph name parts with "+parts.size()+" elements");
     return parts;
   }
+  
   @ServerMethod
   @SuppressWarnings("unchecked")
   public Object get(GraphName name) {
@@ -126,6 +127,7 @@ public class ParameterServer extends RpcServer {
      }
     }
   }
+  
   @ServerMethod
   public void set(GraphName name, Object value) {
 	  final GraphName fname = name;
@@ -194,6 +196,7 @@ public class ParameterServer extends RpcServer {
   }
   
   @ServerMethod
+  @Override
   public synchronized Object invokeMethod(RemoteRequestInterface rri) throws Exception {
 		return invokableMethods.invokeMethod(rri, this);
   }
