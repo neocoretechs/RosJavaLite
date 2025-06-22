@@ -9,6 +9,7 @@ public class RemoteRequest implements RemoteRequestInterface, Serializable {
 	String session;
 	String method;
 	Object[] paramArray;
+	String returnClassName;
 	
 	public RemoteRequest() {}
 	public RemoteRequest(String classname, String method, Object ... params) {
@@ -56,6 +57,11 @@ public class RemoteRequest implements RemoteRequestInterface, Serializable {
 		Class<?>[] params = new Class<?>[paramArray.length];
 		for( Object param : paramArray) params[i++] = param.getClass();
 		return params;
+	}
+	
+	@Override
+	public void setReturnClass(String className) {
+		returnClassName = className;
 	}
 	
 	@Override

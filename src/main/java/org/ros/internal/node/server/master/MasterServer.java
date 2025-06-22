@@ -9,6 +9,7 @@ import org.ros.internal.node.client.SlaveClient;
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.server.RemoteRequestInterface;
 import org.ros.internal.node.server.ServerInvokeMethod;
+import org.ros.internal.node.server.ServerMethod;
 import org.ros.internal.node.server.SlaveServer;
 import org.ros.internal.node.server.RpcServer;
 import org.ros.internal.node.topic.TopicParticipant;
@@ -85,6 +86,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
   /**
    * Start the {@link MasterServer}.
    */
+  @ServerMethod
   public void start() {
     if (DEBUG) {
       log.info("Starting master server.");
@@ -104,6 +106,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    * @param inetSocketAddress
    *          the {@link URI} of the service
    */
+  @ServerMethod
   public void registerService(GraphName nodeName, InetSocketAddress nodeSlaveUri, GraphName serviceName,
       InetSocketAddress inetSocketAddress) {
     synchronized (masterRegistrationManager) {
@@ -122,6 +125,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    *          the {@link URI} of the service
    * @return {@code true} if the service was registered
    */
+  @ServerMethod
   public boolean unregisterService(GraphName nodeName, GraphName serviceName, InetSocketAddress inetSocketAddress) {
     synchronized (masterRegistrationManager) {
       return masterRegistrationManager.unregisterService(nodeName, serviceName, inetSocketAddress);
@@ -144,6 +148,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    * @return A {@link List} of addresses {@link InetSocketAddress}s for nodes currently
    *         publishing the specified topic
    */
+  @ServerMethod
   public List<InetSocketAddress> registerSubscriber(GraphName nodeName, InetSocketAddress nodeSlaveUri, GraphName topicName,
       String topicMessageType) {
     if (DEBUG) {
@@ -172,6 +177,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    *          the {@link GraphName} of the subscribed {@link TopicParticipant}
    * @return {@code true} if the {@link Subscriber} was registered
    */
+  @ServerMethod
   public boolean unregisterSubscriber(GraphName nodeName, GraphName topicName) {
     if (DEBUG) {
       log.info(String.format("Unregistering subscriber for %s on node %s.", topicName, nodeName));
@@ -196,6 +202,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    *         {@link Publisher}'s {@link TopicSystemState} in the form of RPC
    *         {@link InetAddress}s for each {@link Subscriber}'s {@link SlaveServer}
    */
+  @ServerMethod
   public List<InetSocketAddress> registerPublisher(GraphName nodeName, InetSocketAddress nodeSlaveUri, GraphName topicName,
       String topicMessageType) {
     if (DEBUG) {
@@ -273,6 +280,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    *          the {@link GraphName} of the subscribed {@link TopicParticipant}
    * @return {@code true} if the {@link Publisher} was unregistered
    */
+  @ServerMethod
   public boolean unregisterPublisher(GraphName nodeName, GraphName topicName) {
     if (DEBUG) {
       log.info(String.format("Unregistering publisher for %s on %s.", topicName, nodeName));
@@ -294,6 +302,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    *         name, or {@code null} if there is no {@link Node} with the given
    *         name
    */
+  @ServerMethod
   public InetSocketAddress lookupNode(GraphName nodeName) {
     synchronized (masterRegistrationManager) {
       NodeRegistrationInfo node = masterRegistrationManager.getNodeRegistrationInfo(nodeName);
@@ -313,6 +322,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    * @return a list of the form [[topic 1 name, topic 1 message type], [topic 2
    *         name, topic 2 message type], ...]
    */
+  @ServerMethod
   public List<List<String>> getTopicTypes(GraphName calledId) {
     synchronized (masterRegistrationManager) {
       List<List<String>> result = new ArrayList<List<String>>();
@@ -334,6 +344,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    * 
    * @return TODO(keith): Fill in.
    */
+  @ServerMethod
   public List<Object> getSystemState() {
     synchronized (masterRegistrationManager) {
       List<Object> result = new ArrayList<Object>();
@@ -433,6 +444,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    * @return {@link URI} of the {@link SlaveServer} with the provided name, or
    *         {@code null} if there is no such service.
    */
+  @ServerMethod
   public InetSocketAddress lookupService(GraphName serviceName) {
     synchronized (masterRegistrationManager) {
       ServiceRegistrationInfo service =
@@ -457,6 +469,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
    *         contain, in order, the {@link TopicSystemState} name and
    *         {@link TopicSystemState} message type
    */
+  @ServerMethod
   public List<Object> getPublishedTopics(GraphName caller, GraphName subgraph) {
     synchronized (masterRegistrationManager) {
       // TODO(keith): Filter topics according to subgraph.
@@ -496,7 +509,7 @@ public class MasterServer extends RpcServer implements MasterRegistrationListene
   
   }
 
-
+  @ServerMethod
   @Override
   public Object invokeMethod(RemoteRequestInterface rri) throws Exception {
 	  synchronized(invokableMethods) {

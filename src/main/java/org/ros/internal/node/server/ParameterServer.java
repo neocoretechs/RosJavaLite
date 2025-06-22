@@ -44,7 +44,7 @@ public class ParameterServer extends RpcServer {
 		throw new RosRuntimeException(e);
 	}
   }
-
+  @ServerMethod
   public void subscribe(GraphName name, NodeIdentifier nodeIdentifier) {
 	List<NodeIdentifier> subs = subscribers.get(name);
 	if( subs == null ) {
@@ -65,7 +65,7 @@ public class ParameterServer extends RpcServer {
     //	log.info("Returning graph name parts with "+parts.size()+" elements");
     return parts;
   }
-
+  @ServerMethod
   @SuppressWarnings("unchecked")
   public Object get(GraphName name) {
     assert(name.isGlobal());
@@ -126,7 +126,7 @@ public class ParameterServer extends RpcServer {
      }
     }
   }
-
+  @ServerMethod
   public void set(GraphName name, Object value) {
 	  final GraphName fname = name;
 	  final Object fvalue = value;
@@ -138,7 +138,7 @@ public class ParameterServer extends RpcServer {
     });
   }
 
- 
+  @ServerMethod
   @SuppressWarnings("unchecked")
   public void delete(GraphName name) {
     assert(name.isGlobal());
@@ -153,11 +153,13 @@ public class ParameterServer extends RpcServer {
       }
     }
   }
-
+  
+  @ServerMethod
   public Object search(GraphName name) {
     throw new UnsupportedOperationException();
   }
-
+  
+  @ServerMethod
   @SuppressWarnings("unchecked")
   public boolean has(GraphName name) {
     assert(name.isGlobal());
@@ -186,10 +188,12 @@ public class ParameterServer extends RpcServer {
     return names;
   }
 
+  @ServerMethod
   public List<GraphName> getNames() {
     return getSubtreeNames(GraphName.root(), tree);
   }
   
+  @ServerMethod
   public synchronized Object invokeMethod(RemoteRequestInterface rri) throws Exception {
 		return invokableMethods.invokeMethod(rri, this);
   }

@@ -14,7 +14,6 @@ import org.ros.internal.node.topic.SubscriberIdentifier;
 import org.ros.internal.node.topic.TopicDeclaration;
 import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.system.Process;
-import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ProtocolDescription;
 import org.ros.internal.transport.ProtocolNames;
 import org.ros.internal.transport.tcp.TcpRosProtocolDescription;
@@ -26,12 +25,11 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * SlaveServer is the remote execution endpoint.<br/> This class is reflected for its invokable
- * methods and that is made available to remote clients as the callable remote procedures.<br/>
+ * SlaveServer is the remote execution endpoint.<br> This class is reflected for its invokable
+ * methods and that is made available to remote clients as the callable remote procedures.<br>
  * A remote client can request connections, get collections of publishers and subscriber and information
  * about the state of the bus including connections between publishers and subscribers. TcpRosServer is
  * the class that does most of the work and is wrapped by this class, which is here to provide the subset of
@@ -75,7 +73,7 @@ public class SlaveServer extends RpcServer {
     	//		" ServiceManager:"+serviceManager+" ParameterManager:"+parameterManager+" ScheduledExecutorService:"+executorService);
     }
   }
-
+  @ServerMethod
   public AdvertiseAddress getTcpRosAdvertiseAddress() {
     return tcpRosServer.getAdvertiseAddress();
   }
@@ -85,21 +83,25 @@ public class SlaveServer extends RpcServer {
    * {@link TcpRosServer} is initialized first so that the slave server returns
    * correct information when topics are requested.
    */
+  @ServerMethod
   public void start() {
 	tcpRosServer.start();
     super.start();
   }
 
   // TODO(damonkohler): This should also shut down the Node.
+  @ServerMethod
   @Override
   public void shutdown() throws IOException {
 	tcpRosServer.shutdown();
     super.shutdown();
   }
-
+  
+  @ServerMethod
   public List<Object> getBusStats(String callerId) {
     throw new UnsupportedOperationException();
   }
+  
   /**
    * We are returning a list of ArrayList of strings. Each ArrayList of string will
    * contain 5 elements representing subscriber or publisher bus information.<br/>
@@ -111,6 +113,7 @@ public class SlaveServer extends RpcServer {
    * @param callerId
    * @return A List of Objects representing the above, packaged thusly to enable remote serialization delivery.
    */
+  @ServerMethod
   public List<Object> getBusInfo(String callerId) {
     List<Object> busInfo = new ArrayList<Object>();
     // The connection ID field is opaque to the user. A monotonically increasing
@@ -150,7 +153,8 @@ public class SlaveServer extends RpcServer {
     }
     return busInfo;
   }
-
+  
+  @ServerMethod
   public InetSocketAddress getMasterUri() {
     return masterClient.getRemoteUri();
   }
@@ -159,15 +163,18 @@ public class SlaveServer extends RpcServer {
    * @return PID of this process if available, throws
    *         {@link UnsupportedOperationException} otherwise.
    */
+  @ServerMethod
   @Override
   public long getPid() {
     return Process.getPid();
   }
-
+  
+  @ServerMethod
   public Collection<DefaultSubscriber<?>> getSubscriptions() {
     return topicParticipantManager.getSubscribers();
   }
-
+  
+  @ServerMethod
   public Collection<DefaultPublisher<?>> getPublications() {
     return topicParticipantManager.getPublishers();
   }
@@ -177,9 +184,11 @@ public class SlaveServer extends RpcServer {
    * @param parameterValue
    * @return the number of parameter subscribers that received the update
    */
+  @ServerMethod
   public int paramUpdate(GraphName parameterName, Object parameterValue) {
     return parameterManager.updateParameter(parameterName, parameterValue);
   }
+  
   /**
    * If there is a subscriber subscribed to this topicName, call updatePublishers on the subscriber
    * using the collection of publisherUris. DefaultSubscriber class creates an 
@@ -189,6 +198,7 @@ public class SlaveServer extends RpcServer {
    * @param topicName
    * @param publisherUris collection of InetSocketAddress of remote publishers to be updated. 
    */
+  @ServerMethod
   public void publisherUpdate(String callerId, String topicName, Collection<InetSocketAddress> publisherUris) {
     GraphName graphName = GraphName.of(topicName);
     if (topicParticipantManager.hasSubscriber(graphName)) {
@@ -204,6 +214,7 @@ public class SlaveServer extends RpcServer {
       }
     }
   }
+  
   /**
    * Request a topic conforming to the specified set of protocols, for instance
    * if a ProtocolNames.TCPROS is included, a new TcpRosProtocolDescription from tcpRosServer.getAdvertiseAddress
@@ -213,6 +224,7 @@ public class SlaveServer extends RpcServer {
    * @return
    * @throws ServerException
    */
+  @ServerMethod
   public ProtocolDescription requestTopic(String topicName, Collection<String> protocols) throws ServerException {
     // TODO(damonkohler): Use NameResolver.
     // Canonicalize topic name.
@@ -240,17 +252,20 @@ public class SlaveServer extends RpcServer {
   /**
    * @return a {@link NodeIdentifier} for this {@link SlaveServer}
    */
+  @ServerMethod
   public NodeIdentifier toNodeIdentifier() {
     return new NodeIdentifier(nodeName, getUri());
   }
-
+  
+  @ServerMethod
   @Override
   public Object invokeMethod(RemoteRequestInterface rri) throws Exception {
 	  synchronized(invokableMethods) {
 		  return invokableMethods.invokeMethod(rri, this);
 	  }
   }
-
+  
+  @ServerMethod
   public void setNodeName(GraphName nodename) {
 	nodeName = nodename;
   }

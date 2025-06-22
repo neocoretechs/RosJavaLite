@@ -21,5 +21,7 @@ public interface RemoteRequestInterface {
 	 * @return An array of Class objects for the parameters of the remote method
 	 */
 	public Class<?>[] getParams();
+	
+	public void setReturnClass(String className);
 
 }
