@@ -23,7 +23,9 @@ import java.util.Set;
 
 /**
  * Facility for contacting the remote master and issuing commands via the remote invokable methods.
- * The transport is accomplished via the RemoteRequestinterface implementors.
+ * The transport is accomplished via the RemoteRequestinterface implementors.<p>
+ * Constructs a {@link org.ros.internal.node.server.RemoteRequestInterface} with a request, then a 
+ * {@link org.ros.internal.node.client.RemoteClient} is used to queue the remote request.
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2020,2021
  */
 public class SlaveRpcEndpointImpl implements SlaveRpcEndpoint {

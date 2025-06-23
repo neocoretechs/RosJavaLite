@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.server.ParameterServer;
+import org.ros.internal.node.server.RelatrixTransactionServer;
 import org.ros.internal.node.server.master.MasterServer;
 import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.namespace.GraphName;
@@ -21,22 +22,23 @@ import java.util.concurrent.TimeUnit;
  * {@link RosCore} is a collection of nodes and programs that are pre-requisites
  * of a ROS-based system. You must have a {@link RosCore}
  * running in order for ROS nodes to communicate.
- * The light weight implementation will not interop with standard ROS
+ * The light weight implementation will not yet interop with standard ROS.
  * nodes, the XML RPC has been eliminated in favor of lightweight java serialization protocol.
  * An added capability is the provisioning of remote nodes with JAR files to simplify deployment of
- * numerous remote nodes via the parameter server and the ParameterTree.<p/>
+ * numerous remote nodes via the parameter server and the ParameterTree.<p>
  * Add the -Djars.provision=/path/to/jars on the command line to enable JAR, script, xml and other asset
- * provisioning through the ParameterTree.<br/>
+ * provisioning through the ParameterTree.<br>
  * On the RosRun remote node add the same command line parameter to write the files to that directory. Due to the
  * way the classloader and the protection domain works its necessary to load the classes and write them to the same directory
- * as the bootstrap JARs for running ROS that are defined on the classpath.<p/>
+ * as the bootstrap JARs for running ROS that are defined on the classpath.<p>
  * To exclude files and directories from provisioning, add them to a file called _exclusion, otherwise all files and subdirectories
  * will be loaded, but the directory structure will NOT be preserved, just flattened. In addition, due to the way the ParameterTree
  * operates, special characters such as - will be converted to x, and other special characters may cause failure and so
  * resources such as these that are explicitly loaded by applications must be manually provisioned 
- * and added to the _exclusion file.<p/>
+ * and added to the _exclusion file.<p>
  * The real use case is to provide a means to add update of nodes and assets beyond basic bootstrapping to minimize constant
- * reconfiguration and provide a means of "live update".
+ * reconfiguration and provide a means of "live update".<p>
+ * {@link org.ros.internal.node.server.RelatrixTransactionServer} integrated as a core service 6/2025
  * TODO: Add /rosout node.
  * @see <a href="http://www.ros.org/wiki/roscore">roscore documentation</a>
  * 
@@ -47,6 +49,7 @@ public class RosCore {
   private static final Log log = LogFactory.getLog(RosCore.class);
   private MasterServer masterServer = null;
   private ParameterServer parameterServer = null;
+  private RelatrixTransactionServer relatrixServer = null;
   public static final String propsEntry = "jars.provision";
   public static final String jarGraph = "/java/";
   public static final String jarParent = "/java";
@@ -82,7 +85,8 @@ public class RosCore {
     try {
 		masterServer = new MasterServer(bindAddress, advertiseAddress);
 		parameterServer = new ParameterServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+1));
-	} catch (IOException e) {
+		relatrixServer = new RelatrixTransactionServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+2));
+	} catch (IOException | ClassNotFoundException e) {
 		log.error("RosCore fault, master server can not be constructed due to "+e,e);
 		//e.printStackTrace();
 	}
@@ -94,6 +98,7 @@ public class RosCore {
   public void start() {
     masterServer.start();
     parameterServer.start();
+    relatrixServer.start();
     // see if we are going to load JARs for provisioning remote nodes.
 	String jarsDir = System.getProperty(propsEntry);
 	if(jarsDir != null) {
@@ -181,16 +186,17 @@ public class RosCore {
   }
 
   /**
-   * Await the start of the master and parameter servers.
+   * Await the start of the master and parameter and Relatrix servers.
    * @throws InterruptedException
    */
   public void awaitStart() throws InterruptedException {
     masterServer.awaitStart();
     parameterServer.awaitStart();
+    relatrixServer.awaitStart();
   }
 
   /**
-   * Await the start of the mater and parameter servers using the specified timeouts.
+   * Await the start of the master and parameter and Relatrix servers using the specified timeouts.
    * @param timeout
    * @param unit
    * @return true if both servers started in the specified timeframes.
@@ -199,7 +205,8 @@ public class RosCore {
   public boolean awaitStart(long timeout, TimeUnit unit) throws InterruptedException {
     boolean ms = masterServer.awaitStart(timeout, unit);
     boolean ps = parameterServer.awaitStart(timeout,  unit);
-    return ms & ps;
+    boolean rs = relatrixServer.awaitStart(timeout, unit);
+    return ms & ps & rs;
   }
 
   /**
@@ -209,6 +216,7 @@ public class RosCore {
     try {
     	parameterServer.shutdown();
 		masterServer.shutdown();
+		relatrixServer.shutdown();
 	} catch (IOException e) {
 		log.error("Can not shut down master server due to "+e,e);
 		//e.printStackTrace();
@@ -222,6 +230,11 @@ public class RosCore {
   public MasterServer getMasterServer() {
     return masterServer;
   }
+  
+  public RelatrixTransactionServer getRelatrixServer() {
+	  return relatrixServer;
+  }
+  
   /**
    * Start a new public RosCore on default port 8090 using first acquired interface.
    * Wait 1 second for each server to start before throwing an exception.
@@ -232,6 +245,6 @@ public class RosCore {
 	   RosCore rosCore = RosCore.newPublic(8090);
 	   rosCore.start();
 	   rosCore.awaitStart(1, TimeUnit.SECONDS);
-	   log.info("RosLite Master started @ address "+rosCore.getUri());
+	   log.info("RosJavaLite Master started @ address "+rosCore.getUri());
   }
 }

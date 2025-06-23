@@ -62,7 +62,6 @@ public class RemoteClient implements Runnable {
 		ThreadPoolManager.getInstance().spin(this);
 	}
 	
-	
 	/**
 	 * Look for messages coming back from the workers. 
 	 */

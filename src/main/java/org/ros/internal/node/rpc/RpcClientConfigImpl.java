@@ -1,15 +1,11 @@
 package org.ros.internal.node.rpc;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.net.UnknownHostException;
-
-import org.ros.exception.RosRuntimeException;
 /**
- * 
- * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
- *
+ * Sets the parameters for RPC based server client communications. {@link RpcClientConfig} {@link RpcEndpoint} {@link org.ros.internal.node.server.RpcServer}
+ * {@link MasterRpcEndpoint} {@link MasterRpcEndpointImpl}
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017,2021
  */
 public class RpcClientConfigImpl implements RpcClientConfig {
 	private InetSocketAddress serverURL;
@@ -37,8 +33,6 @@ public class RpcClientConfigImpl implements RpcClientConfig {
 		return replyTimeout;
 	}
 	public void setServerURL(InetSocketAddress uri) {
-		serverURL = uri;
-		
+		serverURL = uri;		
 	}
-
 }
