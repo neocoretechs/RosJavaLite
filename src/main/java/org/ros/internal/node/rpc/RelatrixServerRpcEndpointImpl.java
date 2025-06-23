@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.ros.internal.node.client.RemoteClient;
 import org.ros.internal.node.server.RemoteRequest;
 import org.ros.internal.node.server.RemoteRequestInterface;
 
@@ -16,10 +19,19 @@ import com.neocoretechs.relatrix.Relation;
 import com.neocoretechs.relatrix.client.RemoteStream;
 import com.neocoretechs.relatrix.type.RelationList;
 
-public abstract class RelatrixServerRpcEndpointImpl implements RelatrixServerRpcEndpoint{
+public final class RelatrixServerRpcEndpointImpl implements RelatrixServerRpcEndpoint{
 	private final String remoteClass = "org.ros.internal.node.server.RelarixTransactionServer";
+	private static final Log log = LogFactory.getLog(RelatrixServerRpcEndpointImpl.class);
+	private RemoteClient remoteServer;
 	
-	public abstract Object sendCommand(RemoteRequestInterface s) throws Exception;
+	public RelatrixServerRpcEndpointImpl(String remoteHost, int remotePort) throws IOException {
+		remoteServer = new RemoteClient(remoteHost, remotePort);
+	}
+	
+	public Object sendCommand(RemoteRequestInterface s) throws Exception {
+		return remoteServer.queue(s);
+	}
+	
 	@Override
 	public void rollbackToCheckpoint(Alias arg1,TransactionId arg2) throws java.io.IOException {
 		RemoteRequestInterface s = new RemoteRequest(remoteClass,remoteClass,"rollbackToCheckpoint", arg1, arg2);
@@ -2321,6 +2333,29 @@ public abstract class RelatrixServerRpcEndpointImpl implements RelatrixServerRpc
 		} catch(Exception e) {
 			throw new java.io.IOException(e);
 		}
+	}
+	
+	/**
+	 * Set for future use where we may need to connect to a higher master, perhaps for failover.
+	 * The use case would be loss of the entire node. remoteMaster and remoteParameter are both closed, 
+	 * shutdown awaited, then restarted at
+	 * new config parameters.
+	 * @param config {@link RpcClientConfig} carrying master Rpc Endpoint, we extrapolate address, port+2 
+	 */
+	@Override
+	public void setConfig(RpcClientConfigImpl config) {
+		remoteServer.close();
+		try {
+			remoteServer = new RemoteClient(config.getSeverURL().getHostName(), config.getSeverURL().getPort()+2);
+		} catch (IOException e) {
+			log.fatal("Reconnection to remote server at "+config.getSeverURL().getHostString()+" FAILED due to:"+e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void shutDown() {
+		remoteServer.close();	
 	}
 }
 

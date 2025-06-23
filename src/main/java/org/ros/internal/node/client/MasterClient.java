@@ -1,6 +1,5 @@
 package org.ros.internal.node.client;
 
-import org.ros.exception.RosRuntimeException;
 import org.ros.internal.node.response.InetAddressListResultFactory;
 
 import org.ros.internal.node.response.InetSocketAddressListResultFactory;
