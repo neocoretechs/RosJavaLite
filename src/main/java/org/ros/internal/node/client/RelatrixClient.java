@@ -1,6 +1,5 @@
 package org.ros.internal.node.client;
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.response.BooleanResultFactory;
@@ -25,11 +24,12 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
-
 /**
- * Provide access to the RPC API for a ROS {@link RelatrixTransactionServer}.
- * The ParameterServer typically starts one port higher than the master.
- * {@link org.ros.internal.node.parameter.DefaultParameterTree}
+ * Provide access to the RPC API for a ROS RelatrixTransactionServer.
+ * The ParameterServer typically starts one port higher than the master. The RelatrixServer
+ * is at port plus 2.
+ * {@link org.ros.internal.node.server.RelatrixTransactionServer} <br>
+ * {@link RelatrixServerRpcEndpoint}
  * 
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2025
  */

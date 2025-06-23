@@ -18,8 +18,11 @@ import org.ros.internal.node.server.ThreadPoolManager;
 
 
 /**
- * This class functions as client to the remote node. MasterRpcEndpoint has one of these each for master and parameter server
- * SlaveRpcEndpoint has but one for contacting the remote master and issuing commands via the remote invokable methods.
+ * This class functions as client to the remote nodes.<p>
+ * It functions as a generic serialization queue and wire level socket request/response processor.<br>
+ * MasterRpcEndpoint has one of these each for master and parameter server.<br>
+ * RelatrixServerRpcEndpoint has one for contacting the RelatrixTransactionServer.<br>
+ * SlaveRpcEndpoint has but one for contacting the remote master and issuing commands via the remote invokable methods.<br>
  * The transport is accomplished via the RemoteRequestinterface implementors.<br>
  * {@link org.ros.internal.node.rpc.MasterRpcEndpointImpl}<br>
  * {@link org.ros.internal.node.rpc.SlaveRpcEndpointImpl}<br>
@@ -154,9 +157,5 @@ public class RemoteClient implements Runnable {
 			} catch (InterruptedException ie) {}
 		}
 	}
-
-
-	
-
 	
 }
