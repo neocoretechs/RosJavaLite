@@ -37,8 +37,12 @@ import java.net.URI;
 import java.util.List;
 
 /**
- * Provides access to the RPC API exposed by a {@link MasterServer}.
- * 
+ * Provides access to the RPC API exposed by a {@link MasterServer}. <br>
+ * {@link org.ros.internal.node.DefaultNode}<br>
+ * {@link org.ros.node.NodeConfiguration}<br> 
+ * {@link org.ros.master.client.MasterStateClient}<br>
+ * {@link org.ros.internal.node.server.SlaveServer}<r>
+ * {@link org.ros.internal.node.client.Registrar}
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class MasterClient extends Client<MasterRpcEndpoint> {

@@ -13,6 +13,8 @@ import org.ros.internal.node.response.StringResultFactory;
 import org.ros.internal.node.response.VoidResultFactory;
 import org.ros.internal.node.rpc.MasterRpcEndpointImpl;
 import org.ros.internal.node.rpc.ParameterServerRpcEndpoint;
+import org.ros.internal.node.rpc.RelatrixServerRpcEndpoint;
+import org.ros.internal.node.rpc.RelatrixServerRpcEndpointImpl;
 import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.server.ParameterServer;
 
@@ -25,35 +27,35 @@ import java.util.List;
 
 
 /**
- * Provide access to the RPC API for a ROS {@link ParameterServer}.
+ * Provide access to the RPC API for a ROS {@link RelatrixTransactionServer}.
  * The ParameterServer typically starts one port higher than the master.
  * {@link org.ros.internal.node.parameter.DefaultParameterTree}
  * 
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2025
  */
-public class ParameterClient extends Client<ParameterServerRpcEndpoint> {
+public class RelatrixClient extends Client<RelatrixServerRpcEndpoint> {
   private static final boolean DEBUG = false;
-  private static final Log log = LogFactory.getLog(ParameterClient.class);  
+  private static final Log log = LogFactory.getLog(RelatrixClient.class);  
   private final NodeIdentifier nodeIdentifier;
   private final String nodeName;
 
   /**
-   * Create a new {@link ParameterClient} connected to the specified
+   * Create a new {@link RelatrixClient} connected to the specified
    * {@link ParameterServer} Address.
    * @param nodeIdentifier The identifier of our currently executing node
    * 
    * @param uri
-   *          the {@link address} of the {@link ParameterServer} to connect to
+   *          the {@link address} of the {@link RelatrixTransactionServer} to connect to
    * @throws IOException 
    * @throws UnknownHostException 
    */
-  public ParameterClient(NodeIdentifier nodeIdentifier, InetSocketAddress uri) throws IOException {
+  public RelatrixClient(NodeIdentifier nodeIdentifier, InetSocketAddress uri) throws IOException {
 	  super(uri, 60000, 60000);
 	  this.nodeIdentifier = nodeIdentifier;
 	  nodeName = nodeIdentifier.getName().toString();
-	  rpcEndpoint = new MasterRpcEndpointImpl(uri.getHostName(), uri.getPort());
+	  rpcEndpoint = new RelatrixServerRpcEndpointImpl(uri.getHostName(), uri.getPort());
   }
-
+  /*
   public Response<Object> getParam(GraphName parameterName) {
 	  return Response.fromListCheckedFailure(rpcEndpoint.getParam(nodeName, parameterName.toString()),
 			  new ObjectResultFactory());
@@ -101,6 +103,8 @@ public class ParameterClient extends Client<ParameterServerRpcEndpoint> {
 			  Response.fromListChecked(rpcEndpoint.getParamNames(nodeName), new GraphNameListResultFactory());
 	  return response;
   }
-
-
+*/
+  public void shutdown() {
+	  rpcEndpoint.shutDown();
+  }
 }

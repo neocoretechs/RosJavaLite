@@ -1,6 +1,5 @@
 package org.ros.internal.node.client;
 
-import org.ros.exception.RosRuntimeException;
 import org.ros.internal.node.rpc.RpcClientConfigImpl;
 import org.ros.internal.node.rpc.RpcEndpoint;
 import org.ros.internal.node.server.RpcServer;
@@ -21,19 +20,16 @@ abstract class Client<T extends RpcEndpoint> {
   protected T rpcEndpoint = null;
 
   /**
-   * @param subscriberSlaveUri
-   *          the {@link URI} to connect to
-   * @param interfaceClass
-   *          the class literal for the XML-RPC interface
+   * @param subscriberSlaveUri the {@link URI} to connect to
+   * @param connTimeout connection timeout
+   * @param replyTimeout reply timeout
    */
   public Client(InetSocketAddress subscriberSlaveUri, int connTimeout, int replyTimeout) {
     this.uri = subscriberSlaveUri;
     RpcClientConfigImpl config = new RpcClientConfigImpl();
     config.setServerURL(subscriberSlaveUri);
     config.setConnectionTimeout(connTimeout);
-    config.setReplyTimeout(replyTimeout);
-
-       
+    config.setReplyTimeout(replyTimeout);  
   }
 
   /**
