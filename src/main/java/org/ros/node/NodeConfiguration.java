@@ -10,13 +10,13 @@ import org.ros.address.BindAddress;
 import org.ros.address.PrivateAdvertiseAddressFactory;
 import org.ros.address.PublicAdvertiseAddressFactory;
 import org.ros.concurrent.DefaultScheduledExecutorService;
-import org.ros.exception.RosRuntimeException;
+
 import org.ros.internal.message.DefaultMessageFactory;
 import org.ros.internal.message.service.ServiceDescriptionFactory;
 import org.ros.internal.message.service.ServiceRequestMessageFactory;
 import org.ros.internal.message.service.ServiceResponseMessageFactory;
 import org.ros.internal.message.topic.TopicDescriptionFactory;
-import org.ros.internal.node.DefaultNode;
+
 import org.ros.internal.node.client.MasterClient;
 import org.ros.internal.node.client.RelatrixClient;
 import org.ros.internal.node.parameter.DefaultParameterTree;
@@ -25,6 +25,7 @@ import org.ros.internal.node.server.NodeIdentifier;
 import org.ros.internal.node.server.SlaveServer;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.TopicParticipantManager;
+
 import org.ros.message.MessageDefinitionProvider;
 import org.ros.message.MessageFactory;
 import org.ros.namespace.GraphName;
@@ -160,7 +161,6 @@ public class NodeConfiguration {
     return configuration;
   }
 
-
   /**
    * Creates a new {@link NodeConfiguration} for a {@link Node} that is only
    * accessible on the local host.
@@ -183,7 +183,6 @@ public class NodeConfiguration {
 	}
     return configuration;
   }
-
 
   /**
    * Creates a new {@link NodeConfiguration} for a {@link Node} that is only accessible on the local host.
@@ -240,16 +239,16 @@ public class NodeConfiguration {
 		nodeName = parentResolver.getNamespace().join(nodeName);
 		resolver = new NodeNameResolver(nodeName, parentResolver);
 		masterClient = new MasterClient(masterUri, 60000, 60000);
+	    nodeIdentifier = new NodeIdentifier(nodeName, getRpcAdvertiseAddress().toInetSocketAddress());
+		relatrixClient = new RelatrixClient(nodeIdentifier, masterUri);
 		slaveServer =
 			   new SlaveServer(nodeName, getTcpRosBindAddress(), getTcpRosAdvertiseAddress(),getRpcBindAddress(),getRpcAdvertiseAddress(),
-					   masterClient, topicParticipantManager, serviceManager, parameterManager, executor);
+					   masterClient, relatrixClient, topicParticipantManager, serviceManager, parameterManager, executor);
 	    // start TcpRosServer and SlaveServer
 	    slaveServer.start();
-	    nodeIdentifier = slaveServer.toNodeIdentifier();
 		parameterTree =
 			    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
 			        resolver, parameterManager);
-		relatrixClient = new RelatrixClient(nodeIdentifier, masterUri);
 		return slaveServer;
   }
   

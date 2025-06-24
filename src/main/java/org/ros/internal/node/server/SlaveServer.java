@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.client.MasterClient;
+import org.ros.internal.node.client.RelatrixClient;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.DefaultPublisher;
@@ -43,6 +44,7 @@ public class SlaveServer extends RpcServer {
   private static final Log log = LogFactory.getLog(SlaveServer.class);
   private GraphName nodeName;
   private final MasterClient masterClient;
+  private final RelatrixClient relatrixClient;
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
   private final ParameterManager parameterManager;
@@ -51,12 +53,13 @@ public class SlaveServer extends RpcServer {
 
   public SlaveServer(GraphName nodeName, BindAddress tcpRosBindAddress,
       AdvertiseAddress tcpRosAdvertiseAddress, BindAddress rpcBindAddress,
-      AdvertiseAddress rpcAdvertiseAddress, MasterClient master,
+      AdvertiseAddress rpcAdvertiseAddress, MasterClient master, RelatrixClient relatrixClient,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager,
       ParameterManager parameterManager, ScheduledExecutorService executorService) throws IOException {
     super(rpcBindAddress, rpcAdvertiseAddress);
     this.nodeName = nodeName;
     this.masterClient = master;
+    this.relatrixClient = relatrixClient;
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     this.parameterManager = parameterManager;
@@ -99,7 +102,19 @@ public class SlaveServer extends RpcServer {
   
   @ServerMethod
   public List<Object> getBusStats(String callerId) {
-    throw new UnsupportedOperationException();
+	  List<Object> busInfo = new ArrayList<Object>();
+	  for (DefaultPublisher<?> publisher : getPublications()) {
+		  List<String> publisherBusInfo = new ArrayList<String>();
+		  publisherBusInfo.add(publisher.getIdentifier().toString());
+		  publisherBusInfo.add(String.valueOf(publisher.getNumberOfSubscribers()));
+		  busInfo.add(publisherBusInfo);
+	  }
+	  for (DefaultSubscriber<?> subscriber : getSubscriptions()) {
+		  List<String> publisherBusInfo = new ArrayList<String>();
+		  publisherBusInfo.add(subscriber.toIdentifier().toString());
+		  busInfo.add(publisherBusInfo);
+	  }
+	  return busInfo;
   }
   
   /**
@@ -263,6 +278,11 @@ public class SlaveServer extends RpcServer {
 	  synchronized(invokableMethods) {
 		  return invokableMethods.invokeMethod(rri, this);
 	  }
+  }
+  //TODO: fix
+  @ServerMethod
+  public Object invokeRelatrix(RemoteRequestInterface rri) throws Exception {
+	  return relatrixClient.toString();
   }
   
   @ServerMethod
