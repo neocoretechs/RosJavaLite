@@ -16,15 +16,14 @@ import org.ros.namespace.GraphName;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
+
 import java.util.Collection;
 import java.util.List;
 
-
 /**
- * Create a client to the RpcEndpoint via SlaveRpcEndpointImpl 
+ * Create a client to the {@link org.ros.internal.node.rpc.RpcEndpoint} via {@link SlaveRpcEndpointImpl} 
  * from the socket address passed in constructor.
- * @author jg
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2025
  */
 public class SlaveClient extends Client<SlaveRpcEndpoint> {
 
@@ -70,7 +69,6 @@ public class SlaveClient extends Client<SlaveRpcEndpoint> {
     return Response.fromListChecked(rpcEndpoint.paramUpdate(nodeName.toString(), name.toString(), value),
         new VoidResultFactory());
   }
-
 
   public Response<Void> publisherUpdate(GraphName topic, List<InetSocketAddress> publisherUris) {
     return Response.fromListChecked(

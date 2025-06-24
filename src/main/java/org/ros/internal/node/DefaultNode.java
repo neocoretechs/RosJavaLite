@@ -13,6 +13,7 @@ import org.ros.internal.message.service.ServiceDescription;
 import org.ros.internal.message.topic.TopicDescription;
 import org.ros.internal.node.client.MasterClient;
 import org.ros.internal.node.client.Registrar;
+import org.ros.internal.node.client.RelatrixClient;
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.response.Response;
@@ -89,6 +90,7 @@ public class DefaultNode implements ConnectedNode {
   private final SubscriberFactory subscriberFactory;
   private final ServiceFactory serviceFactory;
   private final Registrar registrar;
+  private final RelatrixClient relatrixClient;
 
   private RosoutLogger rlog;
   private TimeProvider timeProvider;
@@ -110,6 +112,7 @@ public class DefaultNode implements ConnectedNode {
 	this.masterClient = nodeConfiguration.getMasterClient();
 	this.topicParticipantManager = nodeConfiguration.getTopicParticipantManager();
     this.serviceManager = nodeConfiguration.getServiceManager();
+    this.relatrixClient = nodeConfiguration.getRelatrixClient();
     try {
     	this.slaveServer = nodeConfiguration.getSlaveServer();
     	this.parameterManager = nodeConfiguration.getParameterManager();

@@ -18,6 +18,7 @@ import org.ros.internal.message.service.ServiceResponseMessageFactory;
 import org.ros.internal.message.topic.TopicDescriptionFactory;
 import org.ros.internal.node.DefaultNode;
 import org.ros.internal.node.client.MasterClient;
+import org.ros.internal.node.client.RelatrixClient;
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -42,10 +43,17 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Stores configuration information (e.g. ROS master URI) for {@link Node}s.
- * 
+ * Starts a host of core services including {@link MasterClient} <br>
+ * {@link SlaveServer} <br>
+ * {@link RelatrixClient} <br>
+ * {@link ParameterTree} <br>
+ * {@link ParameterManager} <br>
+ * {@link TopicParticipantManager} <br>
+ * {@link ServiceManager} <br>
+ * {@link NodeNameResolver}
  * @see <a href="http://www.ros.org/wiki/ROS/Technical%20Overview#Node">Node documentation</a>
  * 
- * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021,2025
  */
 public class NodeConfiguration {
   private static final boolean DEBUG = false;
@@ -91,6 +99,7 @@ public class NodeConfiguration {
   private NameResolver resolver;
   private NodeIdentifier nodeIdentifier;
   private ClassLoader classLoader;
+  private RelatrixClient relatrixClient = null;
   /**
    * @param nodeConfiguration The {@link NodeConfiguration} to copy
    * @return a copy of the supplied {@link NodeConfiguration}
@@ -117,6 +126,7 @@ public class NodeConfiguration {
     // SlaveServer and related
     copy.slaveServer = nodeConfiguration.slaveServer;
     copy.masterClient = nodeConfiguration.masterClient;
+    copy.relatrixClient = nodeConfiguration.relatrixClient;
     copy.parameterTree = nodeConfiguration.parameterTree;
     copy.topicParticipantManager = nodeConfiguration.topicParticipantManager;
     copy.serviceManager = nodeConfiguration.serviceManager;
@@ -239,6 +249,7 @@ public class NodeConfiguration {
 		parameterTree =
 			    DefaultParameterTree.newFromNodeIdentifier(nodeIdentifier, masterClient.getRemoteUri(),
 			        resolver, parameterManager);
+		relatrixClient = new RelatrixClient(nodeIdentifier, masterUri);
 		return slaveServer;
   }
   
@@ -580,5 +591,9 @@ public class NodeConfiguration {
 
   public ParameterManager getParameterManager() {
 	return parameterManager;
+  }
+
+  public RelatrixClient getRelatrixClient() {
+	  return relatrixClient;
   }
 }
