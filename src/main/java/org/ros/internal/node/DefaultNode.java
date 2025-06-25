@@ -112,7 +112,6 @@ public class DefaultNode implements ConnectedNode {
 	this.masterClient = nodeConfiguration.getMasterClient();
 	this.topicParticipantManager = nodeConfiguration.getTopicParticipantManager();
     this.serviceManager = nodeConfiguration.getServiceManager();
-    this.relatrixClient = nodeConfiguration.getRelatrixClient();
     try {
     	this.slaveServer = nodeConfiguration.getSlaveServer();
     	this.parameterManager = nodeConfiguration.getParameterManager();
@@ -133,6 +132,7 @@ public class DefaultNode implements ConnectedNode {
 			        new SubscriberFactory(nodeIdentifier, this.topicParticipantManager, this.scheduledExecutorService);
 		this.serviceFactory =
 			        new ServiceFactory(this.nodeName, this.slaveServer, this.serviceManager, this.scheduledExecutorService);
+		this.relatrixClient = nodeConfiguration.getRelatrixClient();
 	} catch (IOException e) {
 		log.error("Cannot construct new node due to "+e,e);
 		throw new RuntimeException(e);
@@ -413,6 +413,8 @@ public class DefaultNode implements ConnectedNode {
     registrar.shutdown();
     try {
 		slaveServer.shutdown();
+		if(relatrixClient != null)
+			relatrixClient.close();
 	} catch (IOException e) {
 	}
     signalOnShutdownComplete();

@@ -240,7 +240,7 @@ public class NodeConfiguration {
 		resolver = new NodeNameResolver(nodeName, parentResolver);
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 	    nodeIdentifier = new NodeIdentifier(nodeName, getRpcAdvertiseAddress().toInetSocketAddress());
-		relatrixClient = new RelatrixClient(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort() );
+
 		slaveServer =
 			   new SlaveServer(nodeName, getTcpRosBindAddress(), getTcpRosAdvertiseAddress(),getRpcBindAddress(),getRpcAdvertiseAddress(),
 					   masterClient, topicParticipantManager, serviceManager, parameterManager, executor);
@@ -592,7 +592,9 @@ public class NodeConfiguration {
 	return parameterManager;
   }
 
-  public RelatrixClient getRelatrixClient() {
+  public RelatrixClient getRelatrixClient() throws IOException {
+	  if(relatrixClient == null)
+			relatrixClient = new RelatrixClient(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort() );
 	  return relatrixClient;
   }
 }
