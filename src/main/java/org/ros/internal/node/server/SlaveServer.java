@@ -6,6 +6,8 @@ import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.client.MasterClient;
 import com.neocoretechs.relatrix.client.RelatrixClient;
+import com.neocoretechs.relatrix.client.RelatrixStatementInterface;
+
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.DefaultPublisher;
@@ -44,7 +46,6 @@ public class SlaveServer extends RpcServer {
   private static final Log log = LogFactory.getLog(SlaveServer.class);
   private GraphName nodeName;
   private final MasterClient masterClient;
-  private final RelatrixClient relatrixClient;
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;
   private final ParameterManager parameterManager;
@@ -53,13 +54,12 @@ public class SlaveServer extends RpcServer {
 
   public SlaveServer(GraphName nodeName, BindAddress tcpRosBindAddress,
       AdvertiseAddress tcpRosAdvertiseAddress, BindAddress rpcBindAddress,
-      AdvertiseAddress rpcAdvertiseAddress, MasterClient master, RelatrixClient relatrixClient,
+      AdvertiseAddress rpcAdvertiseAddress, MasterClient master,
       TopicParticipantManager topicParticipantManager, ServiceManager serviceManager,
       ParameterManager parameterManager, ScheduledExecutorService executorService) throws IOException {
     super(rpcBindAddress, rpcAdvertiseAddress);
     this.nodeName = nodeName;
     this.masterClient = master;
-    this.relatrixClient = relatrixClient;
     this.topicParticipantManager = topicParticipantManager;
     this.serviceManager = serviceManager;
     this.parameterManager = parameterManager;

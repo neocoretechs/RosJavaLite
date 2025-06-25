@@ -243,7 +243,7 @@ public class NodeConfiguration {
 		relatrixClient = new RelatrixClient(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort() );
 		slaveServer =
 			   new SlaveServer(nodeName, getTcpRosBindAddress(), getTcpRosAdvertiseAddress(),getRpcBindAddress(),getRpcAdvertiseAddress(),
-					   masterClient, relatrixClient, topicParticipantManager, serviceManager, parameterManager, executor);
+					   masterClient, topicParticipantManager, serviceManager, parameterManager, executor);
 	    // start TcpRosServer and SlaveServer
 	    slaveServer.start();
 		parameterTree =
