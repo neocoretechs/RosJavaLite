@@ -32,7 +32,6 @@ import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.message.MessageFactory;
 import org.ros.message.Time;
 import org.ros.namespace.GraphName;
-import org.ros.namespace.NameResolver;
 import org.ros.namespace.NodeNameResolver;
 import org.ros.node.ConnectedNode;
 import org.ros.node.DefaultNodeFactory;
@@ -52,7 +51,7 @@ import org.ros.time.TimeProvider;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
+
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;

@@ -594,7 +594,7 @@ public class NodeConfiguration {
 
   public RelatrixClientTransaction getRelatrixClient() throws IOException {
 	  if(relatrixClient == null)
-			relatrixClient = new RelatrixClientTransaction(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort() );
+			relatrixClient = new RelatrixClientTransaction(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort()+2 );
 	  return relatrixClient;
   }
 }
