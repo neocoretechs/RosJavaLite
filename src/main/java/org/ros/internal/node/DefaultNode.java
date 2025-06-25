@@ -13,7 +13,9 @@ import org.ros.internal.message.service.ServiceDescription;
 import org.ros.internal.message.topic.TopicDescription;
 import org.ros.internal.node.client.MasterClient;
 import org.ros.internal.node.client.Registrar;
-import com.neocoretechs.relatrix.client.RelatrixClientTransaction;
+
+import com.neocoretechs.relatrix.client.asynch.AsynchRelatrixClientTransaction;
+
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.response.Response;
@@ -89,7 +91,7 @@ public class DefaultNode implements ConnectedNode {
   private final SubscriberFactory subscriberFactory;
   private final ServiceFactory serviceFactory;
   private final Registrar registrar;
-  private RelatrixClientTransaction relatrixClient;
+  private AsynchRelatrixClientTransaction relatrixClient;
 
   private RosoutLogger rlog;
   private TimeProvider timeProvider;
@@ -434,7 +436,7 @@ public class DefaultNode implements ConnectedNode {
   }
 
   @Override
-  public RelatrixClientTransaction getRelatrixClient() throws IOException {
+  public AsynchRelatrixClientTransaction getRelatrixClient() throws IOException {
 	  if(this.relatrixClient == null)
 		this.relatrixClient = nodeConfiguration.getRelatrixClient();
 	  return relatrixClient;

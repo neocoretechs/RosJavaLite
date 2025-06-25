@@ -18,7 +18,7 @@ import org.ros.internal.message.service.ServiceResponseMessageFactory;
 import org.ros.internal.message.topic.TopicDescriptionFactory;
 
 import org.ros.internal.node.client.MasterClient;
-import com.neocoretechs.relatrix.client.RelatrixClientTransaction;
+import com.neocoretechs.relatrix.client.asynch.AsynchRelatrixClientTransaction;
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -100,7 +100,7 @@ public class NodeConfiguration {
   private NameResolver resolver;
   private NodeIdentifier nodeIdentifier;
   private ClassLoader classLoader;
-  private RelatrixClientTransaction relatrixClient = null;
+  private AsynchRelatrixClientTransaction relatrixClient = null;
   /**
    * @param nodeConfiguration The {@link NodeConfiguration} to copy
    * @return a copy of the supplied {@link NodeConfiguration}
@@ -592,9 +592,9 @@ public class NodeConfiguration {
 	return parameterManager;
   }
 
-  public RelatrixClientTransaction getRelatrixClient() throws IOException {
+  public AsynchRelatrixClientTransaction getRelatrixClient() throws IOException {
 	  if(relatrixClient == null)
-			relatrixClient = new RelatrixClientTransaction(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort()+2 );
+			relatrixClient = new AsynchRelatrixClientTransaction(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort()+2 );
 	  return relatrixClient;
   }
 }
