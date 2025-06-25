@@ -18,7 +18,7 @@ import org.ros.internal.message.service.ServiceResponseMessageFactory;
 import org.ros.internal.message.topic.TopicDescriptionFactory;
 
 import org.ros.internal.node.client.MasterClient;
-import com.neocoretechs.relatrix.client.RelatrixClient;
+import com.neocoretechs.relatrix.client.RelatrixClientTransaction;
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -46,7 +46,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * Stores configuration information (e.g. ROS master URI) for {@link Node}s.
  * Starts a host of core services including {@link MasterClient} <br>
  * {@link SlaveServer} <br>
- * {@link RelatrixClient} <br>
+ * {@link RelatrixClientTransaction} <br>
  * {@link ParameterTree} <br>
  * {@link ParameterManager} <br>
  * {@link TopicParticipantManager} <br>
@@ -100,7 +100,7 @@ public class NodeConfiguration {
   private NameResolver resolver;
   private NodeIdentifier nodeIdentifier;
   private ClassLoader classLoader;
-  private RelatrixClient relatrixClient = null;
+  private RelatrixClientTransaction relatrixClient = null;
   /**
    * @param nodeConfiguration The {@link NodeConfiguration} to copy
    * @return a copy of the supplied {@link NodeConfiguration}
@@ -592,9 +592,9 @@ public class NodeConfiguration {
 	return parameterManager;
   }
 
-  public RelatrixClient getRelatrixClient() throws IOException {
+  public RelatrixClientTransaction getRelatrixClient() throws IOException {
 	  if(relatrixClient == null)
-			relatrixClient = new RelatrixClient(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort() );
+			relatrixClient = new RelatrixClientTransaction(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort() );
 	  return relatrixClient;
   }
 }
