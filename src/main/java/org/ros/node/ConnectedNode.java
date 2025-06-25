@@ -11,6 +11,8 @@ import org.ros.node.service.ServiceServer;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
+import com.neocoretechs.relatrix.client.RelatrixClient;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -135,5 +137,7 @@ public interface ConnectedNode extends Node {
    */
   ParameterTree getParameterTree();
   
-  NodeConfiguration getNodeConfiguration(); 
+  NodeConfiguration getNodeConfiguration();
+  
+  RelatrixClient getRelatrixClient() throws IOException;
 }

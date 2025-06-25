@@ -90,7 +90,7 @@ public class DefaultNode implements ConnectedNode {
   private final SubscriberFactory subscriberFactory;
   private final ServiceFactory serviceFactory;
   private final Registrar registrar;
-  private final RelatrixClient relatrixClient;
+  private RelatrixClient relatrixClient;
 
   private RosoutLogger rlog;
   private TimeProvider timeProvider;
@@ -132,7 +132,6 @@ public class DefaultNode implements ConnectedNode {
 			        new SubscriberFactory(nodeIdentifier, this.topicParticipantManager, this.scheduledExecutorService);
 		this.serviceFactory =
 			        new ServiceFactory(this.nodeName, this.slaveServer, this.serviceManager, this.scheduledExecutorService);
-		this.relatrixClient = nodeConfiguration.getRelatrixClient();
 	} catch (IOException e) {
 		log.error("Cannot construct new node due to "+e,e);
 		throw new RuntimeException(e);
@@ -435,6 +434,13 @@ public class DefaultNode implements ConnectedNode {
     return parameterTree;
   }
 
+  @Override
+  public RelatrixClient getRelatrixClient() throws IOException {
+	  if(this.relatrixClient == null)
+		this.relatrixClient = nodeConfiguration.getRelatrixClient();
+	  return relatrixClient;
+  }
+  
   @Override
   public InetSocketAddress getUri() {
     return slaveServer.getUri();
