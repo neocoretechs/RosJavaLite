@@ -7,7 +7,7 @@ import org.ros.EnvironmentVariables;
 
 import org.ros.address.InetSocketAddressFactory;
 import org.ros.internal.jarclassloader.JarClassLoader;
-import org.ros.internal.node.DefaultNode;
+
 import org.ros.namespace.GraphName;
 import org.ros.namespace.NameResolver;
 import org.ros.node.AbstractNodeMain;
@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Create {@link NodeConfiguration} instances using a ROS command-line and
@@ -42,7 +41,7 @@ import java.util.UUID;
  * @author Jonathan Groff (C) NeoCoreTechs 2021
  */
 public class CommandLineLoader {
-  private static final boolean DEBUG = false;
+  private static final boolean DEBUG = true;
   private static final Log log = LogFactory.getLog(CommandLineLoader.class);
   private final List<String> argv;
   private final List<String> nodeArguments;
@@ -74,6 +73,8 @@ public class CommandLineLoader {
    * @param environment environment variables
    */
   public CommandLineLoader(List<String> argv, Map<String, String> environment) {
+	if(DEBUG)
+		log.info("***invoking command line loader");
     assert(argv.size() > 0);
     this.argv = argv;
     this.environment = environment;

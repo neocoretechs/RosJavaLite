@@ -5,30 +5,29 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.server.ParameterServer;
+
+import com.neocoretechs.relatrix.RelatrixTransaction;
 import com.neocoretechs.relatrix.server.RelatrixTransactionServer;
 import org.ros.internal.node.server.master.MasterServer;
-import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.namespace.GraphName;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@link RosCore} is a collection of nodes and programs that are pre-requisites
- * of a ROS-based system. You must have a {@link RosCore}
+ * RosCore is a collection of nodes and programs, driven by {@link MasterServer}, that are pre-requisites
+ * of a ROS-based system. <p>You must have a RosCore
  * running in order for ROS nodes to communicate.
- * The light weight implementation will not yet interop with standard ROS.
- * nodes, the XML RPC has been eliminated in favor of lightweight java serialization protocol.
+ * The light weight implementation will not yet interop with standard ROS.<p>
+ * ROS XML RPC has been eliminated in favor of lightweight java serialization protocol.
  * An added capability is the provisioning of remote nodes with JAR files to simplify deployment of
- * numerous remote nodes via the parameter server and the ParameterTree.<p>
+ * numerous remote nodes via the {@link ParameterServer} and the {@link org.ros.node.parameter.ParameterTree}.<p>
  * Add the -Djars.provision=/path/to/jars on the command line to enable JAR, script, xml and other asset
  * provisioning through the ParameterTree.<br>
- * On the RosRun remote node add the same command line parameter to write the files to that directory. Due to the
+ * On the {@link RosRun} remote node add the same command line parameter to write the files to that directory. Due to the
  * way the classloader and the protection domain works its necessary to load the classes and write them to the same directory
  * as the bootstrap JARs for running ROS that are defined on the classpath.<p>
  * To exclude files and directories from provisioning, add them to a file called _exclusion, otherwise all files and subdirectories
@@ -38,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * and added to the _exclusion file.<p>
  * The real use case is to provide a means to add update of nodes and assets beyond basic bootstrapping to minimize constant
  * reconfiguration and provide a means of "live update".<p>
- * {@link org.ros.internal.node.server.RelatrixTransactionServer} integrated as a core service 6/2025
+ * RelatrixTransactionServer integrated as a core service 6/2025
  * TODO: Add /rosout node.
  * @see <a href="http://www.ros.org/wiki/roscore">roscore documentation</a>
  * 
@@ -248,6 +247,12 @@ public class RosCore {
 	   RosCore rosCore = RosCore.newPublic(8090);
 	   rosCore.start();
 	   rosCore.awaitStart(1, TimeUnit.SECONDS);
+	   if(args.length > 0 && !args[0].startsWith("__")) {
+			RelatrixTransaction.getInstance();
+			String db = (new File(args[0])).toPath().getParent().toString() + File.separator + (new File(args[0]).getName());
+			System.out.println("Bringing up Relatrix tablespace:"+db);
+			RelatrixTransaction.setTablespace(db);
+	   }
 	   log.info("RosJavaLite Master started @ address "+rosCore.getUri());
   }
 }
