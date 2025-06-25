@@ -18,7 +18,7 @@ import org.ros.internal.message.service.ServiceResponseMessageFactory;
 import org.ros.internal.message.topic.TopicDescriptionFactory;
 
 import org.ros.internal.node.client.MasterClient;
-import org.ros.internal.node.client.RelatrixClient;
+import com.neocoretechs.relatrix.client.RelatrixClient;
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.server.NodeIdentifier;
@@ -240,7 +240,7 @@ public class NodeConfiguration {
 		resolver = new NodeNameResolver(nodeName, parentResolver);
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 	    nodeIdentifier = new NodeIdentifier(nodeName, getRpcAdvertiseAddress().toInetSocketAddress());
-		relatrixClient = new RelatrixClient(nodeIdentifier, masterUri);
+		relatrixClient = new RelatrixClient(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort() );
 		slaveServer =
 			   new SlaveServer(nodeName, getTcpRosBindAddress(), getTcpRosAdvertiseAddress(),getRpcBindAddress(),getRpcAdvertiseAddress(),
 					   masterClient, relatrixClient, topicParticipantManager, serviceManager, parameterManager, executor);

@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.server.ParameterServer;
-import org.ros.internal.node.server.RelatrixTransactionServer;
+import com.neocoretechs.relatrix.server.RelatrixTransactionServer;
 import org.ros.internal.node.server.master.MasterServer;
 import org.ros.internal.transport.tcp.TcpRosServer;
 import org.ros.namespace.GraphName;
@@ -73,7 +73,6 @@ public class RosCore {
     return new RosCore(BindAddress.newPublic(port), AdvertiseAddress.newPublic(port));
   }
 
-
   public static RosCore newPrivate() {
 	BindAddress ba = BindAddress.newPrivate();
     return new RosCore(ba, AdvertiseAddress.newPrivate());
@@ -85,7 +84,7 @@ public class RosCore {
     try {
 		masterServer = new MasterServer(bindAddress, advertiseAddress);
 		parameterServer = new ParameterServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+1));
-		relatrixServer = new RelatrixTransactionServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+2));
+		relatrixServer = new RelatrixTransactionServer(bindAddress.toInetSocketAddress().getAddress(), advertiseAddress.getPort()+2, true);
 	} catch (IOException | ClassNotFoundException e) {
 		log.error("RosCore fault, master server can not be constructed due to "+e,e);
 		//e.printStackTrace();
@@ -98,7 +97,11 @@ public class RosCore {
   public void start() {
     masterServer.start();
     parameterServer.start();
-    relatrixServer.start();
+    try {
+		relatrixServer.startServer(RelatrixTransactionServer.port,RelatrixTransactionServer.address);
+	} catch (IOException e1) {
+		log.error(e1);
+	}
     // see if we are going to load JARs for provisioning remote nodes.
 	String jarsDir = System.getProperty(propsEntry);
 	if(jarsDir != null) {
@@ -216,7 +219,7 @@ public class RosCore {
     try {
     	parameterServer.shutdown();
 		masterServer.shutdown();
-		relatrixServer.shutdown();
+		relatrixServer.stopServer();
 	} catch (IOException e) {
 		log.error("Can not shut down master server due to "+e,e);
 		//e.printStackTrace();

@@ -13,7 +13,7 @@ import org.ros.internal.message.service.ServiceDescription;
 import org.ros.internal.message.topic.TopicDescription;
 import org.ros.internal.node.client.MasterClient;
 import org.ros.internal.node.client.Registrar;
-import org.ros.internal.node.client.RelatrixClient;
+import com.neocoretechs.relatrix.client.RelatrixClient;
 import org.ros.internal.node.parameter.DefaultParameterTree;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.response.Response;

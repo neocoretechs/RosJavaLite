@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.internal.node.client.MasterClient;
-import org.ros.internal.node.client.RelatrixClient;
+import com.neocoretechs.relatrix.client.RelatrixClient;
 import org.ros.internal.node.parameter.ParameterManager;
 import org.ros.internal.node.service.ServiceManager;
 import org.ros.internal.node.topic.DefaultPublisher;
@@ -275,14 +275,9 @@ public class SlaveServer extends RpcServer {
   @ServerMethod
   @Override
   public Object invokeMethod(RemoteRequestInterface rri) throws Exception {
-	  synchronized(invokableMethods) {
+	  //synchronized(invokableMethods) {
 		  return invokableMethods.invokeMethod(rri, this);
-	  }
-  }
-  //TODO: fix
-  @ServerMethod
-  public Object invokeRelatrix(RemoteRequestInterface rri) throws Exception {
-	  return relatrixClient.toString();
+	  //}
   }
   
   @ServerMethod
