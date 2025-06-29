@@ -64,7 +64,29 @@ public class CircularBlockingDeque<T> implements Iterable<T> {
     }
     return true;
   }
-
+  /**
+   * Adds the specified entry to the tail of the queue, 
+   * blocking at max entries if necessary. Use takeFirstNotify.
+   * 
+   * @param entry
+   *          the entry to add
+   * @return {@code true}
+   * @throws InterruptedException 
+   */
+  public boolean addLastWait(T entry) throws InterruptedException {
+    synchronized (mutex) {
+      if (length == limit) {
+    	mutex.wait();
+        deque[(start + length) % limit] = entry;
+        start = (start + 1) % limit;
+      } else {
+    	deque[(start + length) % limit] = entry;
+        length++;
+      }
+      mutex.notify();
+    }
+    return true;
+  }
   /**
    * Adds the specified entry to the tail of the queue, overwriting older
    * entries if necessary.
@@ -111,7 +133,29 @@ public class CircularBlockingDeque<T> implements Iterable<T> {
     }
     return entry;
   }
-
+  /**
+   * Retrieves the head of the queue, blocking if necessary until an entry is
+   * available. Notifies addLastWait that a take has occurred.
+   * 
+   * @return the head of the queue
+   * @throws InterruptedException
+   */
+  public T takeFirstNotify() throws InterruptedException {
+    T entry;
+    synchronized (mutex) {
+      while (true) {
+        if (length > 0) {
+          entry = deque[start];
+          start = (start + 1) % limit;
+          length--;
+          mutex.notify();
+          break;
+        }
+        mutex.wait();
+      }
+    }
+    return entry;
+  }
   /**
    * Retrieves, but does not remove, the head of this queue, returning
    * {@code null} if this queue is empty.
