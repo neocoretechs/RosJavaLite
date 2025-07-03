@@ -36,7 +36,7 @@ public class Process {
       // Android does not support ManagementFactory. Try to get the PID on
       // Android.
       try {
-        return new Long((Integer)Class.forName("android.os.Process").getMethod("myPid").invoke(null));
+        return Long.valueOf((Integer)Class.forName("android.os.Process").getMethod("myPid").invoke(null));
       } catch (Exception unused1) {
         // Ignore this exception and fall through to the
         // UnsupportedOperationException.
