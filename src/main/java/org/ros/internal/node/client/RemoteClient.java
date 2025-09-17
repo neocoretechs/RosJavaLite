@@ -14,7 +14,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.internal.node.server.RemoteRequestInterface;
-import org.ros.internal.node.server.ThreadPoolManager;
+import org.ros.internal.node.server.SynchronizedThreadManager;
 
 
 /**
@@ -65,7 +65,7 @@ public class RemoteClient implements Runnable {
 		}
 		remotePort = bootPort;
 		// spin up 'this' to receive connection request from remote server 'slave' to our 'master'
-		ThreadPoolManager.getInstance().spin(this);
+		SynchronizedThreadManager.getInstance().spin(this);
 	}
 	
 	/**

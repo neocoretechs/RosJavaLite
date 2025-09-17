@@ -63,7 +63,7 @@ public final class BaseServer extends TCPServer {
                     datasocket.setSoLinger(true, 1);
 					//
                     TCPWorker uworker = new TCPWorker(datasocket, rpcserver);
-                    Future<?> newworker= ThreadPoolManager.getInstance().submit("WORKERS",uworker);
+                    Future<?> newworker= SynchronizedThreadManager.getInstance().submit(uworker,"WORKERS");
                     uworkers.put(uworker, newworker);
                     if( DEBUG ) {
                     	log.info("ROS Server node worker starting");
@@ -85,7 +85,7 @@ public final class BaseServer extends TCPServer {
 		while(workers.hasMoreElements()) {
 			close(workers.nextElement());
 		}
-		ThreadPoolManager.getInstance().shutdown("WORKERS");
+		SynchronizedThreadManager.getInstance().shutdown("WORKERS");
 		super.shutdown();
 	}
 	

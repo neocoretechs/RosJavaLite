@@ -19,8 +19,8 @@ public abstract class TCPServer implements Cloneable, Runnable {
 			server = new ServerSocket(port);
 			//runner = new Thread(this);
 			//runner.start();
-			ThreadPoolManager.init(new String[]{"TCPSERVER","WORKERS"}, false);
-			ThreadPoolManager.getInstance().spin(this,"TCPSERVER");
+			SynchronizedThreadManager.getInstance().init(new String[]{"TCPSERVER","WORKERS"}, false);
+			SynchronizedThreadManager.getInstance().spin(this,"TCPSERVER");
 		}
 	}
 	public synchronized void startServer(int port, InetAddress binder) throws IOException {
@@ -30,8 +30,8 @@ public abstract class TCPServer implements Cloneable, Runnable {
 			server = new ServerSocket(port, 1000, binder);
 			//runner = new Thread(this);
 			//runner.start();
-			ThreadPoolManager.init(new String[]{"TCPSERVER","WORKERS"}, false);
-			ThreadPoolManager.getInstance().spin(this,"TCPSERVER");
+			SynchronizedThreadManager.getInstance().init(new String[]{"TCPSERVER","WORKERS"}, false);
+			SynchronizedThreadManager.getInstance().spin(this,"TCPSERVER");
 		}
 	}
 	public synchronized void stopServer() throws IOException {
@@ -39,8 +39,8 @@ public abstract class TCPServer implements Cloneable, Runnable {
 			shouldStop = true;
 			server.close();
 			server = null;
-			ThreadPoolManager.getInstance().shutdown("TCPSERVER");
-			ThreadPoolManager.getInstance().shutdown("WORKERS");
+			SynchronizedThreadManager.getInstance().shutdown("TCPSERVER");
+			SynchronizedThreadManager.getInstance().shutdown("WORKERS");
 		}
 	}
 
