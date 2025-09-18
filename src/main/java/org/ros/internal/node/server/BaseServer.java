@@ -10,6 +10,8 @@ import java.util.concurrent.Future;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.neocoretechs.relatrix.parallel.SynchronizedThreadManager;
+
 /**
  * Functionally this class Extends TCPServer, takes connections and spins the worker thread to handle each one.<p/>
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
@@ -51,6 +53,7 @@ public final class BaseServer extends TCPServer {
 	public static void main(String args[]) throws Exception {
 		BaseServer bs = new BaseServer();
 		log.info("ROSLite Server started on "+InetAddress.getLocalHost().getHostName()+" port "+bs.WORKBOOTPORT);
+		SynchronizedThreadManager.startSupervisorThread();
 	}
 	
 	public void run() {

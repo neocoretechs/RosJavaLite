@@ -202,6 +202,7 @@ public class SynchronizedThreadManager {
 		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_POOL);
         return ftl.submit(r);
     }
+
     /**
      * Get the Future via executor for named group
      * @param r The Callable<Object>
@@ -214,6 +215,7 @@ public class SynchronizedThreadManager {
 			throw new RuntimeException("Executor Group "+group+" not initialized");
 	    return ftl.submit(r);
 	}
+
     /**
      * Shutdown all threads
      */
@@ -247,6 +249,22 @@ public class SynchronizedThreadManager {
 		} catch (InterruptedException e1) {}
 	}
 	/**
+	 * Start a supervisor platform thread to keep JVM from exiting. 
+	 * Virtual threads are all daemon by default.
+	 */
+	public static void startSupervisorThread() {
+		Thread supervisor = new Thread(() -> {
+		    while (!Thread.currentThread().isInterrupted()) {
+		        try {
+		            Thread.sleep(10000);
+		        } catch (InterruptedException e) {
+		            break;
+		        }
+		    }
+		});
+		supervisor.start(); // Not daemon by default
+	}
+	/**
      * Shutdown default group
      */
 	public void shutdown() {
@@ -266,7 +284,6 @@ public class SynchronizedThreadManager {
 	static class ExtendedExecutor {
 		public ExecutorService exs;
 		public String group;
-		private long threadNum = 0L;
 		public ExtendedExecutor(String group, ExecutorService exs) {
 			this.group = group;
 			this.exs = exs;
@@ -275,19 +292,7 @@ public class SynchronizedThreadManager {
 		public void waitForGroupToTerminate() throws InterruptedException {
 			this.exs.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
 		}
-
-		public Future<?> submitDaemon(ThreadGroup threadGroup, Runnable r) {
-			Thread thread = new Thread(threadGroup, r, threadGroup.getName()+threadNum++);
-			thread.setDaemon(true);
-			Future<?> f = exs.submit(thread);
-			return f;
-		}
-		public Future<?> submitDaemon(Runnable r) {
-	        Thread thread = new Thread(r);
-	        thread.setDaemon(true);
-	        Future<?> f = exs.submit(thread);
-	        return f;
-		}
+		
 		public Future<?> submit(Runnable r) {
 	        return exs.submit(r);
 		}
