@@ -9,12 +9,9 @@ import org.ros.internal.transport.ChannelHandlerContextImpl;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.StandardSocketOptions;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
-import java.nio.channels.SocketChannel;
+
 import java.util.List;
-import java.util.concurrent.Executor;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -72,47 +69,53 @@ public class TcpClient {
   }
 
   public ChannelHandlerContext getContext() { return ctx; }
-  
-  public Socket connect(String connectionName, SocketAddress socketAddress) throws Exception {
-	 if (DEBUG) {
-	   log.info("TcpClient:"+this+" attempting connection:"+connectionName+" to socket:" + socketAddress);
-	 }
-	//channel = /*Asynchronous*/SocketChannel.open(/*channelGroup*/);
-	  channel = new Socket();
-	  //channel.setTcpNoDelay(true);
-	  channel.setSendBufferSize(4096000);
-	  channel.setSendBufferSize(4096000);
-	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_RCVBUF, 4096000);
-	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.SO_SNDBUF, 4096000);
-	//((/*Asynchronous*/SocketChannel)channel).setOption(StandardSocketOptions.TCP_NODELAY, false);
-	ctx = new ChannelHandlerContextImpl(executor, channel);
-    // connect outbound to pub
-    ctx.connect(socketAddress);
-    //
-    TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(namedChannelHandlers);
-    // add handler pipeline factory to stack
-    factoryStack.addLast(tcpClientPipelineFactory);
-    // load the handlers from the pipeline factories
-    // inject calls initChannel on each ChannelInitializer in the factoryStack
-    factoryStack.inject(ctx);
-    // notify new handlers all loaded
-    //ctx.pipeline().fireChannelRegistered(); 
-    // connect outbound to pub
-    //ctx.connect(socketAddress);
-    AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
-    executor.execute(uworker);
-    // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
-    ctx.pipeline().fireChannelActive();
-	// recall we keep the list of contexts in TcpClientManager  
-    if (DEBUG) {
-        log.info("TcpClient:"+this+" Connected with ChannelHandlerContext "+ctx);
-    }
-    //} else {
-      // We expect the first connection to succeed. If not, fail fast.
-      //throw new RosRuntimeException("TcpClient socket connection exception: " + socketAddress, future.cause());
-    //}
-    return channel;
+  /**
+   * Connect despite possible initial failure by continual re-try until success.
+   * Delay for 5 seconds then re-try connection. Assume eventual response of server.
+   * @param connectionName then name of this connection
+   * @param socketAddress the address we are attempting connection to
+   * @return The successfully connected socket
+   */
+  public Socket connect(String connectionName, SocketAddress socketAddress) {
+	  if (DEBUG) {
+		  log.info("TcpClient:"+this+" attempting connection:"+connectionName+" to socket:" + socketAddress);
+	  }
+	  while(true) {
+		  try {
+			  channel = new Socket();
+			  //channel.setTcpNoDelay(true);
+			  channel.setSendBufferSize(4096000);
+			  channel.setSendBufferSize(4096000);
+			  ctx = new ChannelHandlerContextImpl(executor, channel);
+			  // connect outbound to pub
+			  ctx.connect(socketAddress);
+			  //
+			  TcpClientPipelineFactory tcpClientPipelineFactory = new TcpClientPipelineFactory(namedChannelHandlers);
+			  // add handler pipeline factory to stack
+			  factoryStack.addLast(tcpClientPipelineFactory);
+			  // load the handlers from the pipeline factories
+			  // inject calls initChannel on each ChannelInitializer in the factoryStack
+			  factoryStack.inject(ctx);
+			  // notify new handlers all loaded
+			  //ctx.pipeline().fireChannelRegistered(); 
+			  // connect outbound to pub
+			  //ctx.connect(socketAddress);
+			  AsynchTCPWorker uworker = new AsynchTCPWorker(ctx);
+			  executor.execute(uworker);
+			  // notify pipeline we connected (or failed via exceptionCaught and runtime exception)
+			  ctx.pipeline().fireChannelActive();
+			  // recall we keep the list of contexts in TcpClientManager  
+			  if (DEBUG) {
+				  log.info("TcpClient:"+this+" Connected with ChannelHandlerContext "+ctx);
+			  }
+			  return channel;
+		  } catch(Exception e) {
+			  log.error("Exception establishing connection to "+connectionName+" at address "+socketAddress+", Re-try connection in 5 seconds...");
+			  try {
+				  Thread.sleep(5000);
+			  } catch (InterruptedException e1) {}
+		  }
+	  }
   }
-
 
 }

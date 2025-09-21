@@ -40,7 +40,7 @@ public class AsynchTCPWorker implements Runnable {
 						ctx.pipeline().fireChannelRead(reso);
 						ctx.pipeline().fireChannelReadComplete();
 					} catch(StreamCorruptedException sce) {
-						log.info("Thread "+Thread.currentThread().getId()+" context:"+ctx+" stream was corrupted on read:"+sce);
+						log.info("Thread "+Thread.currentThread()+" context:"+ctx+" stream was corrupted on read:"+sce);
 					}
 				} // shouldRun		
 			} catch(Exception se) {

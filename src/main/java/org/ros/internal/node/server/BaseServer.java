@@ -10,7 +10,6 @@ import java.util.concurrent.Future;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.neocoretechs.relatrix.parallel.SynchronizedThreadManager;
 
 /**
  * Functionally this class Extends TCPServer, takes connections and spins the worker thread to handle each one.<p/>
@@ -20,6 +19,7 @@ import com.neocoretechs.relatrix.parallel.SynchronizedThreadManager;
 public final class BaseServer extends TCPServer {
 	private static boolean DEBUG = false;
     private static final Log log = LogFactory.getLog(BaseServer.class);
+    private static final String WORKERTHREADS = "WORKER";
 	public int WORKBOOTPORT = 8090;
 	public InetAddress address = null;
 	private RpcServer rpcserver = null;
@@ -30,6 +30,7 @@ public final class BaseServer extends TCPServer {
 		WORKBOOTPORT = server.getAddress().getPort();
 		this.address = server.getAddress().getAddress();
 		this.rpcserver = server;
+		SynchronizedThreadManager.getInstance().init(new String[]{WORKERTHREADS});
 	}
 	/**
 	 * Construct the Server, fill in port and address later.
@@ -38,6 +39,7 @@ public final class BaseServer extends TCPServer {
 	 */
 	public BaseServer() throws IOException, ClassNotFoundException {
 		super();
+		SynchronizedThreadManager.getInstance().init(new String[]{WORKERTHREADS});
 	}
 
 	public void startServer() throws IOException {
@@ -66,7 +68,7 @@ public final class BaseServer extends TCPServer {
                     datasocket.setSoLinger(true, 1);
 					//
                     TCPWorker uworker = new TCPWorker(datasocket, rpcserver);
-                    Future<?> newworker= SynchronizedThreadManager.getInstance().submit(uworker,"WORKERS");
+                    Future<?> newworker= SynchronizedThreadManager.getInstance().submit(uworker,WORKERTHREADS);
                     uworkers.put(uworker, newworker);
                     if( DEBUG ) {
                     	log.info("ROS Server node worker starting");
@@ -88,7 +90,7 @@ public final class BaseServer extends TCPServer {
 		while(workers.hasMoreElements()) {
 			close(workers.nextElement());
 		}
-		SynchronizedThreadManager.getInstance().shutdown("WORKERS");
+		SynchronizedThreadManager.getInstance().shutdown(WORKERTHREADS);
 		super.shutdown();
 	}
 	

@@ -3,12 +3,16 @@ package org.ros.node;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.concurrent.DefaultScheduledExecutorService;
+import org.ros.internal.node.server.SynchronizedThreadManager;
 import org.ros.namespace.GraphName;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -117,6 +121,8 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
         }
         assert(!nml.contains(nodeMain));
         nml.add(nodeMain);
+        // start a supervisor to prevent VM exit
+        SynchronizedThreadManager.startSupervisorThread(node.getName().toString());
       }
     });
   }
@@ -131,10 +137,31 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
    */
   @Override
   public void shutdownNodeMain(NodeMain nodeMain) {
-    List<NodeMain> node = nodeMains./*inverse().*/get(nodeMain);
+    Collection<List<NodeMain>> cnode = nodeMains.values();
+    // array of all List of NodeMain
+    Object[] node = cnode.toArray();
+    // Set of all Node to List of NodeMain
+    Set<Entry<Node,List<NodeMain>>> nodeToMain = nodeMains.entrySet();
     if (node != null) {
-    	for(int i = node.size()-1; i > 0; i--)
-    		safelyShutdownNode((Node)node.get(i));
+    	// iterate through all List of NodeMain in reverse order
+    	for(int i = node.length-1; i > 0; i--) {
+    		// mainNode is iterated list of NodeMain reverse order
+    		List<NodeMain> mainNode = (List<NodeMain>) node[i];
+    		// iterator of Set of Node to List of NodeMain
+    		Iterator<?> it = nodeToMain.iterator();
+    		while(it.hasNext()) {
+    			// Node to List of NodeMain
+    			Entry<Node,List<NodeMain>> nextEntry = (Entry<Node,List<NodeMain>>)it.next();
+    			// if our reverse order List of NodeMain matches our iterated Node to List of NodeMain, see if 
+    			// entry in this List of NodeMain matches passed NodeMain, shut down node for entry
+    			if(nextEntry.getValue() == mainNode) {
+    				mainNode.forEach(e->{
+    					if(e.equals(nodeMain))
+    						safelyShutdownNode(nextEntry.getKey());
+    				});
+    			}
+    		}
+    	}
     }
   }
   /**
@@ -159,6 +186,7 @@ public class DefaultNodeMainExecutor implements NodeMainExecutor {
     boolean success = true;
     try {
       node.shutdown();
+      SynchronizedThreadManager.stopSupervisorThread(node.getName().toString());
     } catch (Exception e) {
       // Ignore spurious errors during shutdown.
       log.error("Exception thrown while shutting down node.", e);

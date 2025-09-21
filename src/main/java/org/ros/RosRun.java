@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.exception.RosRuntimeException;
 import org.ros.internal.loader.CommandLineLoader;
+import org.ros.internal.node.server.SynchronizedThreadManager;
 import org.ros.namespace.GraphName;
 
 import org.ros.node.DefaultNodeMainExecutor;
@@ -20,6 +21,7 @@ import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
 import org.ros.node.NodeMainExecutor;
 import org.ros.node.parameter.ParameterTree;
+
 
 /**
  * This is a main class entry point for executing {@link NodeMain}s.
@@ -90,6 +92,7 @@ public class RosRun {
     assert(nodeMain != null);
     NodeMainExecutor nodeMainExecutor = DefaultNodeMainExecutor.newDefault();
     nodeMainExecutor.execute(nodeMain, nodeConfiguration);
+    SynchronizedThreadManager.startSupervisorThread(nodeConfiguration.getNodeName().toString());
   }
   /*
    *    parameterTree.addParameterListener(GraphName.of(RosCore.jarParent), new ParameterListener() {

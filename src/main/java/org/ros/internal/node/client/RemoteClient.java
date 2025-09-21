@@ -128,24 +128,34 @@ public class RemoteClient implements Runnable {
 	 * @param iori
 	 */
 	private void send(RemoteRequestInterface iori) {
-		try {
-			if(workerSocket == null ) {
-				workerSocketAddress = new InetSocketAddress(IPAddress, remotePort);
-				workerSocket = new Socket();
-				workerSocket.connect(workerSocketAddress);
-				workerSocket.setKeepAlive(true);
-				//workerSocket.setTcpNoDelay(true);
-				workerSocket.setReceiveBufferSize(32767);
-				workerSocket.setSendBufferSize(32767);
+		while(true) {
+			try {
+				if(workerSocket == null || workerSocket.isClosed() || !workerSocket.isConnected()) {
+					workerSocketAddress = new InetSocketAddress(IPAddress, remotePort);
+					workerSocket = new Socket();
+					workerSocket.connect(workerSocketAddress);
+					workerSocket.setKeepAlive(true);
+					//workerSocket.setTcpNoDelay(true);
+					workerSocket.setReceiveBufferSize(32767);
+					workerSocket.setSendBufferSize(32767);
+				}
+				ObjectOutputStream oos = new ObjectOutputStream(workerSocket.getOutputStream());
+				oos.writeObject(iori);
+				oos.flush();
+				break;
+
+			//} catch (SocketException e) {
+			//	log.error("Exception setting up socket to remote host:"+IPAddress+" port "+remotePort+" "+e);
+			//} catch (IOException e) {
+			//	log.error("Socket send error "+e+" to address "+IPAddress+" on port "+remotePort);
+			//}
+			} catch(Exception e) {
+				log.error("Exception establishing connection or sending to remote host:"+IPAddress+" port "+remotePort+" "+e);
 			}
-			ObjectOutputStream oos = new ObjectOutputStream(workerSocket.getOutputStream());
-			oos.writeObject(iori);
-			oos.flush();
-			
-		} catch (SocketException e) {
-				log.error("Exception setting up socket to remote host:"+IPAddress+" port "+remotePort+" "+e);
-		} catch (IOException e) {
-				log.error("Socket send error "+e+" to address "+IPAddress+" on port "+remotePort);
+			try {
+				log.info("Re-try socket connect in 5 seconds...");
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {}
 		}
 	}
 	

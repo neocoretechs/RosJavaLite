@@ -28,8 +28,10 @@ import org.apache.commons.logging.LogFactory;
 public class SynchronizedThreadManager {
 	private static boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(SynchronizedThreadManager.class);
-	private static String DEFAULT_THREAD_POOL = "RPCSERVER";
+	private static final String DEFAULT_SUPERVISOR = "SUPERVISOR";
+	private static final String DEFAULT_THREAD_EXECUTOR = "RPCSERVER";
     private static Map<String, ExtendedExecutor> executor = new ConcurrentHashMap<String, ExtendedExecutor>();
+    private static final Map<String, Thread> supervisors = new ConcurrentHashMap<>();
 	public static volatile SynchronizedThreadManager threadManager = null;
 	private SynchronizedThreadManager() { }
 
@@ -45,7 +47,7 @@ public class SynchronizedThreadManager {
 	}
 	
 	public ExecutorService getExecutor() {
-		return executor.get(DEFAULT_THREAD_POOL).exs;
+		return executor.get(DEFAULT_THREAD_EXECUTOR).exs;
 	}
 	
 	public ExecutorService getExecutor(String group) {
@@ -107,13 +109,13 @@ public class SynchronizedThreadManager {
 	}
 	
 	public void reinit(int maxThreads, int executionLimit) {
-		reinit(DEFAULT_THREAD_POOL);
+		reinit(DEFAULT_THREAD_EXECUTOR);
 	}
 	/**
 	 * Initialize default group SYSTEMSYNC<p/>
 	 */
 	public void init() {
-		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_POOL);
+		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_EXECUTOR);
 		if( ftl != null ) {
 			//ftl.exs.shutdownNow();
 			//executor.remove(ftl.group);
@@ -121,7 +123,7 @@ public class SynchronizedThreadManager {
 			return;
 		}
 		ExecutorService tpx = Executors.newVirtualThreadPerTaskExecutor();
-		executor.put(DEFAULT_THREAD_POOL, new ExtendedExecutor(DEFAULT_THREAD_POOL, tpx));
+		executor.put(DEFAULT_THREAD_EXECUTOR, new ExtendedExecutor(DEFAULT_THREAD_EXECUTOR, tpx));
 	}
 
 	/**
@@ -169,7 +171,7 @@ public class SynchronizedThreadManager {
 	 * @param r the Runnable
 	 */
 	public void spin(Runnable r) {
-		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_POOL);
+		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_EXECUTOR);
 	    ftl.execute(r);
 	}
 	/**
@@ -178,7 +180,7 @@ public class SynchronizedThreadManager {
 	 * @return the Future executing thread
 	 */
     public Future<?> submit(Runnable r) {
-		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_POOL);
+		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_EXECUTOR);
         return ftl.submit(r);
     }
     /**
@@ -199,7 +201,7 @@ public class SynchronizedThreadManager {
 	 * @return The Future<Object>
 	 */
 	public Future<Object> submit(Callable<Object> r) {
-		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_POOL);
+		ExtendedExecutor ftl = executor.get(DEFAULT_THREAD_EXECUTOR);
         return ftl.submit(r);
     }
 
@@ -231,6 +233,7 @@ public class SynchronizedThreadManager {
 				e.waitForGroupToTerminate();
 			} catch (InterruptedException e1) {}
 		}
+		Thread.currentThread().interrupt(); // stop supervisor
 	}
 	/**
      * Shutdown all threads for a group
@@ -253,6 +256,7 @@ public class SynchronizedThreadManager {
 	 * Virtual threads are all daemon by default.
 	 */
 	public static void startSupervisorThread() {
+		if (supervisors.containsKey(DEFAULT_SUPERVISOR)) return;
 		Thread supervisor = new Thread(() -> {
 		    while (!Thread.currentThread().isInterrupted()) {
 		        try {
@@ -262,13 +266,50 @@ public class SynchronizedThreadManager {
 		        }
 		    }
 		});
+		supervisors.put(DEFAULT_SUPERVISOR, supervisor);
 		supervisor.start(); // Not daemon by default
+	}
+	/**
+	 * Start a supervisor platform thread to keep JVM from exiting. 
+	 * Virtual threads are all daemon by default.
+	 */
+	public static void startSupervisorThread(String name) {
+		if (supervisors.containsKey(name)) return;
+		Thread supervisor = new Thread(() -> {
+		    while (!Thread.currentThread().isInterrupted()) {
+		        try {
+		            Thread.sleep(10000);
+		        } catch (InterruptedException e) {
+		            break;
+		        }
+		    }
+		});
+		supervisors.put(name, supervisor);
+		supervisor.start(); // Not daemon by default
+	}
+	public static void stopSupervisorThread() {
+		Thread supervisor = supervisors.remove(DEFAULT_SUPERVISOR);
+		if (supervisor != null) {
+			supervisor.interrupt();
+		}
+	}
+	public static void stopSupervisorThread(String name) {
+		Thread supervisor = supervisors.remove(name);
+		if (supervisor != null) {
+			supervisor.interrupt();
+		}
+	}
+	public static void stopAllSupervisors() {
+	    for (Thread t : supervisors.values()) {
+	        t.interrupt();
+	    }
+	    supervisors.clear();
 	}
 	/**
      * Shutdown default group
      */
 	public void shutdown() {
-		ExtendedExecutor ex = executor.get(DEFAULT_THREAD_POOL);
+		ExtendedExecutor ex = executor.get(DEFAULT_THREAD_EXECUTOR);
 		List<Runnable> spun = ex.exs.shutdownNow();
 		for(Runnable rs : spun) {
 			if(DEBUG)
