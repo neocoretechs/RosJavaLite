@@ -11,29 +11,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * This wraps a {@link Executors#newCachedThreadPool()} and a
- * {@link Executors#newScheduledThreadPool(int)} to provide the functionality of
+ * This wraps a {@link Executors#newVirtualThreadPerTaskExecutor()} to run a series of executing
+ * {@link Executors#newSingleThreadScheduledExecutor()} to provide the functionality of
  * both in a single {@link ScheduledExecutorService}. This is necessary since
- * the {@link ScheduledExecutorService} uses an unbounded queue which makes it
- * impossible to create an unlimited number of threads on demand (as explained
- * in the {@link ThreadPoolExecutor} class javadoc.
+ * the {@link ScheduledExecutorService} uses a pool executor with an unbounded queue which makes it
+ * impossible to create an unlimited number of threads on demand.
  * 
- * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017,2021,2025
  */
 public class DefaultScheduledExecutorService implements ScheduledExecutorService {
 
-  private static final int CORE_POOL_SIZE = 11;
-
   private final ExecutorService executorService;
-  private final ScheduledExecutorService scheduledExecutorService;
-
+  
   public DefaultScheduledExecutorService() {
-    this(Executors.newCachedThreadPool());
+    this(Executors.newVirtualThreadPerTaskExecutor());
   }
 
   /**
@@ -42,43 +37,29 @@ public class DefaultScheduledExecutorService implements ScheduledExecutorService
    * @param executorService
    */
   public DefaultScheduledExecutorService(ExecutorService executorService) {
-    this(executorService, Executors.newScheduledThreadPool(CORE_POOL_SIZE));
-  }
-
-  /**
-   * This instance will take over the lifecycle of the services.
-   * 
-   * @param executorService
-   * @param scheduledExecutorService
-   */
-  public DefaultScheduledExecutorService(ExecutorService executorService,
-      ScheduledExecutorService scheduledExecutorService) {
     this.executorService = executorService;
-    this.scheduledExecutorService = scheduledExecutorService;
   }
 
   @Override
   public void shutdown() {
     executorService.shutdown();
-    scheduledExecutorService.shutdown();
   }
 
   @Override
   public List<Runnable> shutdownNow() {
     List<Runnable> combined = new ArrayList<Runnable>();
     combined.addAll(executorService.shutdownNow());
-    combined.addAll(scheduledExecutorService.shutdownNow());
     return combined;
   }
 
   @Override
   public boolean isShutdown() {
-    return executorService.isShutdown() && scheduledExecutorService.isShutdown();
+    return executorService.isShutdown();
   }
 
   @Override
   public boolean isTerminated() {
-    return executorService.isTerminated() && scheduledExecutorService.isTerminated();
+    return executorService.isTerminated();
   }
 
   /**
@@ -92,9 +73,7 @@ public class DefaultScheduledExecutorService implements ScheduledExecutorService
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     boolean executorServiceResult = executorService.awaitTermination(timeout, unit);
-    boolean scheduledExecutorServiceResult =
-        scheduledExecutorService.awaitTermination(timeout, unit);
-    return executorServiceResult && scheduledExecutorServiceResult;
+    return executorServiceResult;
   }
 
   @Override
@@ -140,26 +119,122 @@ public class DefaultScheduledExecutorService implements ScheduledExecutorService
   public void execute(Runnable command) {
     executorService.execute(command);
   }
-
+  /**
+   * Invoke the single threaded executor within a virtual threads context. We do this
+   * because the single thread executor creates a series of sequential threads
+   * @param command The Runnable to schedule
+   * @param delay the delay to start
+   * @param unit The TimeUnit
+   * @return the Scheduled Future of the task
+   */
+  private ScheduledFuture<?> invokeSchedulerWithinVirtualThread(Runnable command, long delay, TimeUnit unit) {
+	  final ReturnRunnable ret = new ReturnRunnable();
+	  executorService.execute(() -> {
+		  ScheduledExecutorService singleThreadScheduler = Executors.newSingleThreadScheduledExecutor();
+		  try (singleThreadScheduler) {
+			  ret.setReturnRunnable(singleThreadScheduler.schedule(command, delay, unit));
+		  }
+	  });
+	  return ret.getReturnRunnable();
+  }
+  /**
+   * Invoke the single threaded executor within a virtual threads context. We do this
+   * because the single thread executor creates a series of sequential threads
+   * @param command The Runnable to schedule
+   * @param initDelay the initial delay
+   * @param period the interval
+   * @param unit The TimeUnit
+   * @return the Scheduled Future of the task
+   */
+  private ScheduledFuture<?> invokeSchedulerWithinVirtualThread(Runnable command, long initDelay, long period, TimeUnit unit) {
+	  final ReturnRunnable ret = new ReturnRunnable();
+	  executorService.execute(() -> {
+		  ScheduledExecutorService singleThreadScheduler = Executors.newSingleThreadScheduledExecutor();
+		  try (singleThreadScheduler) {
+			  ret.setReturnRunnable(singleThreadScheduler.scheduleAtFixedRate(command, initDelay, period, unit));
+		  }
+	  });
+	  return ret.getReturnRunnable();
+  }
+  /**
+   * Invoke the single threaded executor within a virtual threads context. We do this
+   * because the single thread executor creates a series of sequential threads
+   * @param command The Runnable to schedule
+   * @param initDelay the initial delay
+   * @param delay the delay to start
+   * @param unit The TimeUnit
+   * @return the Scheduled Future of the task
+   */
+  private ScheduledFuture<?> invokeSchedulerWithinVirtualThreadFixedDelay(Runnable command, long initDelay, long delay, TimeUnit unit) {
+	  final ReturnRunnable ret = new ReturnRunnable();
+	  executorService.execute(() -> {
+		  ScheduledExecutorService singleThreadScheduler = Executors.newSingleThreadScheduledExecutor();
+		  try (singleThreadScheduler) {
+			  ret.setReturnRunnable(singleThreadScheduler.scheduleWithFixedDelay(command, initDelay, delay, unit));
+		  }
+	  });
+	  return ret.getReturnRunnable();
+  }
+  /**
+   * Invoke the single threaded executor within a virtual threads context. We do this
+   * because the single thread executor creates a series of sequential threads
+   * @param command The Callable to schedule
+   * @param delay the delay to start
+   * @param unit The TimeUnit
+   * @return the Scheduled Future of the task
+   */
+  private <V> ScheduledFuture<V> invokeSchedulerWithinVirtualThread(Callable<V> command, long delay, TimeUnit unit) {
+	  final ReturnCallable<V> ret = new ReturnCallable<V>();
+	  executorService.execute(() -> {
+		  ScheduledExecutorService singleThreadScheduler = Executors.newSingleThreadScheduledExecutor();
+		  try (singleThreadScheduler) {
+			  ret.setReturnCallable(singleThreadScheduler.schedule(command, delay, unit));
+		  }
+	  });
+	  return ret.getReturnCallable();
+  }
   @Override
   public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
-    return scheduledExecutorService.schedule(command, delay, unit);
+    //return scheduledExecutorService.schedule(command, delay, unit);
+	  return invokeSchedulerWithinVirtualThread(command, delay, unit);
   }
 
   @Override
   public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
-    return scheduledExecutorService.schedule(callable, delay, unit);
+    //return scheduledExecutorService.schedule(callable, delay, unit);
+	  return invokeSchedulerWithinVirtualThread(callable, delay, unit);
   }
 
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period,
-      TimeUnit unit) {
-    return scheduledExecutorService.scheduleAtFixedRate(command, initialDelay, period, unit);
+  public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
+    //return scheduledExecutorService.scheduleAtFixedRate(command, initialDelay, period, unit);
+	  return invokeSchedulerWithinVirtualThread(command, initialDelay, period, unit);
   }
 
   @Override
-  public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay,
-      TimeUnit unit) {
-    return scheduledExecutorService.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+  public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+    //return scheduledExecutorService.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+	  return invokeSchedulerWithinVirtualThreadFixedDelay(command, initialDelay, delay, unit);
+  }
+  
+  class ReturnCallable<V> {
+	  ScheduledFuture<V> returnCallable;
+	  public ReturnCallable() { }
+	  public void setReturnCallable(ScheduledFuture<V> scheduledFuture) {
+		  this.returnCallable = scheduledFuture;
+	  }
+	  public ScheduledFuture<V> getReturnCallable() {
+		  return returnCallable;
+	  }
+  }
+  class ReturnRunnable {
+	  ScheduledFuture<?> returnRunnable;
+	  public ReturnRunnable() { }
+	  public void setReturnRunnable(ScheduledFuture<?> scheduledFuture) {
+		  this.returnRunnable = scheduledFuture;
+	  }
+	  public ScheduledFuture<?> getReturnRunnable() {
+		  return returnRunnable;
+	  }
   }
 }
