@@ -45,8 +45,7 @@ public class RemoteClient implements Runnable {
 	
 	ArrayBlockingQueue<RemoteRequestInterface> requests = new ArrayBlockingQueue<RemoteRequestInterface>(1);
 	ArrayBlockingQueue<Object> responses = new ArrayBlockingQueue<Object>(1);
-	
-	
+
 	/**
 	 * Start a remote client.
 	 */
@@ -92,6 +91,7 @@ public class RemoteClient implements Runnable {
 						if( workerSocket != null ) workerSocket.close();
 					} catch (IOException e2) {}
 					workerSocket = null;
+					shouldRun = false;
 			} catch (IOException e) {
 				// we lost the remote, try to close worker and wait for reconnect
 				log.debug("RemoteClient: receive IO error "+e+" Address:"+IPAddress+" port:"+remotePort);
@@ -99,15 +99,16 @@ public class RemoteClient implements Runnable {
 					if( workerSocket != null ) workerSocket.close();
 				} catch (IOException e2) {}
 				workerSocket = null;
+				shouldRun = false;
 			} catch (ClassNotFoundException e1) {
 				log.error("Class not found for deserialization "+e1+" Address:"+IPAddress+" port:"+remotePort);
-				break;
+				shouldRun = false;
 			} catch (InterruptedException e) {
-				break;
+				shouldRun = false;
 			}
-	    }	// shouldRun
+	    }// shouldRun
 		try {
-				if( workerSocket != null ) workerSocket.close();
+			if( workerSocket != null ) workerSocket.close();
 		} catch (IOException e2) {}
 		synchronized(waitHalt) {
 				waitHalt.notify();
@@ -128,7 +129,6 @@ public class RemoteClient implements Runnable {
 	 * @param iori
 	 */
 	private void send(RemoteRequestInterface iori) {
-		while(true) {
 			try {
 				if(workerSocket == null || workerSocket.isClosed() || !workerSocket.isConnected()) {
 					workerSocketAddress = new InetSocketAddress(IPAddress, remotePort);
@@ -142,21 +142,11 @@ public class RemoteClient implements Runnable {
 				ObjectOutputStream oos = new ObjectOutputStream(workerSocket.getOutputStream());
 				oos.writeObject(iori);
 				oos.flush();
-				break;
-
-			//} catch (SocketException e) {
-			//	log.error("Exception setting up socket to remote host:"+IPAddress+" port "+remotePort+" "+e);
-			//} catch (IOException e) {
-			//	log.error("Socket send error "+e+" to address "+IPAddress+" on port "+remotePort);
-			//}
-			} catch(Exception e) {
-				log.error("Exception establishing connection or sending to remote host:"+IPAddress+" port "+remotePort+" "+e);
+			} catch (SocketException e) {
+				log.error("Exception setting up socket to remote host:"+IPAddress+" port "+remotePort+" "+e);
+			} catch (IOException e) {
+				log.error("Socket send error "+e+" to address "+IPAddress+" on port "+remotePort);
 			}
-			try {
-				log.info("Re-try socket connect in 5 seconds...");
-				Thread.sleep(5000);
-			} catch (InterruptedException e) {}
-		}
 	}
 	
 	public void close() {
