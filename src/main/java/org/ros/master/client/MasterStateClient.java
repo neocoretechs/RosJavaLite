@@ -5,6 +5,7 @@ import org.ros.internal.node.response.Response;
 import org.ros.internal.node.server.master.MasterServer;
 import org.ros.internal.node.topic.TopicDeclaration;
 import org.ros.node.Node;
+import org.ros.node.NodeConfiguration;
 import org.ros.node.service.ServiceServer;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class MasterStateClient {
 
   public MasterStateClient(Node caller, URI masterUri) throws IOException {
     this.caller = caller;
-    masterClient = new MasterClient( new InetSocketAddress(InetAddress.getByName(masterUri.getHost()), 8090), 60000, 60000);
+    masterClient = new MasterClient( new InetSocketAddress(InetAddress.getByName(masterUri.getHost()), NodeConfiguration.MAIN_PORT), 60000, 60000);
   }
   
   public MasterStateClient(Node caller, InetSocketAddress masterUri) throws IOException {

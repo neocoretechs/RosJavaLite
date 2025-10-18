@@ -59,13 +59,14 @@ import java.util.concurrent.ScheduledExecutorService;
 public class NodeConfiguration {
   private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(NodeConfiguration.class);
+  public static int MAIN_PORT = 8090;
   /**
    * The default master {@link URI}.
    */
   public static final InetSocketAddress DEFAULT_MASTER_URI;
 
   static {
-    DEFAULT_MASTER_URI = new InetSocketAddress("127.0.0.1", 8090);
+    DEFAULT_MASTER_URI = new InetSocketAddress("127.0.0.1", MAIN_PORT);
   }
 
   private NameResolver parentResolver;

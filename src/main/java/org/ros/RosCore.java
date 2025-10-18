@@ -4,17 +4,20 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
+import org.ros.internal.loader.CommandLineLoader;
 import org.ros.internal.node.server.ParameterServer;
 
 import com.neocoretechs.relatrix.RelatrixTransaction;
 import com.neocoretechs.relatrix.server.RelatrixTransactionServer;
 import org.ros.internal.node.server.master.MasterServer;
 import org.ros.namespace.GraphName;
+import org.ros.node.NodeConfiguration;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,7 +63,7 @@ public class RosCore {
    * @return the RosCore object to further control the servers.
    */
   public static RosCore newPublic(String host, int port) {
-    return new RosCore(BindAddress.newPublic(port), new AdvertiseAddress(host, port));
+    return new RosCore(BindAddress.newPublic(host, port), new AdvertiseAddress(host, port));
   }
   
   /**
@@ -71,7 +74,11 @@ public class RosCore {
   public static RosCore newPublic(int port) {
     return new RosCore(BindAddress.newPublic(port), AdvertiseAddress.newPublic(port));
   }
-
+  
+  public static RosCore newPublic(InetSocketAddress masterUri) {
+	  return new RosCore(BindAddress.newPublic(masterUri), AdvertiseAddress.newPublic(masterUri));
+  }
+  
   public static RosCore newPrivate() {
 	BindAddress ba = BindAddress.newPrivate();
     return new RosCore(ba, AdvertiseAddress.newPrivate());
@@ -89,6 +96,7 @@ public class RosCore {
 		//e.printStackTrace();
 	}
   }
+  
   /**
    * Start the master and parameter servers. Read the exclusion file and provision the parameter server
    * with assets for the remote nodes to acquire.
@@ -238,21 +246,31 @@ public class RosCore {
   }
   
   /**
-   * Start a new public RosCore on default port 8090 using first acquired interface.
+   * Start a new public RosCore on default port MAIN_PORT using first acquired interface.
    * Wait 1 second for each server to start before throwing an exception.
    * @param args
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-	   RosCore rosCore = RosCore.newPublic(8090);
-	   rosCore.start();
-	   rosCore.awaitStart(1, TimeUnit.SECONDS);
-	   if(args.length > 0 && !args[0].startsWith("__")) {
-			RelatrixTransaction.getInstance();
-			String db = (new File(args[0])).toPath().getParent().toString() + File.separator + (new File(args[0]).getName());
-			System.out.println("Bringing up Relatrix tablespace:"+db);
-			RelatrixTransaction.setTablespace(db);
-	   }
-	   log.info("RosJavaLite Master started @ address "+rosCore.getUri());
+	  RosCore rosCore = null;
+	  if(args.length == 0) {
+		  rosCore = RosCore.newPublic(NodeConfiguration.MAIN_PORT);
+	  } else {
+	  CommandLineLoader cl = new CommandLineLoader(Arrays.asList(args));
+	  cl.build();
+	  InetSocketAddress masterUri = cl.getMasterUri();
+	  rosCore = RosCore.newPublic(masterUri);
+	  }
+	  rosCore.start();
+	  rosCore.awaitStart(1, TimeUnit.SECONDS);
+	  if(args.length > 0 && !args[0].startsWith("__")) {
+		  RelatrixTransaction.getInstance();
+		  String db = (new File(args[0])).toPath().getParent().toString() + File.separator + (new File(args[0]).getName());
+		  System.out.println("Bringing up Relatrix tablespace:"+db);
+		  RelatrixTransaction.setTablespace(db);
+	  }
+	  log.info("RosJavaLite Master started @ address "+rosCore.getUri());
   }
+
+
 }

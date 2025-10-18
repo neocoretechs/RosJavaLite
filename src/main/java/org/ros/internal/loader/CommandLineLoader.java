@@ -192,7 +192,7 @@ public class CommandLineLoader {
    * <li>The default host as specified in {@link NodeConfiguration}.</li>
    * </ol>
    */
-  private String getHost() {
+  public String getHost() {
     String host = InetSocketAddressFactory.newNonLoopback().getCanonicalHostName();
     if (specialRemappings.containsKey(CommandLineVariables.ROS_IP)) {
       host = specialRemappings.get(CommandLineVariables.ROS_IP);
@@ -214,17 +214,17 @@ public class CommandLineLoader {
    * <li>The default master URI as defined in {@link NodeConfiguration}.</li>
    * </ol>
    */
-  private InetSocketAddress getMasterUri() {
+  public InetSocketAddress getMasterUri() {
     InetSocketAddress uri = NodeConfiguration.DEFAULT_MASTER_URI;
     if (specialRemappings.containsKey(CommandLineVariables.ROS_MASTER_URI)) {
-        uri = new InetSocketAddress(specialRemappings.get(CommandLineVariables.ROS_MASTER_URI), 8090);
+        uri = new InetSocketAddress(specialRemappings.get(CommandLineVariables.ROS_MASTER_URI), NodeConfiguration.MAIN_PORT);
       } else if (environment.containsKey(EnvironmentVariables.ROS_MASTER_URI)) {
-        uri = new InetSocketAddress(environment.get(EnvironmentVariables.ROS_MASTER_URI), 8090);
+        uri = new InetSocketAddress(environment.get(EnvironmentVariables.ROS_MASTER_URI), NodeConfiguration.MAIN_PORT);
       }
       return uri;
   }
 
-  private File getRosRoot() {
+  public File getRosRoot() {
     if (environment.containsKey(EnvironmentVariables.ROS_ROOT)) {
       return new File(environment.get(EnvironmentVariables.ROS_ROOT));
     } else {

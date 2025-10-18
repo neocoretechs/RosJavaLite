@@ -2,13 +2,6 @@ package org.ros.internal.transport.tcp;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-//import org.jboss.netty.bootstrap.ServerBootstrap;
-//import org.jboss.netty.buffer.HeapChannelBufferFactory;
-//import org.jboss.netty.channel.Channel;
-//import org.jboss.netty.channel.ChannelFactory;
-//import org.jboss.netty.channel.group.ChannelGroup;
-//import org.jboss.netty.channel.group.DefaultChannelGroup;
-//import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.ros.address.AdvertiseAddress;
 import org.ros.address.BindAddress;
 import org.ros.exception.RosRuntimeException;
