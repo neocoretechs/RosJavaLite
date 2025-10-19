@@ -99,7 +99,8 @@ public class CommandLineLoader {
         nodeArguments.add(argument);
       }
     }
-    nodeClassName = nodeArguments.get(0);
+    if(nodeArguments.size() > 0)
+    	nodeClassName = nodeArguments.get(0);
   }
 
   public String getNodeClassName() {
