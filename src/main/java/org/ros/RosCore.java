@@ -253,19 +253,20 @@ public class RosCore {
    */
   public static void main(String[] args) throws Exception {
 	  RosCore rosCore = null;
+	  CommandLineLoader cl = null;
 	  if(args.length == 0) {
 		  rosCore = RosCore.newPublic(NodeConfiguration.MAIN_PORT);
 	  } else {
-	  CommandLineLoader cl = new CommandLineLoader(Arrays.asList(args));
-	  cl.build();
-	  InetSocketAddress masterUri = cl.getMasterUri();
-	  rosCore = RosCore.newPublic(masterUri);
+		  cl = new CommandLineLoader(Arrays.asList(args));
+		  cl.build();
+		  InetSocketAddress masterUri = cl.getMasterUri();
+		  rosCore = RosCore.newPublic(masterUri);
 	  }
 	  rosCore.start();
 	  rosCore.awaitStart(1, TimeUnit.SECONDS);
-	  if(args.length > 0 && !args[0].startsWith("__")) {
+	  if(args.length > 0) {
 		  RelatrixTransaction.getInstance();
-		  String db = (new File(args[0])).toPath().getParent().toString() + File.separator + (new File(args[0]).getName());
+		  String db = (new File(cl.getNodeArguments().get(0))).toPath().getParent().toString() + File.separator + (new File(cl.getNodeArguments().get(0)).getName());
 		  System.out.println("Bringing up Relatrix tablespace:"+db);
 		  RelatrixTransaction.setTablespace(db);
 	  }

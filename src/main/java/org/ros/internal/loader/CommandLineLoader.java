@@ -86,14 +86,16 @@ public class CommandLineLoader {
   }
 
   private void parseArgv() {
-    nodeClassName = argv.get(0);
-    for (String argument : argv.subList(1, argv.size())) {
+    for (String argument : argv) {
+    	if(DEBUG)
+    		log.info("argument="+argument);
       if (argument.contains(":=")) {
         remappingArguments.add(argument);
       } else {
         nodeArguments.add(argument);
       }
     }
+    nodeClassName = nodeArguments.get(0);
   }
 
   public String getNodeClassName() {
@@ -152,10 +154,14 @@ public class CommandLineLoader {
     for (String remapping : remappingArguments) {
       assert(remapping.contains(":="));
       String[] remap = remapping.split(":=");
+      if(remap.length < 2)
+    	  continue;
       if (remap.length > 2) {
         throw new IllegalArgumentException("Invalid remapping argument: " + remapping);
       }
       if (remapping.startsWith("__")) {
+    	  if(DEBUG)
+    		  log.info("specialRemap="+remap[0]+":="+remap[1]);
         specialRemappings.put(remap[0], remap[1]);
       } else {
         remappings.put(GraphName.of(remap[0]), GraphName.of(remap[1]));

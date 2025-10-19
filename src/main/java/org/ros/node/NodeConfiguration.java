@@ -149,9 +149,9 @@ public class NodeConfiguration {
   public static NodeConfiguration newPublic(String nodeName, String host, InetSocketAddress defaultMasterUri, ClassLoader classLoader) {
     NodeConfiguration configuration = new NodeConfiguration(classLoader);
     configuration.setNodeName(nodeName);
-    configuration.setRpcBindAddress(BindAddress.newPublic());
+    configuration.setRpcBindAddress(BindAddress.newPublic(host));
     configuration.setRpcAdvertiseAddressFactory(new PublicAdvertiseAddressFactory(host));
-    configuration.setTcpRosBindAddress(BindAddress.newPublic());
+    configuration.setTcpRosBindAddress(BindAddress.newPublic(host));
     configuration.setTcpRosAdvertiseAddressFactory(new PublicAdvertiseAddressFactory(host));
     configuration.setMasterUri(defaultMasterUri);
     try {

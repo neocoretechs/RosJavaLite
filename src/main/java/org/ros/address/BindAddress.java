@@ -93,4 +93,12 @@ public class BindAddress {
 	public static BindAddress newPublic(InetSocketAddress masterUri) {
 		return new BindAddress(masterUri);
 	}
+
+	public static BindAddress newPublic(String host) {
+		try {
+			return new BindAddress(new InetSocketAddress(host, findPortOnAddress(InetAddress.getByName(host))));
+		} catch (IOException e) {
+			throw new RosRuntimeException(e);
+		}
+	}
 }
