@@ -15,14 +15,18 @@ import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -211,6 +215,9 @@ public class CommandLineLoader {
   }
 
   /**
+   * Define the master URI, in the case of a node its the running {@link RosCOre} in the case of RosCore
+   * its the interface or InetAddress of the NodeConfiguration.MAIN_PORT. If we specify
+   * __iface:=interface, or __master:=address <p>
    * Precedence:
    * 
    * <ol>
@@ -221,13 +228,32 @@ public class CommandLineLoader {
    * </ol>
    */
   public InetSocketAddress getMasterUri() {
-    InetSocketAddress uri = NodeConfiguration.DEFAULT_MASTER_URI;
-    if (specialRemappings.containsKey(CommandLineVariables.ROS_MASTER_URI)) {
-        uri = new InetSocketAddress(specialRemappings.get(CommandLineVariables.ROS_MASTER_URI), NodeConfiguration.MAIN_PORT);
-      } else if (environment.containsKey(EnvironmentVariables.ROS_MASTER_URI)) {
-        uri = new InetSocketAddress(environment.get(EnvironmentVariables.ROS_MASTER_URI), NodeConfiguration.MAIN_PORT);
-      }
-      return uri;
+	  InetSocketAddress uri = NodeConfiguration.DEFAULT_MASTER_URI;
+	  if(specialRemappings.containsKey(CommandLineVariables.ROS_MASTER_URI)) {
+		  uri = new InetSocketAddress(specialRemappings.get(CommandLineVariables.ROS_MASTER_URI), NodeConfiguration.MAIN_PORT);
+	  } else 
+		  if(environment.containsKey(EnvironmentVariables.ROS_MASTER_URI)) {
+			  uri = new InetSocketAddress(environment.get(EnvironmentVariables.ROS_MASTER_URI), NodeConfiguration.MAIN_PORT);
+		  } else {
+			  if(specialRemappings.containsKey(CommandLineVariables.ROS_MASTER_IFACE))  {
+				  try {
+					  NetworkInterface ni = NetworkInterface.getByName(specialRemappings.get(CommandLineVariables.ROS_MASTER_IFACE));
+					  Iterator<InetAddress> it = ni.getInetAddresses().asIterator();
+					  while(it.hasNext()) {
+						  InetAddress e = it.next();
+						  if (e instanceof Inet4Address && !e.isLoopbackAddress() && e.isReachable(100)) {
+							  uri = new InetSocketAddress(e, NodeConfiguration.MAIN_PORT);
+							  break;
+						  }
+					  }
+				  } catch (SocketException e) {
+					  log.error("Unknown interface:"+specialRemappings.get(CommandLineVariables.ROS_MASTER_IFACE));
+				  } catch (IOException e1) {
+					  log.error("Can't reach interface:"+specialRemappings.get(CommandLineVariables.ROS_MASTER_IFACE));
+				  }
+			  }
+		  }
+	  return uri;
   }
 
   public File getRosRoot() {
