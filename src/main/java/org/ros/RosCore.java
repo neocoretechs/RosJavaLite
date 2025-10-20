@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class RosCore {
-  private static boolean DEBUG = true;
+  private static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(RosCore.class);
   private MasterServer masterServer = null;
   private ParameterServer parameterServer = null;
@@ -78,12 +78,12 @@ public class RosCore {
   public static RosCore newPublic(InetSocketAddress masterUri) {
 	  return new RosCore(BindAddress.newPublic(masterUri), AdvertiseAddress.newPublic(masterUri));
   }
-  
+  /*
   public static RosCore newPrivate() {
 	BindAddress ba = BindAddress.newPrivate();
     return new RosCore(ba, AdvertiseAddress.newPrivate());
   }
-
+	*/
   private RosCore(BindAddress bindAddress, AdvertiseAddress advertiseAddress) {
 	  if(DEBUG)
 		  log.info("RosCore initialization with bind:"+bindAddress+" advertise:"+advertiseAddress);
@@ -264,11 +264,14 @@ public class RosCore {
 	  }
 	  rosCore.start();
 	  rosCore.awaitStart(1, TimeUnit.SECONDS);
-	  if(args.length > 0) {
+	  if(cl.getNodeArguments().size() > 0) {
 		  RelatrixTransaction.getInstance();
 		  String db = (new File(cl.getNodeArguments().get(0))).toPath().getParent().toString() + File.separator + (new File(cl.getNodeArguments().get(0)).getName());
 		  System.out.println("Bringing up Relatrix tablespace:"+db);
 		  RelatrixTransaction.setTablespace(db);
+	  } else {
+		  log.error("Database directory unspecified as command line argument 1");
+		  System.exit(-1);
 	  }
 	  log.info("RosJavaLite Master started @ address "+rosCore.getUri());
   }

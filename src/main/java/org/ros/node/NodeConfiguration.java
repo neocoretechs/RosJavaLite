@@ -231,7 +231,7 @@ public class NodeConfiguration {
     return masterUri;
   }
   
-  public SlaveServer newSlaveServer() throws IOException {
+  private SlaveServer newSlaveServer() throws IOException {
  	    topicParticipantManager = new TopicParticipantManager();
 	    serviceManager = new ServiceManager();
 		executor = new DefaultScheduledExecutorService();
@@ -241,7 +241,8 @@ public class NodeConfiguration {
 		resolver = new NodeNameResolver(nodeName, parentResolver);
 		masterClient = new MasterClient(masterUri, 60000, 60000);
 	    nodeIdentifier = new NodeIdentifier(nodeName, getRpcAdvertiseAddress().toInetSocketAddress());
-
+	    if(DEBUG)
+	    	log.info(this.toString());
 		slaveServer =
 			   new SlaveServer(nodeName, getTcpRosBindAddress(), getTcpRosAdvertiseAddress(),getRpcBindAddress(),getRpcAdvertiseAddress(),
 					   masterClient, topicParticipantManager, serviceManager, parameterManager, executor);
@@ -343,7 +344,8 @@ public class NodeConfiguration {
     this.nodeName = nodeName;
     if(slaveServer != null)
     	slaveServer.setNodeName(nodeName);
-	log.info("setNodeName(GraphName) Setting Node Name:"+nodeName); 
+    if(DEBUG)
+    	log.info("setNodeName(GraphName) Setting Node Name:"+nodeName); 
     return this;
   }
 
@@ -354,7 +356,8 @@ public class NodeConfiguration {
   public NodeConfiguration setNodeName(String nodeName) {
 	if(slaveServer != null)
 	   slaveServer.setNodeName(GraphName.of(nodeName));
-	log.info("setNodeName(String) Setting Node Name:"+nodeName); 
+	if(DEBUG)
+		log.info("setNodeName(String) Setting Node Name:"+nodeName); 
     return setNodeName(GraphName.of(nodeName));
   }
 
@@ -378,7 +381,6 @@ public class NodeConfiguration {
   public NodeConfiguration setDefaultNodeName(String nodeName) {
     return setDefaultNodeName(GraphName.of(nodeName));
   }
-
 
   /**
    * @param topicMessageFactory  the {@link MessageFactory} for the {@link Node}
@@ -463,7 +465,7 @@ public class NodeConfiguration {
    * 
    * @param tcpRosBindAddress the {@link BindAddress} for the {@link Node}'s TCPROS server
    */
-  public NodeConfiguration setTcpRosBindAddress(BindAddress tcpRosBindAddress) {
+  private NodeConfiguration setTcpRosBindAddress(BindAddress tcpRosBindAddress) {
     this.tcpRosBindAddress = tcpRosBindAddress;
     return this;
   }
@@ -483,7 +485,7 @@ public class NodeConfiguration {
    * @param tcpRosAdvertiseAddressFactory the {@link AdvertiseAddressFactory} for the {@link Node}'s TCPROS server
    * @return this {@link NodeConfiguration}
    */
-  public NodeConfiguration setTcpRosAdvertiseAddressFactory(AdvertiseAddressFactory tcpRosAdvertiseAddressFactory) {
+  private NodeConfiguration setTcpRosAdvertiseAddressFactory(AdvertiseAddressFactory tcpRosAdvertiseAddressFactory) {
     this.tcpRosAdvertiseAddressFactory = tcpRosAdvertiseAddressFactory;
     return this;
   }
@@ -512,7 +514,7 @@ public class NodeConfiguration {
    * 
    * @param RpcBindAddress  the {@link BindAddress} for the {@link Node}'s RPC server
    */
-  public NodeConfiguration setRpcBindAddress(BindAddress rpcBindAddress) {
+  private NodeConfiguration setRpcBindAddress(BindAddress rpcBindAddress) {
     this.rpcBindAddress = rpcBindAddress;
     return this;
   }
@@ -543,7 +545,7 @@ public class NodeConfiguration {
    * 
    * @param rpcAdvertiseAddressFactory the {@link AdvertiseAddressFactory} for the {@link Node}'s XML-RPC server
    */
-  public NodeConfiguration setRpcAdvertiseAddressFactory(
+  private NodeConfiguration setRpcAdvertiseAddressFactory(
       AdvertiseAddressFactory rpcAdvertiseAddressFactory) {
     this.rpcAdvertiseAddressFactory = rpcAdvertiseAddressFactory;
     return this;
@@ -597,5 +599,13 @@ public class NodeConfiguration {
 	  if(relatrixClient == null)
 			relatrixClient = new AsynchRelatrixClientTransaction(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getHostName(), masterUri.getPort()+2 );
 	  return relatrixClient;
+  }
+  
+  @Override
+  public String toString() {
+	    return String.format("rosBind=%s rosAdvertise=%s rpcBind=%s rpcAdverstise=%s",tcpRosBindAddress,
+	    tcpRosAdvertiseAddress,
+	    rpcBindAddress,
+	    rpcAdvertiseAddress); 
   }
 }

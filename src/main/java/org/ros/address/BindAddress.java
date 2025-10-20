@@ -5,6 +5,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.ros.exception.RosRuntimeException;
 
 /**
@@ -15,7 +18,9 @@ import org.ros.exception.RosRuntimeException;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class BindAddress {
-
+	public static boolean DEBUG = false;
+	private static final Log log = LogFactory.getLog(BindAddress.class);
+	 
 	private final InetSocketAddress address;
 
 	private BindAddress(InetSocketAddress address) {
@@ -27,18 +32,24 @@ public class BindAddress {
 	 * @return a {@link BindAddress} instance with specified port that will bind to all network interfaces on the host
 	 */
 	public static BindAddress newPublic(int port) {
-		return new BindAddress(new InetSocketAddress(InetSocketAddressFactory.newNonLoopback(), port));
+		InetAddress iAddr = InetSocketAddressFactory.newNonLoopback();
+		if(DEBUG)
+			log.info(iAddr+" on port:"+port);
+		return new BindAddress(new InetSocketAddress(iAddr, port));
 	}
 
 	public static BindAddress newPublic() {
 		InetAddress host = InetSocketAddressFactory.newNonLoopback();
 		try {
-			return new BindAddress(new InetSocketAddress(host, findPortOnAddress(host)));
+			Integer port = findPortOnAddress(host);
+			if(DEBUG)
+				log.info(host+" on port:"+port);
+			return new BindAddress(new InetSocketAddress(host, port));
 		} catch (IOException e) {
 			throw new RosRuntimeException(e);
 		}
 	}
-
+	
 	/**
 	 * @param port the port to bind to
 	 * @return a {@link BindAddress} instance with specified port that will bind to the loopback interface on the host
@@ -50,7 +61,7 @@ public class BindAddress {
 	public static BindAddress newPrivate() {
 		return new BindAddress(InetSocketAddressFactory.newLoopback());
 	}
-
+	
 	@Override
 	public String toString() {
 		return "BindAddress<" + address + ">";

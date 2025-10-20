@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Utility class to generate addresses for various servers
@@ -42,6 +41,7 @@ public class InetSocketAddressFactory {
       // sort to move ether ahead of wlan or lo
       List<String> sortIface = new ArrayList<String>();
       for (NetworkInterface networkInterface : networkInterfaces) {
+    	  if(networkInterface.isUp() && !networkInterface.isLoopback())
         sortIface.add(networkInterface.getName());
       }
       Collections.sort(sortIface);

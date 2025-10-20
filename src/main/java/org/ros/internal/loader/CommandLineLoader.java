@@ -45,7 +45,7 @@ import java.util.Map;
  * @author Jonathan Groff (C) NeoCoreTechs 2021
  */
 public class CommandLineLoader {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(CommandLineLoader.class);
   private final List<String> argv;
   private final List<String> nodeArguments;

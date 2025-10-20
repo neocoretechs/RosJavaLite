@@ -40,7 +40,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class SlaveServer extends RpcServer {
-  private static boolean DEBUG = true;
+  private static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(SlaveServer.class);
   private GraphName nodeName;
   private final MasterClient masterClient;
