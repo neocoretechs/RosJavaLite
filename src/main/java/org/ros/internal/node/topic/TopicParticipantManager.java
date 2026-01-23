@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class TopicParticipantManager {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static Log log = LogFactory.getLog(TopicParticipantManager.class);
   /**
    * A mapping from topic name to {@link Subscriber}.

@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService;
  * @param <T> the {@link Subscriber} may only subscribe to messages of this type
  */
 class SubscriberHandshakeHandler<T> extends BaseClientHandshakeHandler {
-  private static boolean DEBUG = true;
+  private static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(SubscriberHandshakeHandler.class);
 
   private final IncomingMessageQueue<T> incomingMessageQueue;

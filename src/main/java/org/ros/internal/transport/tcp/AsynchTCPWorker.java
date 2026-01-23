@@ -14,7 +14,7 @@ import org.ros.internal.transport.ChannelHandlerContext;
  *
  */
 public class AsynchTCPWorker implements Runnable {
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(AsynchTCPWorker.class);
 	public volatile boolean shouldRun = true;
 	private ChannelHandlerContext ctx;

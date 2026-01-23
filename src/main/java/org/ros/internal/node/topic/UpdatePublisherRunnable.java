@@ -20,7 +20,7 @@ import org.ros.node.topic.Subscriber;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 class UpdatePublisherRunnable<MessageType> implements Runnable {
-  private static boolean DEBUG = true;
+  private static boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(UpdatePublisherRunnable.class);
 
   private final DefaultSubscriber<MessageType> subscriber;

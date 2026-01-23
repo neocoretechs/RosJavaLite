@@ -50,7 +50,7 @@ import java.util.jar.Manifest;
 *</code>
 */
 	public class JarClassLoader extends ClassLoader {
-		private static boolean DEBUG = true;
+		private static boolean DEBUG = false;
 		private static boolean DEBUGLOADCLASS = false;
 		private static ConcurrentHashMap<String,Class> cache = new ConcurrentHashMap<String,Class>();
 

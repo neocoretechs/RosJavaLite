@@ -88,7 +88,7 @@ public class CircularBlockingDeque<T> implements Iterable<T> {
     return true;
   }
   /**
-   * Adds the specified entry to the tail of the queue, overwriting older
+   * Adds the specified entry to the head of the queue, overwriting older
    * entries if necessary.
    * 
    * @param entry

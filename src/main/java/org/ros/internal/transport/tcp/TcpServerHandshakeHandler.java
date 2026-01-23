@@ -26,7 +26,7 @@ import org.ros.namespace.GraphName;
  * @author Jonthan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpServerHandshakeHandler implements ChannelHandler {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpServerHandshakeHandler.class);
   private final TopicParticipantManager topicParticipantManager;
   private final ServiceManager serviceManager;

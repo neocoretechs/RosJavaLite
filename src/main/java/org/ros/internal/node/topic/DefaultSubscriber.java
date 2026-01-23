@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
  */
 public class DefaultSubscriber<T> extends DefaultTopicParticipant implements Subscriber<T> {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(DefaultSubscriber.class);
 
   /**

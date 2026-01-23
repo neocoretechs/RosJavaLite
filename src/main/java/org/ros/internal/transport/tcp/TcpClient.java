@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */
 public class TcpClient {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private static final Log log = LogFactory.getLog(TcpClient.class);
 
   private static final int DEFAULT_CONNECTION_TIMEOUT_DURATION = 5;

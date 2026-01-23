@@ -19,7 +19,7 @@ import org.ros.internal.transport.ChannelHandlerContextImpl;
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2016,2021
  */
 public final class AsynchBaseServer extends AsynchTCPServer {
-	private static boolean DEBUG = true;
+	private static boolean DEBUG = false;
     private static final Log log = LogFactory.getLog(AsynchBaseServer.class);
 	public int WORKBOOTPORT = 0;
 	public InetSocketAddress address = null;
