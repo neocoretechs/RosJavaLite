@@ -128,60 +128,67 @@ public class CommandLineLoader {
 	  return Collections.unmodifiableMap(specialRemappings);
   }
   /**
-   * Create NodeConfiguration according to ROS command-line and environment
-   * specification.
+   * Perform a build on the command line args accounting for remappings delimited by __<p>
+   * Generate a node name from the getNodeClassName() declared no-arg constructor invoked to
+   * perform the declared gerDefaultNodeName method in the class. If this fails, generate an anonymous name
+   * from GraphName.newAnonomyous().<p>
+   * From there, extract the __name node name from the command line, if its there, and use that. We need a consistent,
+   * legitimate node name for proper operation. For the RosCore master node we can use an anonymous name,
+   * but otherwise we need proper NodeRegistrationInfo from invocation to invocation. Finally,
+   * build up the NodeConfiguration with parent resolver, ROS root, package path, master Uri, and this CommandLineLoader instance.
+   * @return The NodeConfiguration
    */
   public NodeConfiguration build() {
-    parseRemappingArguments();
-    NodeConfiguration nodeConfiguration;
-    String nodeName = null;
-    try {
-    	Class c = Class.forName(getNodeClassName());
-		Object o = c.getDeclaredConstructor().newInstance();
-		Method m = c.getDeclaredMethod("getDefaultNodeName");
-		GraphName g = (GraphName) m.invoke(o);
-		nodeName = g.toString();
-	} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException| NoSuchMethodException | ClassNotFoundException e) {
-		//e.printStackTrace();
-		nodeName = GraphName.newAnonymous().toString();
-	}
-    if (specialRemappings.containsKey(CommandLineVariables.NODE_NAME)) {
-        nodeName = specialRemappings.get(CommandLineVariables.NODE_NAME);
-    }
-    if (specialRemappings.containsKey(CommandLineVariables.NODE_VISIBILITY)) {
-    	if(specialRemappings.get(CommandLineVariables.NODE_VISIBILITY).equals("private")) {
-    		nodeConfiguration = NodeConfiguration.newPrivate(nodeName, getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
-    	} else {
-    		nodeConfiguration = NodeConfiguration.newPublic(nodeName, getHost(), getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
-    	}
-    } else {
-    	nodeConfiguration = NodeConfiguration.newPublic(nodeName, getHost(), getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
-    }
-    nodeConfiguration.setParentResolver(buildParentResolver());
-    nodeConfiguration.setRosRoot(getRosRoot());
-    nodeConfiguration.setRosPackagePath(getRosPackagePath());
-    nodeConfiguration.setMasterUri(getMasterUri());
-    nodeConfiguration.setCommandLineLoader(this);
-    return nodeConfiguration;
+	  parseRemappingArguments();
+	  NodeConfiguration nodeConfiguration;
+	  String nodeName = null;
+	  try {
+		  Class c = Class.forName(getNodeClassName());
+		  Object o = c.getDeclaredConstructor().newInstance();
+		  Method m = c.getDeclaredMethod("getDefaultNodeName");
+		  GraphName g = (GraphName) m.invoke(o);
+		  nodeName = g.toString();
+	  } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException| NoSuchMethodException | ClassNotFoundException e) {
+		  //e.printStackTrace();
+		  nodeName = GraphName.newAnonymous().toString();
+	  }
+	  if (specialRemappings.containsKey(CommandLineVariables.NODE_NAME)) {
+		  nodeName = specialRemappings.get(CommandLineVariables.NODE_NAME);
+	  }
+	  if (specialRemappings.containsKey(CommandLineVariables.NODE_VISIBILITY)) {
+		  if(specialRemappings.get(CommandLineVariables.NODE_VISIBILITY).equals("private")) {
+			  nodeConfiguration = NodeConfiguration.newPrivate(nodeName, getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
+		  } else {
+			  nodeConfiguration = NodeConfiguration.newPublic(nodeName, getHost(), getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
+		  }
+	  } else {
+		  nodeConfiguration = NodeConfiguration.newPublic(nodeName, getHost(), getMasterUri(), (jcl != null ? jcl : getClass().getClassLoader()));
+	  }
+	  nodeConfiguration.setParentResolver(buildParentResolver());
+	  nodeConfiguration.setRosRoot(getRosRoot());
+	  nodeConfiguration.setRosPackagePath(getRosPackagePath());
+	  nodeConfiguration.setMasterUri(getMasterUri());
+	  nodeConfiguration.setCommandLineLoader(this);
+	  return nodeConfiguration;
   }
 
   private void parseRemappingArguments() {
-    for (String remapping : remappingArguments) {
-      assert(remapping.contains(":="));
-      String[] remap = remapping.split(":=");
-      if(remap.length < 2)
-    	  continue;
-      if (remap.length > 2) {
-        throw new IllegalArgumentException("Invalid remapping argument: " + remapping);
-      }
-      if (remapping.startsWith("__")) {
-    	  if(DEBUG)
-    		  log.info("specialRemap="+remap[0]+":="+remap[1]);
-        specialRemappings.put(remap[0], remap[1]);
-      } else {
-        remappings.put(GraphName.of(remap[0]), GraphName.of(remap[1]));
-      }
-    }
+	  for (String remapping : remappingArguments) {
+		  assert(remapping.contains(":="));
+		  String[] remap = remapping.split(":=");
+		  if(remap.length < 2)
+			  continue;
+		  if (remap.length > 2) {
+			  throw new IllegalArgumentException("Invalid remapping argument: " + remapping);
+		  }
+		  if (remapping.startsWith("__")) {
+			  if(DEBUG)
+				  log.info("specialRemap="+remap[0]+":="+remap[1]);
+			  specialRemappings.put(remap[0], remap[1]);
+		  } else {
+			  remappings.put(GraphName.of(remap[0]), GraphName.of(remap[1]));
+		  }
+	  }
   }
 
   /**
@@ -193,14 +200,14 @@ public class CommandLineLoader {
    * </ol>
    */
   private NameResolver buildParentResolver() {
-    GraphName namespace = GraphName.root();
-    if (specialRemappings.containsKey(CommandLineVariables.ROS_NAMESPACE)) {
-      namespace =
-          GraphName.of(specialRemappings.get(CommandLineVariables.ROS_NAMESPACE)).toGlobal();
-    } else if (environment.containsKey(EnvironmentVariables.ROS_NAMESPACE)) {
-      namespace = GraphName.of(environment.get(EnvironmentVariables.ROS_NAMESPACE)).toGlobal();
-    }
-    return new NameResolver(namespace, remappings);
+	  GraphName namespace = GraphName.root();
+	  if (specialRemappings.containsKey(CommandLineVariables.ROS_NAMESPACE)) {
+		  namespace =
+				  GraphName.of(specialRemappings.get(CommandLineVariables.ROS_NAMESPACE)).toGlobal();
+	  } else if (environment.containsKey(EnvironmentVariables.ROS_NAMESPACE)) {
+		  namespace = GraphName.of(environment.get(EnvironmentVariables.ROS_NAMESPACE)).toGlobal();
+	  }
+	  return new NameResolver(namespace, remappings);
   }
 
   /**
@@ -214,15 +221,15 @@ public class CommandLineLoader {
    * </ol>
    */
   public String getHost() {
-    String host = InetSocketAddressFactory.newNonLoopback().getCanonicalHostName();
-    if (specialRemappings.containsKey(CommandLineVariables.ROS_IP)) {
-      host = specialRemappings.get(CommandLineVariables.ROS_IP);
-    } else if (environment.containsKey(EnvironmentVariables.ROS_IP)) {
-      host = environment.get(EnvironmentVariables.ROS_IP);
-    } else if (environment.containsKey(EnvironmentVariables.ROS_HOSTNAME)) {
-      host = environment.get(EnvironmentVariables.ROS_HOSTNAME);
-    }
-    return host;
+	  String host = InetSocketAddressFactory.newNonLoopback().getCanonicalHostName();
+	  if (specialRemappings.containsKey(CommandLineVariables.ROS_IP)) {
+		  host = specialRemappings.get(CommandLineVariables.ROS_IP);
+	  } else if (environment.containsKey(EnvironmentVariables.ROS_IP)) {
+		  host = environment.get(EnvironmentVariables.ROS_IP);
+	  } else if (environment.containsKey(EnvironmentVariables.ROS_HOSTNAME)) {
+		  host = environment.get(EnvironmentVariables.ROS_HOSTNAME);
+	  }
+	  return host;
   }
 
   /**
@@ -268,26 +275,26 @@ public class CommandLineLoader {
   }
 
   public File getRosRoot() {
-    if (environment.containsKey(EnvironmentVariables.ROS_ROOT)) {
-      return new File(environment.get(EnvironmentVariables.ROS_ROOT));
-    } else {
-      // For now, this is not required as we are not doing anything (e.g.
-      // ClassLoader) that requires it. In the future, this may become required.
-      return null;
-    }
+	  if (environment.containsKey(EnvironmentVariables.ROS_ROOT)) {
+		  return new File(environment.get(EnvironmentVariables.ROS_ROOT));
+	  } else {
+		  // For now, this is not required as we are not doing anything (e.g.
+		  // ClassLoader) that requires it. In the future, this may become required.
+		  return null;
+	  }
   }
 
   private List<File> getRosPackagePath() {
-    if (environment.containsKey(EnvironmentVariables.ROS_PACKAGE_PATH)) {
-      String rosPackagePath = environment.get(EnvironmentVariables.ROS_PACKAGE_PATH);
-      List<File> paths = new ArrayList<File>();
-      for (String path : rosPackagePath.split(File.pathSeparator)) {
-        paths.add(new File(path));
-      }
-      return paths;
-    } else {
-      return new ArrayList<File>();
-    }
+	  if (environment.containsKey(EnvironmentVariables.ROS_PACKAGE_PATH)) {
+		  String rosPackagePath = environment.get(EnvironmentVariables.ROS_PACKAGE_PATH);
+		  List<File> paths = new ArrayList<File>();
+		  for (String path : rosPackagePath.split(File.pathSeparator)) {
+			  paths.add(new File(path));
+		  }
+		  return paths;
+	  } else {
+		  return new ArrayList<File>();
+	  }
   }
 
   /**
@@ -299,25 +306,25 @@ public class CommandLineLoader {
    * @throws IllegalAccessException
    */
   public NodeMain loadClass(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-	if(jcl != null)
-		return loadClassWithJars(name);
-    Class<?> clazz = getClass().getClassLoader().loadClass(name);
-    Method meth = null;
-    if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
-    	try {
-			meth = clazz.getMethod("getInstance",(Class<?>[])null);
-		   	return NodeMain.class.cast(meth.invoke(null, (Object[])null));
-		} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
-			throw new InstantiationException(e.getMessage());
-		}
-    }
-    return NodeMain.class.cast(clazz.newInstance());
+	  if(jcl != null)
+		  return loadClassWithJars(name);
+	  Class<?> clazz = getClass().getClassLoader().loadClass(name);
+	  Method meth = null;
+	  if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
+		  try {
+			  meth = clazz.getMethod("getInstance",(Class<?>[])null);
+			  return NodeMain.class.cast(meth.invoke(null, (Object[])null));
+		  } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
+			  throw new InstantiationException(e.getMessage());
+		  }
+	  }
+	  return NodeMain.class.cast(clazz.newInstance());
   }
-  
+
   public void createJarClassLoader() {
-		jcl = new JarClassLoader();
+	  jcl = new JarClassLoader();
   }
-  
+
   public JarClassLoader getJarClassLoader() {
 	  return jcl;
   }
@@ -330,22 +337,22 @@ public class CommandLineLoader {
    * @throws IllegalAccessException
    */
   private NodeMain loadClassWithJars(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-    Class<?> clazz = jcl.loadClass(name);
-    if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
-    	try {	
-		   	return (NodeMain) jcl.invokeMethodReturn(clazz, "getInstance", null);
-		} catch ( Throwable e) {
-			throw new InstantiationException(e.getMessage());
-		}
-    }
-    try {
-    return (NodeMain) clazz.newInstance();
-    } catch(ClassCastException cce) {
-    	log.error(cce);
-    	log.error(clazz.getProtectionDomain()+" "+clazz.getProtectionDomain().getClassLoader()+" "+clazz.getTypeName()+" "+clazz.toGenericString()+" "+AbstractNodeMain.class.isInstance(clazz.newInstance()));
-       	log.error(NodeMain.class.getProtectionDomain()+" "+NodeMain.class.getProtectionDomain().getClassLoader()+" "+NodeMain.class.getTypeName()+" "+NodeMain.class.toGenericString()+" "+NodeMain.class.isInstance(clazz.newInstance()));
-       	throw new InstantiationException(cce.getMessage());
-    }
-    
+	  Class<?> clazz = jcl.loadClass(name);
+	  if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
+		  try {	
+			  return (NodeMain) jcl.invokeMethodReturn(clazz, "getInstance", null);
+		  } catch ( Throwable e) {
+			  throw new InstantiationException(e.getMessage());
+		  }
+	  }
+	  try {
+		  return (NodeMain) clazz.newInstance();
+	  } catch(ClassCastException cce) {
+		  log.error(cce);
+		  log.error(clazz.getProtectionDomain()+" "+clazz.getProtectionDomain().getClassLoader()+" "+clazz.getTypeName()+" "+clazz.toGenericString()+" "+AbstractNodeMain.class.isInstance(clazz.newInstance()));
+		  log.error(NodeMain.class.getProtectionDomain()+" "+NodeMain.class.getProtectionDomain().getClassLoader()+" "+NodeMain.class.getTypeName()+" "+NodeMain.class.toGenericString()+" "+NodeMain.class.isInstance(clazz.newInstance()));
+		  throw new InstantiationException(cce.getMessage());
+	  }
+
   }
 }
