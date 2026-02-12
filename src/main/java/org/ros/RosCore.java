@@ -85,8 +85,12 @@ public class RosCore {
   }
 	*/
   private RosCore(BindAddress bindAddress, AdvertiseAddress advertiseAddress) {
-	  if(DEBUG)
+	if(DEBUG)
 		  log.info("RosCore initialization with bind:"+bindAddress+" advertise:"+advertiseAddress);
+	Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+		log.info("Uncaught in thread " + t + ": " + e);
+		e.printStackTrace();
+	});
     try {
 		masterServer = new MasterServer(bindAddress, advertiseAddress);
 		parameterServer = new ParameterServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+1));

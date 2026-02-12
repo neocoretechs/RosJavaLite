@@ -39,47 +39,45 @@ public class TCPWorker implements Runnable {
 	 * back to master
 	 * @param res
 	 */
-	public void queueResponse(Object res) {
-	
-		if( DEBUG ) {
-			log.debug("Adding response "+res+" to outbound from worker");
-		}
-		try {
-			// Write response to master for forwarding to client
-			OutputStream os = dataSocket.getOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(os);
-			oos.writeObject(res);
-			oos.flush();
-		} catch (IOException e) {
-				log.error("Exception writing socket to remote master port "+e);
-				throw new RuntimeException(e);
-		}
-	}
+    public void queueResponse(Object res) {
+    	if( DEBUG ) {
+    		log.debug("Adding response "+res+" to outbound from worker");
+    	}
+    	try {
+    		// Write response to master for forwarding to client
+    		OutputStream os = dataSocket.getOutputStream();
+    		ObjectOutputStream oos = new ObjectOutputStream(os);
+    		oos.writeObject(res);
+    		oos.flush();
+    	} catch (IOException e) {
+    		log.error("Exception writing socket to remote master port "+e);
+    		throw new RuntimeException(e);
+    	}
+    }
 
 	/**
 	 * Client (Slave port) sends data to our master in the following loop
 	 */
 	@Override
 	public void run() {
-			try {
-				while(shouldRun) {
-					ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
-					RemoteRequestInterface o = (RemoteRequestInterface) ois.readObject();
-					if( DEBUG )
-						log.debug("ROS TCPWorker for "+server+" at address "+dataSocket+" command received:"+o);
-					Object res = server.invokeMethod(o);
-					queueResponse(res);
-				}
-			} catch(Exception se) {
-				if( se instanceof SocketException ) {
-					log.error("Received SocketException, connection reset..");
-				} else {
-					log.error("Remote invocation failure ",se);
-				}
-			} finally {
-				close();
+		try {
+			while(shouldRun) {
+				ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
+				RemoteRequestInterface o = (RemoteRequestInterface) ois.readObject();
+				if( DEBUG )
+					log.debug("ROS TCPWorker for "+server+" at address "+dataSocket+" command received:"+o);
+				Object res = server.invokeMethod(o);
+				queueResponse(res);
 			}
-
+		} catch(Exception se) {
+			if( se instanceof SocketException ) {
+				log.error("Received SocketException, connection reset..");
+			} else {
+				log.error("Remote invocation failure ",se);
+			}
+		} finally {
+			close();
+		}
 	}
 	
 	private void close() {

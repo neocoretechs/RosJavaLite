@@ -60,27 +60,27 @@ public final class BaseServer extends TCPServer {
 	
 	public void run() {
 		while(!shouldStop) {
-				try {
-					Socket datasocket = server.accept();
-                    // disable Nagles algoritm; do not combine small packets into larger ones
-                    //datasocket.setTcpNoDelay(true);
-                    // wait 1 second before close; close blocks for 1 sec. and data can be sent
-                    datasocket.setSoLinger(true, 1);
-					//
-                    TCPWorker uworker = new TCPWorker(datasocket, rpcserver);
-                    Future<?> newworker= SynchronizedThreadManager.getInstance().submit(uworker,WORKERTHREADS);
-                    uworkers.put(uworker, newworker);
-                    if( DEBUG ) {
-                    	log.info("ROS Server node worker starting");
-                    }
-                    
-				} catch(IOException e) {
-                    log.error("Server socket accept exception "+e,e);
-               }
+			try {
+				Socket datasocket = server.accept();
+				// disable Nagles algoritm; do not combine small packets into larger ones
+				//datasocket.setTcpNoDelay(true);
+				// wait 1 second before close; close blocks for 1 sec. and data can be sent
+				datasocket.setSoLinger(true, 1);
+				//
+				TCPWorker uworker = new TCPWorker(datasocket, rpcserver);
+				Future<?> newworker= SynchronizedThreadManager.getInstance().submit(uworker,WORKERTHREADS);
+				uworkers.put(uworker, newworker);
+				if( DEBUG ) {
+					log.info("ROS Server node worker starting");
+				}
+
+			} catch(IOException e) {
+				log.error("Server socket accept exception "+e,e);
+			}
 		}
-	
+
 	}
-	
+
 	/**
 	 * Shut down the TCPWorker, should it have been started. 
 	 * @throws IOException 

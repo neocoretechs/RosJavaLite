@@ -134,7 +134,17 @@ public class CommandLineLoader {
   public NodeConfiguration build() {
     parseRemappingArguments();
     NodeConfiguration nodeConfiguration;
-    String nodeName = GraphName.newAnonymous().toString();
+    String nodeName = null;
+    try {
+    	Class c = Class.forName(getNodeClassName());
+		Object o = c.getDeclaredConstructor().newInstance();
+		Method m = c.getDeclaredMethod("getDefaultNodeName");
+		GraphName g = (GraphName) m.invoke(o);
+		nodeName = g.toString();
+	} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException| NoSuchMethodException | ClassNotFoundException e) {
+		//e.printStackTrace();
+		nodeName = GraphName.newAnonymous().toString();
+	}
     if (specialRemappings.containsKey(CommandLineVariables.NODE_NAME)) {
         nodeName = specialRemappings.get(CommandLineVariables.NODE_NAME);
     }

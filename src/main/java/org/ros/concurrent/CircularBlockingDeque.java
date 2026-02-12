@@ -212,6 +212,10 @@ public class CircularBlockingDeque<T> implements Iterable<T> {
     return length == 0;
   }
   
+  /**
+   * Number of entries in the queue, as opposed to limit, the max possible.
+   * @return the total number of entries in the queue currently.
+   */
   public int length() { return length; }
 
   /**
