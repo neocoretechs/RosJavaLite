@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
  * A deque that removes head or tail elements when the number of elements
  * exceeds the limit and blocks on {@link #takeFirst()} and {@link #takeLast()} when
  * there are no elements available.
- * 
- * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017, 2021
+ * Compatible with List, but not implementing it due to boolean overwrite semantics.
+ * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2017,2021,2026
  */
-public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, List<T> {
+public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T> {
 	private final T[] deque;
 	private final Object mutex;
 	/**
@@ -60,20 +60,19 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 	 *          the entry to add
 	 * @return {@code true} if entry overwrote
 	 */
-	@Override
-	public void addLast(T entry) {
-		//boolean overwrite = false;
+	public boolean addLast(T entry) {
+		boolean overwrite = false;
 		synchronized (mutex) {
 			deque[(start + length) % limit] = entry;
 			if (length == limit) {
 				start = (start + 1) % limit;
-				//overwrite = true;
+				overwrite = true;
 			} else {
 				length++;
 			}
 			mutex.notify();
 		}
-		//return overwrite;
+		return overwrite;
 	}
 
 	public boolean addLast(List<T> lentry) {
@@ -125,13 +124,12 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 	 *          the entry to add
 	 * @return {@code true} if entry overwrote
 	 */
-	@Override
-	public void addFirst(T entry) {
-		//boolean overwrite = false;
+	public boolean addFirst(T entry) {
+		boolean overwrite = false;
 		synchronized (mutex) {
 			if (start - 1 < 0) {
 				start = limit - 1;
-				//overwrite = true;
+				overwrite = true;
 			} else {
 				start--;
 			}
@@ -141,7 +139,7 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 			}
 			mutex.notify();
 		}
-		//return overwrite;
+		return overwrite;
 	}
 
 	/**
@@ -356,7 +354,7 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 		return true;
 	}
 
-	@Override
+
 	public boolean addAll(int index, Collection c) {
 		throw new RuntimeException(this.getClass().getName()+".addAll unimplemented");
 	}
@@ -376,7 +374,7 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 		throw new RuntimeException(this.getClass().getName()+".retainAll unimplemented");
 	}
 
-	@Override
+
 	public Object set(int index, Object element) {
 		if (index < 0 || index >= length)
 			throw new IndexOutOfBoundsException(
@@ -386,7 +384,7 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 		return o;
 	}
 
-	@Override
+
 	public void add(int index, Object element) {
 		if (index < 0 || index > length)
 			throw new IndexOutOfBoundsException("index=" + index + " length=" + length);
@@ -408,7 +406,7 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 		}
 	}
 
-	@Override
+
 	public T remove(int index) {
 		synchronized (mutex) {
 			int l = ((start + length) % limit); 
@@ -429,7 +427,7 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 		}
 	}
 
-	@Override
+	
 	public int indexOf(Object o) {
 		int j = 0;
 		int index = -1;
@@ -444,7 +442,7 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 		return index;
 	}
 
-	@Override
+
 	public int lastIndexOf(Object o) {
 		int j = 0;
 		int index = -1;
@@ -458,22 +456,22 @@ public class CircularBlockingDeque<T> implements BlockingQueue<T>, Iterable<T>, 
 		return index;
 	}
 
-	@Override
+
 	public ListIterator listIterator() {
 		throw new RuntimeException(this.getClass().getName()+".listIterator unimplemented");
 	}
 
-	@Override
+
 	public ListIterator listIterator(int index) {
 		throw new RuntimeException(this.getClass().getName()+".listIterator unimplemented");
 	}
 
-	@Override
+	
 	public List subList(int fromIndex, int toIndex) {
 		throw new RuntimeException(this.getClass().getName()+".subList unimplemented");
 	}
 
-	@Override
+	
 	public T get(int index) {
 		return deque[(start + index) % limit];
 	}
