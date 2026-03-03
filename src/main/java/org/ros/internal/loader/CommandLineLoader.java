@@ -16,6 +16,7 @@ import org.ros.node.NodeMain;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.Inet4Address;
@@ -143,7 +144,7 @@ public class CommandLineLoader {
 	  NodeConfiguration nodeConfiguration;
 	  String nodeName = null;
 	  try {
-		  Class c = Class.forName(getNodeClassName());
+		  Class<?> c = Class.forName(getNodeClassName());
 		  Object o = c.getDeclaredConstructor().newInstance();
 		  Method m = c.getDeclaredMethod("getDefaultNodeName");
 		  GraphName g = (GraphName) m.invoke(o);
@@ -318,7 +319,18 @@ public class CommandLineLoader {
 			  throw new InstantiationException(e.getMessage());
 		  }
 	  }
-	  return NodeMain.class.cast(clazz.newInstance());
+	  // Case 2: instantiate via proper reflective constructor
+	  try {
+		  Constructor<?> ctor = clazz.getDeclaredConstructor();
+		  ctor.setAccessible(true); // required if constructor is non-public
+		  return NodeMain.class.cast(ctor.newInstance());
+	  } catch (InvocationTargetException ite) {
+		  throw new InstantiationException("Constructor threw exception: " + ite.getCause());
+	  } catch (NoSuchMethodException nsme) {
+		  throw new InstantiationException("No no-arg constructor found: " + nsme);
+	  } catch (ClassCastException cce) {
+		  throw new InstantiationException("Loaded class is not a NodeMain: " + cce);
+	  }
   }
 
   public void createJarClassLoader() {
@@ -337,22 +349,26 @@ public class CommandLineLoader {
    * @throws IllegalAccessException
    */
   private NodeMain loadClassWithJars(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-	  Class<?> clazz = jcl.loadClass(name);
-	  if( clazz.getConstructors().length == 0 ) { // no public constructors, lets try to get the singleton instance
-		  try {	
-			  return (NodeMain) jcl.invokeMethodReturn(clazz, "getInstance", null);
-		  } catch ( Throwable e) {
-			  throw new InstantiationException(e.getMessage());
-		  }
-	  }
-	  try {
-		  return (NodeMain) clazz.newInstance();
-	  } catch(ClassCastException cce) {
-		  log.error(cce);
-		  log.error(clazz.getProtectionDomain()+" "+clazz.getProtectionDomain().getClassLoader()+" "+clazz.getTypeName()+" "+clazz.toGenericString()+" "+AbstractNodeMain.class.isInstance(clazz.newInstance()));
-		  log.error(NodeMain.class.getProtectionDomain()+" "+NodeMain.class.getProtectionDomain().getClassLoader()+" "+NodeMain.class.getTypeName()+" "+NodeMain.class.toGenericString()+" "+NodeMain.class.isInstance(clazz.newInstance()));
-		  throw new InstantiationException(cce.getMessage());
-	  }
-
-  }
+	    Class<?> clazz = jcl.loadClass(name);
+	    // Case 1: no public constructors → try singleton accessor
+	    if (clazz.getConstructors().length == 0) {
+	        try {
+	            return (NodeMain) jcl.invokeMethodReturn(clazz, "getInstance", null);
+	        } catch (Throwable e) {
+	            throw new InstantiationException("No public constructors and getInstance() failed: " + e);
+	        }
+	    }
+	    // Case 2: instantiate via proper reflective constructor
+	    try {
+	        Constructor<?> ctor = clazz.getDeclaredConstructor();
+	        ctor.setAccessible(true); // required if constructor is non-public
+	        return (NodeMain) ctor.newInstance();
+	    } catch (InvocationTargetException ite) {
+	        throw new InstantiationException("Constructor threw exception: " + ite.getCause());
+	    } catch (NoSuchMethodException nsme) {
+	        throw new InstantiationException("No no-arg constructor found: " + nsme);
+	    } catch (ClassCastException cce) {
+	        throw new InstantiationException("Loaded class is not a NodeMain: " + cce);
+	    }
+	}
 }
