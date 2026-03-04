@@ -78,48 +78,63 @@ public class CommandLineLoader {
    * @param environment environment variables
    */
   public CommandLineLoader(List<String> argv, Map<String, String> environment) {
-	if(DEBUG)
-		log.info("***invoking command line loader");
-    assert(argv.size() > 0);
-    this.argv = argv;
-    this.environment = environment;
-    nodeArguments = new ArrayList<String>();
-    remappingArguments = new ArrayList<String>();
-    remappings = new HashMap<GraphName, GraphName>();
-    specialRemappings = new HashMap<String, String>();
-    parseArgv();
+	  if(DEBUG)
+		  log.info("***invoking command line loader");
+	  assert(argv.size() > 0);
+	  this.argv = argv;
+	  this.environment = environment;
+	  nodeArguments = new ArrayList<String>();
+	  remappingArguments = new ArrayList<String>();
+	  remappings = new HashMap<GraphName, GraphName>();
+	  specialRemappings = new HashMap<String, String>();
+	  parseArgv();
+  }
+  /**
+   * Construct a COmmandLineLoader that is a copy of an existing loader and instantiate a new
+   * node based on new node class name. We can spin a new node from an already established one this way.
+   * @param cl The existing CommandLineLoader of an already established node
+   * @param newNodeName The new node class name to spin
+   */
+  public CommandLineLoader(CommandLineLoader cl, String newNodeName) {
+	  this.argv = cl.argv;
+	  this.environment = cl.environment;
+	  nodeArguments = new ArrayList<String>(cl.nodeArguments);
+	  remappingArguments = new ArrayList<String>(cl.remappingArguments);
+	  remappings = new HashMap<GraphName, GraphName>(cl.remappings);
+	  specialRemappings = new HashMap<String, String>(cl.specialRemappings);
+	  nodeClassName = newNodeName;
   }
 
   private void parseArgv() {
-    for (String argument : argv) {
-    	if(DEBUG)
-    		log.info("argument="+argument);
-      if (argument.contains(":=")) {
-        remappingArguments.add(argument);
-      } else {
-        nodeArguments.add(argument);
-      }
-    }
-    if(nodeArguments.size() > 0)
-    	nodeClassName = nodeArguments.get(0);
+	  for (String argument : argv) {
+		  if(DEBUG)
+			  log.info("argument="+argument);
+		  if (argument.contains(":=")) {
+			  remappingArguments.add(argument);
+		  } else {
+			  nodeArguments.add(argument);
+		  }
+	  }
+	  if(nodeArguments.size() > 0)
+		  nodeClassName = nodeArguments.get(0);
   }
 
   public String getNodeClassName() {
-    return nodeClassName;
+	  return nodeClassName;
   }
   /**
    * Return a list of args on the cmdl that are not delimited by special := mapping modifier
    * @return
    */
   public List<String> getNodeArguments() {
-    return Collections.unmodifiableList(nodeArguments);
+	  return Collections.unmodifiableList(nodeArguments);
   }
   /**
    * Return cmdl args with := but not __ prefix that have been translated to GraphName.of
    * @return
    */
   public Map<GraphName, GraphName> getRemappings() {
-	    return Collections.unmodifiableMap(remappings);
+	  return Collections.unmodifiableMap(remappings);
   }
   /**
    * Return cmdl args with __ at prefix
@@ -349,26 +364,26 @@ public class CommandLineLoader {
    * @throws IllegalAccessException
    */
   private NodeMain loadClassWithJars(String name) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-	    Class<?> clazz = jcl.loadClass(name);
-	    // Case 1: no public constructors → try singleton accessor
-	    if (clazz.getConstructors().length == 0) {
-	        try {
-	            return (NodeMain) jcl.invokeMethodReturn(clazz, "getInstance", null);
-	        } catch (Throwable e) {
-	            throw new InstantiationException("No public constructors and getInstance() failed: " + e);
-	        }
-	    }
-	    // Case 2: instantiate via proper reflective constructor
-	    try {
-	        Constructor<?> ctor = clazz.getDeclaredConstructor();
-	        ctor.setAccessible(true); // required if constructor is non-public
-	        return (NodeMain) ctor.newInstance();
-	    } catch (InvocationTargetException ite) {
-	        throw new InstantiationException("Constructor threw exception: " + ite.getCause());
-	    } catch (NoSuchMethodException nsme) {
-	        throw new InstantiationException("No no-arg constructor found: " + nsme);
-	    } catch (ClassCastException cce) {
-	        throw new InstantiationException("Loaded class is not a NodeMain: " + cce);
-	    }
-	}
+	  Class<?> clazz = jcl.loadClass(name);
+	  // Case 1: no public constructors → try singleton accessor
+	  if (clazz.getConstructors().length == 0) {
+		  try {
+			  return (NodeMain) jcl.invokeMethodReturn(clazz, "getInstance", null);
+		  } catch (Throwable e) {
+			  throw new InstantiationException("No public constructors and getInstance() failed: " + e);
+		  }
+	  }
+	  // Case 2: instantiate via proper reflective constructor
+	  try {
+		  Constructor<?> ctor = clazz.getDeclaredConstructor();
+		  ctor.setAccessible(true); // required if constructor is non-public
+		  return (NodeMain) ctor.newInstance();
+	  } catch (InvocationTargetException ite) {
+		  throw new InstantiationException("Constructor threw exception: " + ite.getCause());
+	  } catch (NoSuchMethodException nsme) {
+		  throw new InstantiationException("No no-arg constructor found: " + nsme);
+	  } catch (ClassCastException cce) {
+		  throw new InstantiationException("Loaded class is not a NodeMain: " + cce);
+	  }
+  }
 }
