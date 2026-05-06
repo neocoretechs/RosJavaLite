@@ -1,20 +1,19 @@
 package org.ros.internal.transport;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.StreamCorruptedException;
-import java.net.Socket;
+
 import java.net.SocketAddress;
+
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.SocketChannel;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.internal.node.client.RemoteClient;
 
 /**
  * A handler context contains all the executor, the channel group, the channel, and the pipeline with the handlers.
@@ -34,21 +33,21 @@ import org.apache.commons.logging.LogFactory;
 public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(ChannelHandlerContextImpl.class);
-	/*Asynchronous*/Socket/*Channel*/ channel;
+	/*Asynchronous*/SocketChannel channel;
 	private Executor executor;
 	ChannelPipeline pipeline;
 	boolean ready = false;
 	Set<String> outboundMessageTypes;
 
 
-	public ChannelHandlerContextImpl(Executor executor, /*Asynchronous*/Socket channel) {
+	public ChannelHandlerContextImpl(Executor executor, /*Asynchronous*/SocketChannel channel) {
 		this.executor = executor;
 		this.channel = channel;
 		this.pipeline = new ChannelPipelineImpl(this);
 		this.outboundMessageTypes = (Set<String>) new HashSet<String>();
 	}
 	
-	public void setChannel(/*Asynchronous*/Socket/*Channel*/ sock) {
+	public void setChannel(/*Asynchronous*/SocketChannel sock) {
 		this.channel = sock;
 	}
 		
@@ -110,29 +109,16 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 
 	@Override
 	public Object read() throws IOException {
-			InputStream is = channel.getInputStream();
-			ObjectInputStream ois = new ObjectInputStream(is);
-			try {
-				return ois.readObject();
-			} catch (ClassNotFoundException e) {
-				throw new IOException(e);
-			} catch(StreamCorruptedException sce) {
-				is = channel.getInputStream();
-				ois = new ObjectInputStream(is);
-				try {
-					return ois.readObject();
-				} catch (ClassNotFoundException cnf) {
-					throw new IOException(cnf);
-				}
-			}
+		try {
+			return RemoteClient.receiveObject(channel);
+		} catch (ClassNotFoundException e) {
+			throw new IOException(e);
+		}
 	}
 
 	@Override
 	public void write(Object msg) throws IOException {
-			OutputStream os = channel.getOutputStream();
-			ObjectOutputStream oos = new ObjectOutputStream(os);
-			oos.writeObject(msg);
-			oos.flush();
+		RemoteClient.sendObject(channel, msg);
 	}
 
 	@Override
@@ -164,7 +150,7 @@ public class ChannelHandlerContextImpl implements ChannelHandlerContext {
 	}
 
 	@Override
-	public Socket channel() {
+	public SocketChannel channel() {
 		return channel;
 	}
 

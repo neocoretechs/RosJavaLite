@@ -64,7 +64,7 @@ public class TcpClientManager {
    * @param socketAddress
    *          the {@link SocketAddress} to connect to
    * @return a new {@link TcpClient}
- * @throws IOException 
+   * @throws IOException 
    */
   public TcpClient connect(String connectionName, SocketAddress socketAddress) throws Exception {
 	if( DEBUG )

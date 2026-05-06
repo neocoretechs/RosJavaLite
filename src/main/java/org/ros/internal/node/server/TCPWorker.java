@@ -6,9 +6,11 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.channels.SocketChannel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.ros.internal.node.client.RemoteClient;
 
 /**
  * This TCPWorker is spawned for servicing traffic from a master or slave node and invoking methods thereupon.<p/>
@@ -22,10 +24,10 @@ public class TCPWorker implements Runnable {
 	private static final boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(TCPWorker.class);
 	public volatile boolean shouldRun = true;
-	private Socket dataSocket;
+	private SocketChannel dataSocket;
 	private RpcServer server; // the server we are servicing
 	
-    public TCPWorker(Socket datasocket, RpcServer server) throws IOException {
+    public TCPWorker(SocketChannel datasocket, RpcServer server) throws IOException {
     	this.dataSocket = datasocket;
     	this.server = server;
     	if( DEBUG )
@@ -45,10 +47,7 @@ public class TCPWorker implements Runnable {
     	}
     	try {
     		// Write response to master for forwarding to client
-    		OutputStream os = dataSocket.getOutputStream();
-    		ObjectOutputStream oos = new ObjectOutputStream(os);
-    		oos.writeObject(res);
-    		oos.flush();
+    		RemoteClient.sendObject(dataSocket, res);
     	} catch (IOException e) {
     		log.error("Exception writing socket to remote master port "+e);
     		throw new RuntimeException(e);
@@ -62,8 +61,7 @@ public class TCPWorker implements Runnable {
 	public void run() {
 		try {
 			while(shouldRun) {
-				ObjectInputStream ois = new ObjectInputStream(dataSocket.getInputStream());
-				RemoteRequestInterface o = (RemoteRequestInterface) ois.readObject();
+				RemoteRequestInterface o = (RemoteRequestInterface) RemoteClient.receiveObject(dataSocket);
 				if( DEBUG )
 					log.debug("ROS TCPWorker for "+server+" at address "+dataSocket+" command received:"+o);
 				Object res = server.invokeMethod(o);

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<project name="ROSBuild" default="main" basedir=".">
+<project name="rosjavalite" default="main" basedir=".">
   <!-- Sets variables which can later be used. -->
   <!-- The value of a property is accessed via ${} -->
   <property name="src.dir" location="." />
@@ -28,7 +28,7 @@
   <target name="compile" depends="makedir">
     <!--<javac compiler="modern" srcdir="${src.dir}" destdir="${build.dir}" classpath="${lib.dir}/commons-logging-1.1.2.jar:${lib.dir}/commons-net-1.4.1.jar:${lib.dir}/RosBase.jar:${lib.dir}/RosMsgs.jar:${lib.dir}/RockSack.jar:{lib.dir}/rocksdbjni-9.10.0-win64.jar:${lib.dir}/Relatrix.jar">
     </javac>-->
-	<javac srcdir="${src.dir}" destdir="${build.dir}" source="25" target="25" includeantruntime="false" classpath="${lib.dir}/commons-logging-1.1.2.jar:${lib.dir}/commons-net-1.4.1.jar:${lib.dir}/RosBase.jar:${lib.dir}/RosMsgs.jar:${lib.dir}/RockSack.jar:{lib.dir}/rocksdbjni-9.10.0-win64.jar:${lib.dir}/Relatrix.jar">
+	<javac srcdir="${src.dir}" destdir="${build.dir}" source="25" target="25" includeantruntime="false" classpath="${lib.dir}/commons-logging-1.1.2.jar:${lib.dir}/commons-net-1.4.1.jar:${lib.dir}/RosBase.jar:${lib.dir}/RosMsgs.jar:${lib.dir}/RockSack.jar:{lib.dir}/rocksdbjni-9.10.0-win64.jar:${lib.dir}/Relatrix.jar:${lib.dir}/Java-WebSocket-1.6.0.jar">
   	  <compilerarg value="--enable-preview"/>
   	  <compilerarg value="--add-modules"/>
   	  <compilerarg value="jdk.incubator.vector"/>

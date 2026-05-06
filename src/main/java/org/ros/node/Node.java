@@ -13,30 +13,30 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * A node in the ROS graph.
- * -----------------------<p/>
- * An instance of DefaultNode creates ParameterServer, SlaveServer, the Publishers,etc. <p/>
+ * -----------------------<p>
+ * An instance of DefaultNode creates ParameterServer, SlaveServer, the Publishers,etc. <p>
  * 
- * DefaultNodeFactory creates new DefaultNode config listeners executor <p/>
+ * DefaultNodeFactory creates new DefaultNode config listeners executor <p>
  * 
  * DefaultNodeMainExecutor new Default(ScheduledExecutorService) : create new DefaultNodeFactory<p/>
- * ----------------------<p/>
- * AsynchTCPServer abstract startServer stopServer : constructs ServerSocket <p/>
+ * ----------------------<p>
+ * AsynchTCPServer abstract startServer stopServer : constructs ServerSocketChannel <p>
  * 
- * final AsynchBaseServer extends AsynchTCPServer takes TcpRosServer: does serversocket.accept in run<br/>
- * ----------------------<p/>
- * TcpRosServer creates AsynchBaseServer, ChannelHandlerContext and AsynchTcpWorker with context <p/>
+ * final AsynchBaseServer extends AsynchTCPServer takes TcpRosServer: does ServerSocketChannel.accept in run<br>
+ * ----------------------<p>
+ * TcpRosServer creates AsynchBaseServer, ChannelHandlerContext and AsynchTcpWorker with context <p>
  * 
- * MasterServer and SlaveServer extend RpcServer and create TcpRosServer<p/>
- * ----------------------<p/>
- * abstract RpcServer takes bind and advertise address and creates BaseServer <p/>
- * ----------------------<p/>
+ * MasterServer and SlaveServer extend RpcServer and create TcpRosServer<p>
+ * ----------------------<p>
+ * abstract RpcServer takes bind and advertise address and creates BaseServer <p>
+ * ----------------------<p>
  * 
- * final BaseServer takes RpcServer, ServerSocket.accept() then creates TCPWorker <p/>
- * ----------------------<p/>
+ * final BaseServer takes RpcServer, ServerSocketChannel.accept() then creates TCPWorker <p>
+ * ----------------------<p>
  * 
  * TCPWorker takes socket and RpcServer and creates the thread which reads ObjectInputStream from 
- * the socket created from ServerSocket.accept in BaseServer.<p/>
- * ----------------------<p/>
+ * the socket created from ServerSocketChannel.accept in BaseServer.<p>
+ * ----------------------<p>
  * 
  * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
  */

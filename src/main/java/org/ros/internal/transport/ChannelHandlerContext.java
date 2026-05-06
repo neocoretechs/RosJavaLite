@@ -1,27 +1,26 @@
 package org.ros.internal.transport;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.net.SocketAddress;
 
 import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
-
+import java.nio.channels.SocketChannel;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
 
 /**
- * This is the ChannelHandlerContext that links the underlying TCP Socket 'channel' to the {@link ChannelPipeline} and the {@link ChannelGroup}
+ * This is the ChannelHandlerContext that links the underlying TCP SocketChannel 'channel' to the {@link ChannelPipeline} and the {@link ChannelGroup}
  * and provides access to the {@link Executor} to spin up event dispatcher.
  * @author jg (C) NeoCoreTechs 2017
  *
  */
 public interface ChannelHandlerContext {
 	 /**
-     * Return the {@link Socket} which is bound to the {@link ChannelHandlerContext}.
+     * Return the {@link SocketChannel} which is bound to the {@link ChannelHandlerContext}.
      */
-    Socket channel();
+    SocketChannel channel();
 
     /**
      * The {@link Executor} that is used to dispatch the events. This can also be used to directly
@@ -69,7 +68,7 @@ public interface ChannelHandlerContext {
     /**
      * Request to close the {@link Channel}.
      * After it is closed it is not possible to reuse it again.
-     * This will result in having the {@link Socket} closed.
+     * This will result in having the {@link SocketChannel} closed.
      * @throws IOException 
      */
     void close() throws IOException;

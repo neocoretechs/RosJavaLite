@@ -1,6 +1,8 @@
 package org.ros.internal.node.server;
-import java.net.*;
-import java.io.*;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.channels.ServerSocketChannel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -12,11 +14,11 @@ import org.apache.commons.logging.LogFactory;
 public abstract class TCPServer implements Cloneable, Runnable {
 	private static boolean DEBUG = false;
 	private static final Log log = LogFactory.getLog(TCPServer.class);
-	ServerSocket server = null;
+	ServerSocketChannel server = null;
 	volatile boolean shouldStop = false;
 	public synchronized void startServer(int port) throws IOException {
 		if( server == null ) {
-			server = new ServerSocket(port);
+			server = ServerSocketChannel.open().bind(new InetSocketAddress(port));
 			//runner = new Thread(this);
 			//runner.start();
 			SynchronizedThreadManager.getInstance().init(new String[]{"TCPSERVER","WORKERS"}, false);
@@ -27,7 +29,8 @@ public abstract class TCPServer implements Cloneable, Runnable {
 		if( server == null ) {
 			if( DEBUG )
 				log.info("TCPServer attempt local bind "+binder+" port "+port);
-			server = new ServerSocket(port, 1000, binder);
+			InetSocketAddress iSockAddr = new InetSocketAddress(binder,port);
+			server = ServerSocketChannel.open().bind(iSockAddr);
 			//runner = new Thread(this);
 			//runner.start();
 			SynchronizedThreadManager.getInstance().init(new String[]{"TCPSERVER","WORKERS"}, false);

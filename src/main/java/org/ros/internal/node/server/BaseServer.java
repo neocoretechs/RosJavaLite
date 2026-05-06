@@ -2,7 +2,9 @@ package org.ros.internal.node.server;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.Socket;
+import java.net.SocketOption;
+import java.net.StandardSocketOptions;
+import java.nio.channels.SocketChannel;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -61,11 +63,11 @@ public final class BaseServer extends TCPServer {
 	public void run() {
 		while(!shouldStop) {
 			try {
-				Socket datasocket = server.accept();
+				SocketChannel datasocket = server.accept();
 				// disable Nagles algoritm; do not combine small packets into larger ones
 				//datasocket.setTcpNoDelay(true);
 				// wait 1 second before close; close blocks for 1 sec. and data can be sent
-				datasocket.setSoLinger(true, 1);
+				datasocket.setOption(StandardSocketOptions.SO_LINGER,1);
 				//
 				TCPWorker uworker = new TCPWorker(datasocket, rpcserver);
 				Future<?> newworker= SynchronizedThreadManager.getInstance().submit(uworker,WORKERTHREADS);

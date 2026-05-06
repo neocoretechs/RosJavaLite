@@ -1,7 +1,7 @@
 package org.ros.internal.transport.tcp;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
+import java.nio.channels.ServerSocketChannel;
 //import java.nio.channels.AsynchronousChannelGroup;
 //import java.nio.channels.AsynchronousServerSocketChannel;
 //import java.nio.channels.AsynchronousSocketChannel;
@@ -13,7 +13,7 @@ import org.apache.commons.logging.LogFactory;
 
 /**
 * AsynchTCPServer is the superclass of all objects using AsynchServerSockets.<p/>
-* Extended by AsynchBaseServer which takes a TcpRosServer and does a ServerSocket.accept<p/>
+* Extended by AsynchBaseServer which takes a TcpRosServer and does a SocketChannel.accept<p/>
 * The executor service is shut down here.
 * @author Jonathan Groff Copyright (C) NeoCoreTechs 2015,2021
 */
@@ -23,12 +23,12 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 	//AsynchronousServerSocketChannel server = null;
 	//AsynchronousChannelGroup channelGroup;
 	//AsynchronousSocketChannel data = null;
-	ServerSocket server = null;
+	ServerSocketChannel server = null;
 	ExecutorService executor;
 
 	volatile boolean shouldStop = false;
 	/**
-	 * Construct a ServerSocket bound to the specified port using the supplied channel group.<p/>
+	 * Construct a ServerSocketChannel bound to the specified port using the supplied channel group.<p/>
 	 * The primary purpose of the channel group is to provide the executor to start the server.
 	 * @param executor The executor for task running
 	 * @param port
@@ -40,7 +40,7 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 				log.info("AsynchTCPServer attempt local bind port "+port);
 			this.executor = (ExecutorService) executor;
 			//server = AsynchronousServerSocketChannel.open(channelGroup);
-			server = new ServerSocket();//channelGroup);
+			server = ServerSocketChannel.open();//channelGroup);
 			server.bind(new InetSocketAddress(port));
 			executor.execute(this);
 		}
@@ -51,7 +51,7 @@ public abstract class AsynchTCPServer implements Cloneable, Runnable {
 			if( DEBUG )
 				log.info("AsynchTCPServer attempt bind "+binder);
 			this.executor = (ExecutorService) executor;
-			server = new ServerSocket();
+			server = ServerSocketChannel.open();
 			server.bind(binder);
 			executor.execute(this);
 		}

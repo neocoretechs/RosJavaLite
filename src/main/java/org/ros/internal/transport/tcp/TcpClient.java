@@ -7,9 +7,11 @@ import org.ros.internal.transport.ChannelHandlerContext;
 import org.ros.internal.transport.ChannelHandlerContextImpl;
 
 import java.io.IOException;
-import java.net.Socket;
+import java.nio.channels.SocketChannel;
 import java.net.SocketAddress;
-
+import java.net.SocketOption;
+import java.net.SocketOptions;
+import java.net.StandardSocketOptions;
 import java.util.List;
 
 import java.util.concurrent.ExecutorService;
@@ -34,7 +36,7 @@ public class TcpClient {
   private ChannelHandlerContext ctx;
   private final List<NamedChannelHandler> namedChannelHandlers;
   
-  private Socket channel;
+  private SocketChannel channel;
   private ExecutorService executor;
   private ChannelInitializerFactoryStack factoryStack; // Stack of ChannelInitializer factories to load ChannelHandlers
   
@@ -49,8 +51,7 @@ public class TcpClient {
   }
 
   public void setKeepAlive(boolean value) throws IOException {
-	  //channel.setOption(StandardSocketOptions.SO_KEEPALIVE, value);
-	  channel.setKeepAlive(value);
+	  channel.setOption(StandardSocketOptions.SO_KEEPALIVE,value);
   }
 
   public void addNamedChannelHandler(NamedChannelHandler namedChannelHandler) {
@@ -76,16 +77,16 @@ public class TcpClient {
    * @param socketAddress the address we are attempting connection to
    * @return The successfully connected socket
    */
-  public Socket connect(String connectionName, SocketAddress socketAddress) {
+  public SocketChannel connect(String connectionName, SocketAddress socketAddress) {
 	  if (DEBUG) {
 		  log.info("TcpClient:"+this+" attempting connection:"+connectionName+" to socket:" + socketAddress);
 	  }
 	  while(true) {
 		  try {
-			  channel = new Socket();
+			  channel = SocketChannel.open();
 			  //channel.setTcpNoDelay(true);
-			  channel.setSendBufferSize(4096000);
-			  channel.setSendBufferSize(4096000);
+			  //channel.setSendBufferSize(4096000);
+			  //channel.setSendBufferSize(4096000);
 			  ctx = new ChannelHandlerContextImpl(executor, channel);
 			  // connect outbound to pub
 			  ctx.connect(socketAddress);

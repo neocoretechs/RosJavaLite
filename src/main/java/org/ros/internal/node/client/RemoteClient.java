@@ -1,14 +1,19 @@
 package org.ros.internal.node.client;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.StandardSocketOptions;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import org.apache.commons.logging.Log;
@@ -37,7 +42,7 @@ public class RemoteClient implements Runnable {
 	
 	private InetAddress IPAddress = null;
 
-	private Socket workerSocket = null; // socket assigned to slave port
+	private SocketChannel workerSocket = null; // socket assigned to slave port
 	private SocketAddress workerSocketAddress; //address of slave
 
 	private volatile boolean shouldRun = true; // master service thread control
@@ -77,9 +82,7 @@ public class RemoteClient implements Runnable {
 			try {
 				// sets workerSocket
 				send(requests.take());
-				InputStream ins = workerSocket.getInputStream();
-				ObjectInputStream ois = new ObjectInputStream(ins);
-				Object ret = ois.readObject();
+				Object ret = receiveObject(workerSocket);
 				if( ret == null )
 					ret = new Object(); // let voidResultFactory handle this, we cant put null to queue
 				if( DEBUG )
@@ -130,20 +133,16 @@ public class RemoteClient implements Runnable {
 	 */
 	private void send(RemoteRequestInterface iori) {
 			try {
-				if(workerSocket == null || workerSocket.isClosed() || !workerSocket.isConnected()) {
+				if(workerSocket == null || !workerSocket.isOpen() || !workerSocket.isConnected()) {
 					workerSocketAddress = new InetSocketAddress(IPAddress, remotePort);
-					workerSocket = new Socket();
+					workerSocket = SocketChannel.open();
 					workerSocket.connect(workerSocketAddress);
-					workerSocket.setKeepAlive(true);
+					workerSocket.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
 					//workerSocket.setTcpNoDelay(true);
-					workerSocket.setReceiveBufferSize(32767);
-					workerSocket.setSendBufferSize(32767);
+					workerSocket.setOption(StandardSocketOptions.SO_RCVBUF,32767);
+					workerSocket.setOption(StandardSocketOptions.SO_SNDBUF,32767);
 				}
-				ObjectOutputStream oos = new ObjectOutputStream(workerSocket.getOutputStream());
-				oos.writeObject(iori);
-				oos.flush();
-			} catch (SocketException e) {
-				log.error("Exception setting up socket to remote host:"+IPAddress+" port "+remotePort+" "+e);
+				sendObject(workerSocket, iori);
 			} catch (IOException e) {
 				log.error("Socket send error "+e+" to address "+IPAddress+" on port "+remotePort);
 			}
@@ -157,5 +156,53 @@ public class RemoteClient implements Runnable {
 			} catch (InterruptedException ie) {}
 		}
 	}
+	/**
+	 * 
+	 * @param channel
+	 * @param obj
+	 * @throws IOException
+	 */
+	public static void sendObject(SocketChannel channel, Object obj) throws IOException {
+	    ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+	    try (ObjectOutputStream objOut = new ObjectOutputStream(byteStream)) {
+	        objOut.writeObject(obj);
+	    }
+	    byte[] bytes = byteStream.toByteArray();
+	    ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
+	    lengthBuffer.putInt(bytes.length);
+	    lengthBuffer.flip();
+	    while (lengthBuffer.hasRemaining()) {
+	        //System.out.println("chan="+channel+" len buf="+lengthBuffer);
+	        channel.write(lengthBuffer);
+	    }
+	    ByteBuffer dataBuffer = ByteBuffer.wrap(bytes);
+	    while (dataBuffer.hasRemaining()) {
+	    	//System.out.println("chan="+channel+" databuf="+dataBuffer);
+	        channel.write(dataBuffer);
+	    }
+	}
 	
+	public static Object receiveObject(SocketChannel channel) throws IOException, ClassNotFoundException {
+	    ByteBuffer lengthBuffer = ByteBuffer.allocate(4);
+	    while (lengthBuffer.hasRemaining()) {
+	        if (channel.read(lengthBuffer) == -1) {
+	            throw new EOFException("Connection closed prematurely");
+	        }
+	    }
+	    lengthBuffer.flip();
+	    int length = lengthBuffer.getInt();
+	    // Read exactly 'length' bytes
+	    ByteBuffer dataBuffer = ByteBuffer.allocate(length);
+	    while (dataBuffer.hasRemaining()) {
+	        if (channel.read(dataBuffer) == -1) {
+	            throw new EOFException("Incomplete data received");
+	        }
+	    }
+	    dataBuffer.flip();
+	    byte[] bytes = new byte[length];
+	    dataBuffer.get(bytes);
+	    try (ObjectInputStream objIn = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+	        return (Object) objIn.readObject();
+	    }
+	}
 }
