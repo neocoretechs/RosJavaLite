@@ -109,7 +109,7 @@ public class RosCore {
     masterServer.start();
     parameterServer.start();
     try {
-		relatrixServer.startServer(RelatrixTransactionServer.port,RelatrixTransactionServer.address);
+		relatrixServer.startServer(RelatrixTransactionServer.address);
 	} catch (IOException e1) {
 		log.error(e1);
 	}
