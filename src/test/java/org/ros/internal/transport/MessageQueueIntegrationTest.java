@@ -29,32 +29,22 @@ import org.ros.internal.node.topic.TopicParticipantManager;
 import org.ros.internal.transport.queue.IncomingMessageQueue;
 import org.ros.internal.transport.queue.OutgoingMessageQueue;
 import org.ros.internal.transport.tcp.ChannelInitializerFactoryStack;
-import org.ros.internal.transport.tcp.NamedChannelHandler;
-import org.ros.internal.transport.tcp.TcpClient;
 import org.ros.internal.transport.tcp.TcpClientManager;
 import org.ros.internal.transport.tcp.TcpServerPipelineFactory;
 import org.ros.message.MessageDefinitionProvider;
-import org.ros.message.MessageIdentifier;
 import org.ros.message.MessageListener;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.ByteOrder;
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.AsynchronousServerSocketChannel;
-import java.nio.channels.AsynchronousSocketChannel;
+
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -191,9 +181,9 @@ public class MessageQueueIntegrationTest {
             }
         };
      factoryStack.addLast(serverPipelineFactory);
-	  /*AsynchronousServer*/ServerSocket listener = null;
+	  /*AsynchronousServer*/ServerSocketChannel listener = null;
 	try {
-		listener = /*Asynchronous*/new ServerSocket(/*incomingChannelGroup*/);
+		listener = /*Asynchronous*/ServerSocketChannel.open(/*incomingChannelGroup*/);
 	} catch (IOException e1) {
 		// TODO Auto-generated catch block
 		e1.printStackTrace();
@@ -205,7 +195,7 @@ public class MessageQueueIntegrationTest {
 		e.printStackTrace();
 	}
 
-     /*Future<AsynchronousSocketChannel*/ Socket channel = null;
+     /*Future<AsynchronousSocketChannel*/ SocketChannel channel = null;
 	try {
 		channel = listener.accept();
 	} catch (IOException e1) {

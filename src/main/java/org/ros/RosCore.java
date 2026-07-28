@@ -8,6 +8,9 @@ import org.ros.internal.loader.CommandLineLoader;
 import org.ros.internal.node.server.ParameterServer;
 
 import com.neocoretechs.relatrix.RelatrixTransaction;
+import com.neocoretechs.relatrix.key.IndexResolver;
+import com.neocoretechs.relatrix.parallel.ExecutionContextHolder;
+import com.neocoretechs.relatrix.parallel.ParallelExecutionContext;
 import com.neocoretechs.relatrix.server.RelatrixTransactionServer;
 import org.ros.internal.node.server.master.MasterServer;
 import org.ros.namespace.GraphName;
@@ -18,6 +21,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -256,29 +260,28 @@ public class RosCore {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-	  RosCore rosCore = null;
-	  CommandLineLoader cl = null;
-	  if(args.length == 0) {
-		  rosCore = RosCore.newPublic(NodeConfiguration.MAIN_PORT);
-	  } else {
-		  cl = new CommandLineLoader(Arrays.asList(args));
-		  cl.build();
-		  InetSocketAddress masterUri = cl.getMasterUri();
-		  rosCore = RosCore.newPublic(masterUri);
-	  }
-	  rosCore.start();
-	  rosCore.awaitStart(1, TimeUnit.SECONDS);
-	  if(cl.getNodeArguments().size() > 0) {
+	  IndexResolver indexResolver = new IndexResolver();
+	  indexResolver.setLocal();
+	  ParallelExecutionContext pec = new ParallelExecutionContext(indexResolver, new ConcurrentHashMap<String,Object>());
+	  ScopedValue.where(ExecutionContextHolder.CONTEXT, pec).run(() -> {
+		  RosCore rosCore = null;
+		  CommandLineLoader cl = null;
+		  if(args.length == 0) {
+			  rosCore = RosCore.newPublic(NodeConfiguration.MAIN_PORT);
+		  } else {
+			  cl = new CommandLineLoader(Arrays.asList(args));
+			  cl.build();
+			  InetSocketAddress masterUri = cl.getMasterUri();
+			  rosCore = RosCore.newPublic(masterUri);
+		  }
+		  rosCore.start();
+		  try {
+			  rosCore.awaitStart(1, TimeUnit.SECONDS);
+		  } catch (InterruptedException e) {}
 		  RelatrixTransaction.getInstance();
-		  String db = (new File(cl.getNodeArguments().get(0))).toPath().getParent().toString() + File.separator + (new File(cl.getNodeArguments().get(0)).getName());
-		  System.out.println("Bringing up Relatrix tablespace:"+db);
-		  RelatrixTransaction.setTablespace(db);
-	  } else {
-		  log.error("Database directory unspecified as command line argument 1");
-		  System.exit(-1);
-	  }
-	  log.info("RosJavaLite Master started @ address "+rosCore.getUri());
+		  //String db = (new File(cl.getNodeArguments().get(0))).toPath().getParent().toString() + File.separator + (new File(cl.getNodeArguments().get(0)).getName());
+		  System.out.println("Bringing up Relatrix tablespace:"+RelatrixTransaction.getTableSpace());
+		  log.info("RosJavaLite Master started @ address "+rosCore.getUri());
+	  });
   }
-
-
 }
