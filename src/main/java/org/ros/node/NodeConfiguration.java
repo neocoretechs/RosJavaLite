@@ -596,8 +596,13 @@ public class NodeConfiguration {
   }
 
   public AsynchRelatrixClientTransaction getRelatrixClient() throws IOException {
-	  if(relatrixClient == null)
-			relatrixClient = new AsynchRelatrixClientTransaction(getTcpRosBindAddress().toInetSocketAddress().getHostName(), masterUri.getPort()+2 );
+	  if(relatrixClient == null) {
+		  if(DEBUG)
+			  log.info("Relatrix client attempting connect:"+masterUri.getHostName()+" port:"+ (masterUri.getPort()+2) );
+			relatrixClient = new AsynchRelatrixClientTransaction(masterUri.getHostName(), (masterUri.getPort()+2) );
+	  }
+	  if(DEBUG)
+		  log.info("Returning Relatrix client:"+relatrixClient);
 	  return relatrixClient;
   }
   

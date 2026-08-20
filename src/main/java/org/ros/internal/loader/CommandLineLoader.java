@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Create {@link NodeConfiguration} instances using a ROS command-line and
@@ -55,7 +56,7 @@ public class CommandLineLoader {
   private final Map<String, String> specialRemappings;
   private final Map<GraphName, GraphName> remappings;
 
-  private String nodeClassName;
+  private String nodeClassName = UUID.randomUUID().toString();
   
   private JarClassLoader jcl = null; // to pull JARs from ParameterTree
 
@@ -90,7 +91,7 @@ public class CommandLineLoader {
 	  parseArgv();
   }
   /**
-   * Construct a COmmandLineLoader that is a copy of an existing loader and instantiate a new
+   * Construct a CommandLineLoader that is a copy of an existing loader and instantiate a new
    * node based on new node class name. We can spin a new node from an already established one this way.
    * @param cl The existing CommandLineLoader of an already established node
    * @param newNodeName The new node class name to spin

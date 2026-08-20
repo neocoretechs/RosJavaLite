@@ -89,20 +89,33 @@ public class RosCore {
   }
 	*/
   private RosCore(BindAddress bindAddress, AdvertiseAddress advertiseAddress) {
-	if(DEBUG)
+	  if(DEBUG)
 		  log.info("RosCore initialization with bind:"+bindAddress+" advertise:"+advertiseAddress);
-	Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-		log.info("Uncaught in thread " + t + ": " + e);
-		e.printStackTrace();
-	});
-    try {
-		masterServer = new MasterServer(bindAddress, advertiseAddress);
-		parameterServer = new ParameterServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+1));
-		relatrixServer = new RelatrixTransactionServer(bindAddress.toInetSocketAddress().getAddress(), advertiseAddress.getPort()+2, true);
-	} catch (IOException | ClassNotFoundException e) {
-		log.error("RosCore fault, master server can not be constructed due to "+e,e);
-		//e.printStackTrace();
-	}
+	  Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+		  log.info("Uncaught in thread " + t + ": " + e);
+		  e.printStackTrace();
+	  });
+	  RelatrixTransaction.getInstance();
+	  try {
+		  masterServer = new MasterServer(bindAddress, advertiseAddress);
+	  } catch (IOException e) {
+		  log.error("RosCore fault, master server can not be constructed due to "+e,e);
+		  //e.printStackTrace();
+	  }
+	  try {
+		  parameterServer = new ParameterServer(bindAddress, new AdvertiseAddress(advertiseAddress.getHost(),advertiseAddress.getPort()+1));
+	  } catch (IOException e) {
+		  log.error("RosCore fault, parameter server can not be constructed due to "+e,e);
+		  //e.printStackTrace();
+	  }
+	  try {
+		  relatrixServer = new RelatrixTransactionServer(bindAddress.toInetSocketAddress().getAddress(), (advertiseAddress.getPort()+2), true);
+	  } catch (IOException | ClassNotFoundException e) {
+		  log.error("RosCore fault, Relatrix database server can not be constructed due to "+e,e);
+		  //e.printStackTrace();
+	  }
+	  log.info("Bringing up Relatrix tablespace:"+RelatrixTransaction.getTableSpace());
+
   }
   
   /**
@@ -110,29 +123,29 @@ public class RosCore {
    * with assets for the remote nodes to acquire.
    */
   public void start() {
-    masterServer.start();
-    parameterServer.start();
-    try {
-		relatrixServer.startServer(RelatrixTransactionServer.address);
-	} catch (IOException e1) {
-		log.error(e1);
-	}
-    // see if we are going to load JARs for provisioning remote nodes.
-	String jarsDir = System.getProperty(propsEntry);
-	if(jarsDir != null) {
-		log.info("> Processing top level resource directory:"+jarsDir+" for remote node provisioning via ParameterTree");
-		try {
-			// read exclusion file
-			File exclusion = new File((new File(jarsDir).getAbsolutePath())+("/_exclusion"));
-			String exString = new String(readFile(exclusion));
-			String[] exclusions = exString.split("\\r?\\n");
-			for(String s: exclusions)
-				log.info(s+" will be excluded from resource provisioning.");
-			processFilesForFolder(new File(jarsDir), exclusions);
-		} catch (IOException e) {
-			log.error("Was unable to process resource provisioning directory:"+jarsDir+" due to "+e);
-		}
-	}
+	  try {
+		  relatrixServer.startServer(RelatrixTransactionServer.address);
+	  } catch (IOException e) {
+		  log.error("Unable to start the Relatrix database server process!");
+	  }
+	  masterServer.start();
+	  parameterServer.start();
+	  // see if we are going to load JARs for provisioning remote nodes.
+	  String jarsDir = System.getProperty(propsEntry);
+	  if(jarsDir != null) {
+		  log.info("> Processing top level resource directory:"+jarsDir+" for remote node provisioning via ParameterTree");
+		  try {
+			  // read exclusion file
+			  File exclusion = new File((new File(jarsDir).getAbsolutePath())+("/_exclusion"));
+			  String exString = new String(readFile(exclusion));
+			  String[] exclusions = exString.split("\\r?\\n");
+			  for(String s: exclusions)
+				  log.info(s+" will be excluded from resource provisioning.");
+			  processFilesForFolder(new File(jarsDir), exclusions);
+		  } catch (IOException e) {
+			  log.error("Was unable to process resource provisioning directory:"+jarsDir+" due to "+e);
+		  }
+	  }
   }
   /**
    * Recursively process the files from the provided top level folder with potential exclusions.
@@ -261,7 +274,6 @@ public class RosCore {
    */
   public static void main(String[] args) throws Exception {
 	  IndexResolver indexResolver = new IndexResolver();
-	  indexResolver.setLocal();
 	  ParallelExecutionContext pec = new ParallelExecutionContext(indexResolver, new ConcurrentHashMap<String,Object>());
 	  ScopedValue.where(ExecutionContextHolder.CONTEXT, pec).run(() -> {
 		  RosCore rosCore = null;
@@ -278,9 +290,6 @@ public class RosCore {
 		  try {
 			  rosCore.awaitStart(1, TimeUnit.SECONDS);
 		  } catch (InterruptedException e) {}
-		  RelatrixTransaction.getInstance();
-		  //String db = (new File(cl.getNodeArguments().get(0))).toPath().getParent().toString() + File.separator + (new File(cl.getNodeArguments().get(0)).getName());
-		  System.out.println("Bringing up Relatrix tablespace:"+RelatrixTransaction.getTableSpace());
 		  log.info("RosJavaLite Master started @ address "+rosCore.getUri());
 	  });
   }
